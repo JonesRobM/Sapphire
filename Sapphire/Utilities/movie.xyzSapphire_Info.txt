@@ -1,3 +1,0 @@
-
-System property "movie_file_name" is bad. Typically, this is because the required information has not been provied by the user or is given incorrectly.
-Reverting to System default "movie.xyz".
