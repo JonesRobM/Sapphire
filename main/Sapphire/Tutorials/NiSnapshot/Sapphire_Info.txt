@@ -1,0 +1,74 @@
+
+
+      _____         _____  _____  _    _ _____ _____  ______
+     / ____|  /\   |  __ \|  __ \| |  | |_   _|  __ \|  ____|
+    | (___   /  \  | |__) | |__) | |__| | | | | |__) | |__
+     \___ \ / /\ \ |  ___/|  ___/|  __  | | | |  _  /|  __|
+     ____) / ____ \| |    | |    | |  | |_| |_| | \ \| |____
+    |_____/_/    \_\_|    |_|    |_|  |_|_____|_|  \_\______|
+
+
+                              ____
+                             /\__/                            /_/  \_                            \ \__/ /
+                             \/__\/
+
+                
+Running version  -- 1.0.0 --
+
+Architecture : [ x86_64 ]
+
+Sapphire is shining on [ robert-Latitude-7490 ]
+
+Current user is [ robert ]
+
+Calculation beginning Sun 20 Feb 2022 12:24:03
+
+Units : [ ev angstrom ]
+
+No random quote today.
+
+Initialising...
+
+Reading from the Ni1289_To.xyz file.
+
+No energy file can be found at the specified location.
+''
+Please check your local directories and re-write your input file if you want energetic analysis.
+
+System property "extend_xyz" is bad. Typically, this is because the required information has not been provied by the user or is given incorrectly.
+Reverting to System default "None".
+
+Checking user input for calculating homo properties in this run.
+
+Species being considered are:
+Ni
+Checking user input for calculating homo properties in this run.
+
+Initial frame has been set to 0.
+
+System property "1" is bad. Typically, this is because the required information has not been provied by the user or is given incorrectly.
+Reverting to System default "1".
+
+System property "UniformPDF" is bad. Typically, this is because the required information has not been provied by the user or is given incorrectly.
+Reverting to System default "False".
+
+System property "Band" is bad. Typically, this is because the required information has not been provied by the user or is given incorrectly.
+Reverting to System default "0.05".
+Initialising system environment took 0.030 seconds.
+Loading in the dataset to be analysed.
+Be aware that this may take a while for a large file.
+Opened the dataset in 0.005 seconds.
+Checking user input for calculating homo properties in this run.
+Homo atom properties will be caluclated for ['Ni'] in this run.
+Checking user input for hetero atomic species.
+Initialising Metadata took 0.000 seconds.
+
+Computing the core calculations over 1 threads.
+
+Loading in atoms for frame 0.
+Loaded the atoms in 0.000 seconds.
+
+Analysis of frame 0 required 11.128 seconds.
+
+This is approximately 8.633ms for each atom.
+Time for completion is 00:00:13.

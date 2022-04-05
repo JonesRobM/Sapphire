@@ -1,0 +1,183 @@
+
+"""
+for Sys in ['PtCo55', 'PtIh55', 'PtOct55']:
+    for rand in [1345, 2783, 3987, 4009]:
+        try:
+            System = {
+            'base_dir' : '/media/k1899676/Transcend/PhD/2020/October/CMD/AuPt/AuMDh1103/%s/'%(Sys),
+            'iter_dir' : ['Sim-%s'%rand],
+            'plot_dir' : 'Images-%s'%rand,
+            'meta_name' : 'Metadata.csv',
+            'save_meta' : False, 'save_errors' : False
+            }
+    
+    
+            Pipeline = Reader.Read_Meta(System)
+            Metadata, Errors = Pipeline.Average()
+            Figures = Plot_Funcs.Plot_Funcs(Metadata, Errors, Quantities, System)
+            Figures.Make_Plots()
+            aGCN.append(Metadata['agcn'])
+            Energy.append(Metadata['ETot'])
+            Delta.append(Metadata['EDelta'])
+            #Adj.append(Pipeline.BigMeta['Sim-%s'%rand]['adj'])
+            AuAdj.append(Pipeline.BigMeta['Sim-%s'%rand]['HoAdjAu'])
+            PtAdj.append(Pipeline.BigMeta['Sim-%s'%rand]['HoAdjPt'])
+            HeAdj.append(Pipeline.BigMeta['Sim-%s'%rand]['HeAdj'])
+    
+            del(Metadata)
+            del(Pipeline)
+        except IndexError:
+            print(Sys,rand, '\n')
+
+            
+def Homo_Pairs(N1, N2, Tot):            
+
+    AACo = []; AAIh = []; AAOc = []
+    PPCo = []; PPIh = []; PPOc = []
+    for t in range(500):
+        TempAA = []; TempPP = []
+        for ind in range(Tot):
+
+            if ind < N1:
+                TempAA.append(sum(AuAdj[ind][t])/2)
+                TempPP.append(sum(PtAdj[ind][t])/2)
+
+            elif N1 < ind < N2:
+                TempAA.append(sum(AuAdj[ind][t])/2)
+                TempPP.append(sum(PtAdj[ind][t])/2)
+
+            else:
+                TempAA.append(sum(AuAdj[ind][t])/2)
+                TempPP.append(sum(PtAdj[ind][t])/2)
+
+        AACo.append(np.average(TempAA[:N1]))
+        AAIh.append(np.average(TempAA[N1:N2]))
+        AAOc.append(np.average(TempAA[N2:]))
+
+        PPCo.append(np.average(TempPP[:N1]))
+        PPIh.append(np.average(TempPP[N1:N2]))
+        PPOc.append(np.average(TempPP[N2:]))
+
+    return AACo, AAIh, AAOc, PPCo, PPIh, PPOc
+        
+def Hetero_Pairs(N1, N2, Tot):
+    APCo = []; APIh = []; APOc = []
+    for t in range(0,500,50):
+        TempAP = []
+        for ind in range(Tot):
+
+            if ind < N1:
+                TempAP.append(sum(HeAdj[ind][t][0]))
+
+            elif N1 < ind < N2:
+                TempAP.append(sum(HeAdj[ind][t][0]))
+
+            else:
+                TempAP.append(sum(HeAdj[ind][t][0]))
+
+        APCo.append(np.average(TempAP[:N1]))
+        APIh.append(np.average(TempAP[N1:N2]))
+        APOc.append(np.average(TempAP[N2:]))
+
+    return APCo, APIh, APOc
+
+
+def Mix(AA, PP, AP):
+    return np.array( (  [ (AA[x*50] + PP[x*50] - AP[x] ) / ( AA[x*50] + PP[x*50] + AP[x] ) for x in range(40) ] ), dtype = float)
+
+def Plot_Mix(AA_List, PP_List, AP_List, Label_List, Temp):
+    fig,ax = plt.subplots()
+    fig.set_size_inches(12,4)
+    Time = range(0,20,0.5)
+    for x in range(len(AA_List)):
+        ax.plot(Time, Mix(AA_List[x], PP_List[x], AP_List[x]), label = Label_List[x])
+    fig.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='lower left',
+               ncol=4, mode="expand", borderaxespad=0. ,fontsize = 18)
+    ax.set_xlabel('Time (ns)', fontsize=16)
+    ax.set_ylabel('Mix parameter', fontsize=16)
+    ax.tick_params(axis='both', which='major', labelsize=14)
+    plt.savefig('/media/k1899676/Seagate/PhD/20/August/CMD/AuPt/Mix'+str(Temp)+'.png', dpi =100, bbox_inches = 'tight')
+
+ 
+AuSurface = np.zeros((27,2000))
+PtSurface = np.zeros((27,2000))
+for ind, Simul in enumerate(aGCN):
+    PtA = []; AuA = []
+    PtB = []; AuB = []
+    for t in range(len(Simul)):
+        PtA = Simul[t][2057:]
+        AuA = Simul[t][:2057]
+        AuB = [ x for x in AuA if x < 9 ]
+        PtB = [ x for x in PtA if x < 9 ]
+        PtSurface[ind][t] = len(PtB)
+        AuSurface[ind][t] = len(AuB)
+       
+Pt300 = np.average(PtSurface[:4], axis = 0)
+Pt350 = np.average(PtSurface[4:8], axis = 0)
+Pt400 = np.average(PtSurface[8:12], axis = 0)
+Pt450 = np.average(PtSurface[12:16], axis = 0)
+Pt500 = np.average(PtSurface[16:20], axis = 0)
+Pt550 = np.average(PtSurface[20:24], axis = 0)
+Pt600 = np.average(PtSurface[24:], axis = 0)
+Au300 = np.average(AuSurface[:4], axis = 0)
+Au350 = np.average(AuSurface[4:8], axis = 0)
+Au400 = np.average(AuSurface[8:12], axis = 0)
+Au450 = np.average(AuSurface[12:16], axis = 0)
+Au500 = np.average(AuSurface[16:20], axis = 0)
+Au550 = np.average(AuSurface[20:24], axis = 0)
+Au600 = np.average(AuSurface[24:], axis = 0)
+        
+Time = range(0,20000,10)
+fig,ax = plt.subplots()
+fig.set_size_inches(12,4)
+ax.plot(Time, Au300, label = '300K')
+ax.plot(Time, Au350, label = '350K')
+ax.plot(Time, Au400, label = '400K')
+ax.plot(Time, Au450, label = '450K')
+ax.plot(Time, Au500, label = '500K')
+ax.plot(Time, Au550, label = '550K')
+ax.plot(Time, Au600, label = '600K')
+fig.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='lower left',
+           ncol=4, mode="expand", borderaxespad=0. ,fontsize = 16)
+ax.set_xlabel('Time (ps)', fontsize=14)
+ax.tick_params(axis='both', which='major', labelsize=14)
+ax.set_ylabel('Au surface atoms', fontsize=14)
+plt.savefig('/media/k1899676/Seagate/PhD/20/August/CMD/AuPt/Au2057Pt55/Au_Abs.png', dpi =100, bbox_inches = 'tight')
+
+AP2112 = []; AP2167 = []; AP1200 = []; AP1402 = []
+for t in range(0,2000,50):
+    TempAP = []
+    for ind in range(14):
+        
+        if ind < 4:
+            TempAP.append(sum(HeAdj[ind][t][0]))
+            
+        elif 4 < ind < 8:
+            TempAP.append(sum(HeAdj[ind][t][0]))
+            
+        elif 8 < ind < 11:
+            TempAP.append(sum(HeAdj[ind][t][0]))
+            
+        else:
+            TempAP.append(sum(HeAdj[ind][t][0]))
+        
+    AP2112.append(np.average(TempAP[:4]))
+    AP2167.append(np.average(TempAP[4:8]))
+    AP1200.append(np.average(TempAP[8:11]))
+    AP1402.append(np.average(TempAP[11:]))
+    
+fig,ax = plt.subplots()
+fig.set_size_inches(12,4)
+Time = range(0,20000,500)
+ax.plot(Time, Mix1200, label = 'Au$_{891}$Pt$_{309}$')
+ax.plot(Time, Mix1402, label = 'Au$_{1103}$Pt$_{309}$')
+ax.plot(Time, Mix2112, label = 'Au$_{2057}$Pt$_{55}$')
+ax.plot(Time, Mix2167, label = 'Au$_{2057}$Pt$_{110}$')
+fig.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='lower left',
+           ncol=4, mode="expand", borderaxespad=0. ,fontsize = 18)
+ax.set_xlabel('Time (ps)', fontsize=16)
+ax.set_ylabel('Mix parameter', fontsize=16)
+ax.tick_params(axis='both', which='major', labelsize=14)
+plt.savefig('/media/k1899676/Seagate/PhD/20/August/CMD/AuPt/Mix300.png', dpi =100, bbox_inches = 'tight')
+
+"""

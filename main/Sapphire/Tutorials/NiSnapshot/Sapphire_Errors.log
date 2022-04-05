@@ -1,0 +1,23 @@
+
+
+      _____         _____  _____  _    _ _____ _____  ______
+     / ____|  /\   |  __ \|  __ \| |  | |_   _|  __ \|  ____|
+    | (___   /  \  | |__) | |__) | |__| | | | | |__) | |__
+     \___ \ / /\ \ |  ___/|  ___/|  __  | | | |  _  /|  __|
+     ____) / ____ \| |    | |    | |  | |_| |_| | \ \| |____
+    |_____/_/    \_\_|    |_|    |_|  |_|_____|_|  \_\______|
+
+
+                              ____
+                             /\__/                            /_/  \_                            \ \__/ /
+                             \/__\/
+
+                
+Exception raised while computing adjacency properties: 
+'Adjacency_Matrix' object has no attribute 'Area'
+Exception raised while computing Gyration properties: 
+'numpy.float64' object is not iterable
+Exception raised while computing Stat Radius properties: 
+'numpy.float64' object is not iterable
+Exception raised while cleaning cna patterns: 
+'Process' object has no attribute 'metadata'
