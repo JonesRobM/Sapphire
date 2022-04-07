@@ -9,19 +9,29 @@ with open('README') as fd:
 setup(
     name='Sapphire',
     version='1.0.0',
-    url='https://github.com/kcl-tscm/Sapphire',
+    url='https://github.com/JonesRobM/Sapphire.git',
     description='A pythonic post-processing environment for the analysis on NanoAlloys',
     author='Robert Michael Jones',
+    classifiers=[
+        "Programming Language :: Python :: 3.6",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
     author_email='Robert.M.Jones@kcl.ac.uk',
-    packages=find_packages(),
+    package_dir={'Sapphire': 'Sapphire/'},
+    packages=find_packages(where=""),
     install_requires=[
         'numpy',
+        'numba',
         'pandas',
         'ase',
         'scipy',
         'ruptures',
         'ovito',
-        'sklearn'
+        'sklearn', 
+        'ruptures',
+        'tensorflow',
+        'pygdm2'
     ],
     extras_require={'plotting': ['matplotlib', 'jupyter', 'seaborn']},
     setup_requires=['pytest-runner', 'flake8'],
