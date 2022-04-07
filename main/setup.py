@@ -26,8 +26,6 @@ setup(
         'pandas',
         'ase',
         'scipy',
-        'ruptures',
-        'ovito',
         'sklearn', 
         'ruptures',
         'tensorflow',
