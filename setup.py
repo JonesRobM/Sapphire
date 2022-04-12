@@ -22,6 +22,7 @@ setup(
     packages=find_packages(where="main"),
     install_requires=[
         'numpy',
+        'networkx',
         'numba',
         'pandas',
         'ase',
