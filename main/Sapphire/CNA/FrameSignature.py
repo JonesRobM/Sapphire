@@ -1,131 +1,71 @@
-# Import OVITO modules.
-from ovito.io import *
-from ovito.modifiers import *
-from ovito.data import *
-
-from ovito.io import import_file
-from ovito.modifiers import CreateBondsModifier, CommonNeighborAnalysisModifier
-from ovito.data import particles, BondsEnumerator
-
-# Import standard Python and NumPy modules.
-import numpy
-import datetime
-import platform
-import getpass
-import os
-
+import numpy as np
+import networkx as nx
 from Sapphire.CNA import Utilities
 
-def cna_init(System = None, Pattern_Input = False):
-    System = System
-    if Pattern_Input:
-        Pattern_Input = Pattern_Input
-    filename = System['base_dir'] + System['movie_file_name']
-    if (os.path.exists(System['base_dir']+'CNA_npz/')):
-        pass
-    else:
-        os.mkdir(System['base_dir']+'CNA_npz/')
-    npz_dir =  System['base_dir']+'CNA_npz/'
-    __version__ = '1.0.0'
-    Units = 'Angstrom & ev'
-    if Pattern_Input:
-        if not os.path.isfile(System['base_dir'] + 'CNA_Pattern_Info.txt'):
-            with open(System['base_dir'] + 'CNA_Pattern_Info.txt', 'w') as f:
-                f.write("""
-                                
-                          _____         _____  _____  _    _ _____ _____  ______ 
-                         / ____|  /\   |  __ \|  __ \| |  | |_   _|  __ \|  ____|
-                        | (___   /  \  | |__) | |__) | |__| | | | | |__) | |__   
-                         \___ \ / /\ \ |  ___/|  ___/|  __  | | | |  _  /|  __|  
-                         ____) / ____ \| |    | |    | |  | |_| |_| | \ \| |____ 
-                        |_____/_/    \_\_|    |_|    |_|  |_|_____|_|  \_\______|
-                                                                          
-                         
-                                                  ____ 
-                                                 /\__/\ 
-                                                /_/  \_\ 
-                                                \ \__/ / 
-                                                 \/__\/ 
-                                                                                                                                       
-                                    """
-                                    "\nRunning version  -- %s --\n"
-                                    "\nCurrent user is [ %s ]\n"
-                                    "\nCalculation beginning %s\n"
-                                    "\nArchitecture : [ %s ]\n"
-                                    "\nUnits : [ %s ]\n"
-                                    "\nThis file contains all of the user information regarding\nthe "
-                                    "CNA Pattern Recognition and the support vector model.\n"
-                                    %(__version__, getpass.getuser(), datetime.datetime.now().strftime("%a %d %b %Y %H:%M:%S"),
-                                      platform.machine(), Units)
-                    )
-def row_histogram(a):
-    ca = numpy.ascontiguousarray(a).view([('', a.dtype)] * a.shape[1])
-    unique, indices, inverse = numpy.unique(ca, return_index=True, return_inverse=True)
-    counts = numpy.bincount(inverse)
-    return (a[indices], counts)
-class Frame_CNA_Sigs():
+class CNA(object):
+    """
+    RMJ 10/04/22
+    Class template structure on calculating common neighbour analysis (CNA)
+    signatures and patterns with the former of the form (r,s,t), and the latter
+    [n_i (r_i, s_i, t_i)] over all recognised local atomic signature indices i.
     
+    
+    r is the number of nearest neighbours common to both atoms in the pair; 
+    s is the number of bonds between shared neighbours;
+    t is the longest chain which can be made from bonding s atoms if they are nearest neighbours.;
+    
+    Parameters
+    ----------
+    first : scipy sparse matrix - returned from Post_Process.Adjacent.ReturnAdj()
+        the 1st param name adj
+    
+    Returns
+    -------
+    numpy array
+        2 x m matrix where m is the number of unique recognised signatures 
+        Will be of the form (n, (r,s,t)) where n is the number of unique counts
+        of the signature (r,s,t)
+    
+    list
+        N dimensional list where N is the number of atoms considered.
+        Each list element will be a tuple of the CNA pattern for that given atom
+
     """
-    Robert:
+    
+    def __init__(self, system = None, adj = None, Masterkey = None,
+                         Patterns = False, Fingerprint = None, Type = None):
         
-        This function takes the following input arguments:
-            
-            frame: int - frame index of a movie.xyz trajectory.
-            
-            R_Cut: float - Interatomic separation. Can be set manually or read in 
-            by a higher function. It is advised that this is set for each metal individually
-            to ensure the most accurate and physically meaningful results.
-            Will default to a value for the most abundant metal in a system otherwise - To be implemented -
-            
-            Masterkey: Tuple of tuples - Tells the programme which signatures are to be expected.
-            There will be a mode in which this may be appended to and saved in an external file for reference.
-            
-            filename: str - self explanatory. where to find the file to be analysed.
-            
-            Homo: Boolean - Whether or not to search for a single atomic specie. Default of false means that the atoms will
-            not be doctored prior to analysis.
-            
-            Metal: str - The name of the specie to be removed.
-            
-        Will output the following:
-            
-            signature_cna: a*N array where a is the length of the masterkey & N is the number of atoms considered.
-            
-            cna_pattern_indices: N dimensional list which tells you which pattern was found for each atom
-            
-            signature_cna_count: gives the frequency of a given pattern.
-            
-        May include a mode to write the patterns to a new file.
-        
-    """
-    def __init__(self, System, frame, R_Cut=None, Masterkey=None, 
-                   Type = None, Metal = None, Species = None,
-                   Patterns = False, Fingerprint = None):
-        self.System = System
-        self.Frame = frame
-        self.R_Cut = R_Cut
-        self.Masterkey = Masterkey
-        self.Type = Type
-        self.Metal = Metal
+        self.system = system
         self.Patterns = Patterns
         self.Fingerprint = Fingerprint
-        self.Masterkey = ((0,0,0),
-                    (1,0,0),
-                    (2,0,0),(2,1,1),
-                    (3,0,0),(3,1,1),(3,2,2),
-                    (4,0,0),(4,1,1),(4,2,1),(4,2,2),(4,3,3),(4,4,4),
-                    (5,2,1),(5,2,2),(5,3,2),(5,3,3),(5,4,4),(5,5,5),
-                    (6,6,6))
-        self.Default = True
-        self.npz_dir =  self.System['base_dir']+'CNA_npz/'
-        self.filename = self.System['base_dir'] + self.System['movie_file_name']
+        self.Type = Type
+        
+        if adj is not None:
+            try:
+                self.adj = adj.todense()
+            except Exception as e:
+                pass
+        else:
+            pass
+        
+        if Masterkey is None:
+            self.Masterkey = ((0,0,0),
+                        (1,0,0),
+                        (2,0,0),(2,1,1),
+                        (3,0,0),(3,1,1),(3,2,2),
+                        (4,0,0),(4,1,1),(4,2,1),(4,2,2),(4,3,3),(4,4,4),
+                        (5,2,1),(5,2,2),(5,3,2),(5,3,3),(5,4,4),(5,5,5),
+                        (6,6,6))
+        else:
+            self.Masterkey = Masterkey
+        self.Sigs = {}
+        for item in self.Masterkey:
+            self.Sigs[item] = 0
+
         self.Pat_Key = Utilities.Pattern_Key().Key() #Calling dictionary of recognised patterns
         self.Keys = list(self.Pat_Key)
         self.Max_Label = max(len(str(label)) for label in self.Keys)
-        self.calculate()
-        self.write()
-        
-        
+
     def ensure_dir(self, base_dir='', file_path=''):
         """
 
@@ -170,73 +110,106 @@ class Frame_CNA_Sigs():
                 # If the bar is empty, add a left one-eighth block
                 bar = bar or  '|'
                 f.write(f'{self.Keys[i].rjust(self.Max_Label)} | {count:#4d} {bar}\n')
-    def calculate(self):
+
+    def NN(self, atom):
         """
-        if self.Homo:
-                
-        
-            self.pipeline.modifiers.append( SelectTypeModifier(property='Particle Type', 
-                                                           types={self.Metal}) )
-            
-            self.pipeline.modifiers.append( DeleteSelectedModifier() )
+
+        Parameters
+        ----------
+        atom : integer
+            the atomic index being considered relative to the ordering or atoms in the frame of the trajectory
+
+        Returns
+        -------
+        self.neigh : list
+            indices of all atoms considered to be neighbours of the reference atom.
+
         """
-        pipeline = import_file(self.filename)
-
-        pipeline.modifiers.append(CreateBondsModifier(cutoff = self.R_Cut))
-
-        pipeline.modifiers.append( CommonNeighborAnalysisModifier(
-            mode = CommonNeighborAnalysisModifier.Mode.BondBased))
-
-        data = pipeline.compute(self.Frame)
-        # The 'CNA Indices' bond property is a a two-dimensional array
-        # containing the three CNA indices computed for each bond in the system.
-
-        cna_indices = data.particles.bonds['CNA Indices']   
-
-        # Used below for enumerating the bonds of each particle:
-        bond_enumerator = BondsEnumerator(data.particles.bonds)
-
-        particle_cnas = numpy.zeros((data.particles.count, len(self.Masterkey)), dtype=int)
-        for particle_index in range(data.particles.count):
-    
-            # Create local list with CNA indices of the bonds of the current particle.
-            bond_index_list = list(bond_enumerator.bonds_of_particle(particle_index))
-            local_cna_indices = cna_indices[bond_index_list]
-    
-            # Count how often each type of CNA triplet occurred.
-            unique_triplets, triplet_counts = row_histogram(local_cna_indices)
-
-            for triplet, count in zip(unique_triplets, triplet_counts):
-                try:
-                    for index, signature in enumerate(self.Masterkey):
-                        if(signature == tuple(triplet)):
-                            particle_cnas[particle_index,index] = count
-                                
-                except KeyError:
-                    pass
-             
-        Finger = numpy.zeros(len(particle_cnas), dtype=numpy.ndarray)
-        for atom in range(len(particle_cnas)):
-            Temp = []
-            for i, x in enumerate(particle_cnas[atom]):
-                if x > 0:
-                    Temp.append((x, self.Masterkey[i]))
-            
-            Finger[atom] = Temp 
         
-        Sigs = [ sum(particle_cnas[:,x]) for x in range(len(self.Masterkey)) ]
+        self.neigh = []
+        for i, atoms in enumerate(self.adj[:,atom]):
+            if int(atoms) == 1:
+                self.neigh.append(i)
+        return self.neigh
+        
+    
+    def R(self, atom, friend):
+        
+        """
+
+        Parameters
+        ----------
+        atom : integer
+            the reference atomic index being considered relative to the ordering or atoms in the frame of the trajectory
+        friend : integer
+            the neighbour atomic index being considered relative to the ordering or atoms in the frame of the trajectory
+
+        Returns
+        -------
+        self.bonds : list
+            indices of all atoms which are mutually bonded to both the atom and its friend
+
+        """
+        
+        self.bonds = []
+        for i, x in enumerate(self.adj[:,atom]):
+            if int(x) == 1:
+                if self.adj[:,friend][i] == 1:
+                    self.bonds.append(i)
+        self.r = len(self.bonds)
+        return self.r
                     
-        
-        if (self.Fingerprint and self.Patterns):
-            if self.Type == 'Homo':
-                self.Ascii_Bars(Finger, True)
-            else:
-                self.Ascii_Bars(Finger)    
-                
-        self.Sigs = Sigs
-        if self.Patterns:
-            self.Finger = Finger
-            
+    
+    def S(self):
+        self.s = 0
+        self.perm = []
+        for i, b in enumerate(self.bonds):
+            for j, c in enumerate(self.bonds[i:]):
+                a = int(self.adj[:,b][c])
+                if a == 1:
+                    self.s += a
+                    self.perm.append((b,c))
+        return self.s
+
+    def T (self):
+        self.G = nx.Graph()
+        for bond in self.bonds:
+            self.G.add_node(str(bond))
+        for item in self.perm:
+            self.G.add_edge(*(str(item[0]), str(item[1])))
+        chain = []
+        for n1 in self.bonds:
+            for n2 in self.bonds:
+                paths = nx.all_simple_paths(self.G, source=str(n1), target=str(n2))
+                for path in map(nx.utils.pairwise, paths):
+                    chain.append(len(list(path)))
+        cycles = [len(x) for x in nx.cycle_basis(self.G)]
+        try:
+            chain.append(max(cycles))
+        except ValueError:
+            pass
+        try:
+            self.t = max(chain)
+        except ValueError:
+            self.t = 0
+        return self.t
+    
+    
+    def calculate(self):
+        for atom in range(len(self.adj)):
+            self.NN(atom)
+            for neigh in self.neigh:
+                sig = tuple((self.R(atom,neigh), self.S(), self.T()))
+                try:
+                    self.Sigs[sig]+=1
+                except KeyError:
+                    print(sig)
+                    self.Sigs[sig] = 1
+    
+    
+    def fingers(self):
+        return None
+    
     def write(self):
         
         if self.Type == 'Full':
