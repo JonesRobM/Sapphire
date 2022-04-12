@@ -18,8 +18,8 @@ setup(
         "Operating System :: OS Independent",
     ],
     author_email='Robert.M.Jones@kcl.ac.uk',
-    package_dir={'Sapphire': 'Sapphire/'},
-    packages=find_packages(where=""),
+    package_dir={'': 'Sapphire'},
+    packages=find_packages(where="Sapphire"),
     install_requires=[
         'numpy',
         'numba',
