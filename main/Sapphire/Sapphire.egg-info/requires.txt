@@ -1,0 +1,14 @@
+numpy
+numba
+pandas
+ase
+scipy
+sklearn
+ruptures
+tensorflow
+pygdm2
+
+[plotting]
+matplotlib
+jupyter
+seaborn

@@ -1,0 +1,51 @@
+Installation instructions:
+
+1: Create a python virtual environment
+
+$ python3 -m pyvenv < MyEnv >
+
+2: Source the environment
+
+$ source /path/to/< MyEnv >
+
+3: Link your jupyter notebook to this new environment
+
+$ pip install --user ipykernel
+
+$ python -m ipykernel install --user --name=myenv
+
+Check the file /home/user/.local/share/jupyter/kernels/< MyEnv >/kernel.json
+
+It should look like this
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+{
+ "argv": [
+  "/path/to/< MyEnv >",
+  "-m",
+  "ipykernel_launcher",
+  "-f",
+  "{connection_file}"
+ ],
+ "display_name": "< MyEnv >",
+ "language": "python"
+}
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+
+4: Build Sapphire - its dependencies should be installed for you
+Do this from the base directory of Sapphire where you will fins the setup.py file
+
+$ pip install --upgrade .
+
+5: Sapphire should now appear in your site packages and be useable via
+
+$ python
+
+>>import Sapphire
+
+>>from Sapphire.Post_Process import * 
+
+etc...
