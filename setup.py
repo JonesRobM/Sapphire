@@ -23,6 +23,7 @@ setup(
     install_requires=[
         'numpy',
         'numba',
+        'networkx',
         'pandas',
         'ase',
         'scipy',
