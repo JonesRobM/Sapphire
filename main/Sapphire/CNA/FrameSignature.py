@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import networkx as nx
 from Sapphire.CNA import Utilities
 
@@ -16,9 +17,18 @@ class CNA(object):
     
     Parameters
     ----------
-    first : scipy sparse matrix - returned from Post_Process.Adjacent.ReturnAdj()
-        the 1st param name adj
+    system : Full Sapphire calculation information regarding base directories and file composition.
     
+    adj : scipy sparse matrix - returned from Post_Process.Adjacent.ReturnAdj()
+        the 1st param name adj
+
+    Masterkey : tuple - The user may provide their own cna masterkey if they wish to compare
+                        against a theoretical cna signature list
+    
+    Fingerprint : boolean - Whether or not to compute the cna patterns
+    
+    Type : boolean - Whether or not to write out the full cna profile to an external file
+
     Returns
     -------
     numpy array
@@ -33,11 +43,12 @@ class CNA(object):
     """
     
     def __init__(self, system = None, adj = None, Masterkey = None,
-                         Patterns = False, Fingerprint = None, Type = None):
+                         Fingerprint = True, Type = False):
         
         self.system = system
-        self.Patterns = Patterns
-        self.Fingerprint = Fingerprint
+        if Fingerprint:
+            self.Fingerprint = np.zeros(adj.shape[0], dtype = object)
+            self.Keys = np.zeros(adj.shape[0], dtype = object)
         self.Type = Type
         
         if adj is not None:
@@ -93,7 +104,7 @@ class CNA(object):
     def Ascii_Bars(self, Finger):
         with open(self.System['base_dir'] + 'CNA_Pattern_Info.txt', 'a', encoding='utf-8') as f:
             f.write('\nCNA Pattern distribution for full system at frame %s.\n' %self.Frame)
-        Temp = numpy.zeros(len(self.Keys), int)
+        Temp = np.zeros(len(self.Keys), int)
         for atom in Finger:
             if str(atom) in self.Keys:
                 Temp[self.Keys.index(str(atom))] += 1
@@ -196,7 +207,8 @@ class CNA(object):
     
     
     def calculate(self):
-        for atom in range(len(self.adj)):
+        for i, atom in enumerate(self.adj):
+            self.particle_cnas = []
             self.NN(atom)
             for neigh in self.neigh:
                 sig = tuple((self.R(atom,neigh), self.S(), self.T()))
@@ -205,10 +217,16 @@ class CNA(object):
                 except KeyError:
                     print(sig)
                     self.Sigs[sig] = 1
-    
+                    
+                self.particle_cnas.append(sig)
+            if self.Fingerprint:
+                self.Fingerprint[i] = self.fingers()    
     
     def fingers(self):
-        return None
+        Temp = set(self.particle_cnas)
+        self.Keys.append(Temp)
+        return [ (self.particle_cnas.count(x), x) for x in Temp ]  
+    
     
     def write(self):
         
