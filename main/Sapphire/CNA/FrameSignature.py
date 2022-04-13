@@ -46,9 +46,6 @@ class CNA(object):
                          Fingerprint = True, Type = False):
         
         self.system = system
-        if Fingerprint:
-            self.Fingerprint = np.zeros(adj.shape[0], dtype = object)
-            self.Keys = np.zeros(adj.shape[0], dtype = object)
         self.Type = Type
         
         if adj is not None:
@@ -58,7 +55,10 @@ class CNA(object):
                 pass
         else:
             pass
-        
+        if Fingerprint:
+            self.Fingerprint = np.zeros(self.adj.shape[0], dtype = object)
+            self.Keys = np.zeros(self.adj.shape[0], dtype = object)    
+
         if Masterkey is None:
             self.Masterkey = ((0,0,0),
                         (1,0,0),
@@ -209,9 +209,9 @@ class CNA(object):
     def calculate(self):
         for i, atom in enumerate(self.adj):
             self.particle_cnas = []
-            self.NN(atom)
+            self.NN(i)
             for neigh in self.neigh:
-                sig = tuple((self.R(atom,neigh), self.S(), self.T()))
+                sig = tuple((self.R(i,neigh), self.S(), self.T()))
                 try:
                     self.Sigs[sig]+=1
                 except KeyError:
@@ -219,13 +219,13 @@ class CNA(object):
                     self.Sigs[sig] = 1
                     
                 self.particle_cnas.append(sig)
-            if self.Fingerprint:
+            if self.Fingerprint is not False:
                 self.Fingerprint[i] = self.fingers()    
     
     def fingers(self):
         Temp = set(self.particle_cnas)
         self.Keys.append(Temp)
-        return [ (self.particle_cnas.count(x), x) for x in Temp ]  
+        return tuple((self.particle_cnas.count(x), x) for x in Temp) 
     
     
     def write(self):
