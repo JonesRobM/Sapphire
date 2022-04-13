@@ -44,9 +44,9 @@ It should look like this
 
 
 4: Build Sapphire - its dependencies should be installed for you
-Do this from the base directory of Sapphire called 'main/' where you will find the setup.py file
+Do this from the base directory of Sapphire where you will find the setup.py file
 
-$ pip install --upgrade .
+$ python -m pip install --upgrade .
 
 5: Sapphire should now appear in your site packages and will be useable via
 
