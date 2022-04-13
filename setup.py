@@ -24,6 +24,7 @@ setup(
         'numpy',
         'networkx',
         'numba',
+        'networkx',
         'pandas',
         'ase',
         'scipy',
