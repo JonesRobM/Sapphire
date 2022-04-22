@@ -18,14 +18,12 @@ from Sapphire.Utilities import Initial, Supported, System_Clean
 class Process(object):
 
     def __init__(self, System=None, Quantities=None,
-                 Pattern_Input=False, Cores=mp.cpu_count()-1):
+                 Pattern_Input=False):
         
         self.tick = time.time()
 
         self.System = System
         self.Quantities = Quantities
-        self.Cores = Cores
-
         if Pattern_Input:
             self.Pattern_Input = Pattern_Input
 
@@ -201,18 +199,6 @@ class Process(object):
                 self.Start, self.End,self.Step))
             self.Band = self.System.System['Band']
 
-        try:
-            if 'cna_sigs' in self.Quantities['Full']:
-                try:
-                    if 'cna_patterns' in self.Quantities['Full']:
-                        CNA_Init = FrameSignature.cna_init(
-                            System=self.System.System, Pattern_Input=self.Pattern_Input)
-                    else:
-                        CNA_Init = FrameSignature.cna_init(System=self.System.System)
-                except KeyError:
-                    pass
-        except KeyError:
-            pass
 
 ##############################################################################
 
@@ -412,24 +398,7 @@ class Process(object):
             with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
                 f.write('\nException raised while computing hetero pair distances: \n%s' % e)
 
-##############################################################################
-
-        # This block calculates the CNA signatures
-        # and cna patterns for the whole system, only
-
-##############################################################################
-
-        if 'cna_sigs' in self.Quantities['Full']:
-            try:
-                cna = FrameSignature.Frame_CNA_Sigs(
-                    System=self.System.System, frame=i,
-                    R_Cut=self.result_cache['FullCut'], Type = 'Full',
-                    Masterkey=self.Masterkey, 
-                    Patterns='cna_patterns' in self.Quantities['Full'], 
-                    Fingerprint='cna_patterns' in self.Quantities['Full'])
-            except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing CNA properties: \n%s' % e)
+                    
 ##############################################################################
 
         # This block evaluates the adjacency matrices
@@ -440,7 +409,7 @@ class Process(object):
         #The following block computes full-system adjacency properties
         if 'adj' in self.Quantities['Full']:
             try:
-                Adj = Adjacent.Adjacency_Matrix(
+                self.result_cache['Adj'] = Adjacent.Adjacency_Matrix(
                     System = self.System.System,
                     Adj = 'adj' in self.Quantities['Full'], 
                     agcn = 'agcn' in self.Quantities['Full'], 
@@ -498,12 +467,29 @@ class Process(object):
 
 ##############################################################################
 
-        # This block calculates the radius of
-
+        # This block calculates the CNA signatures
+        # and cna patterns for the whole system, only
 
 ##############################################################################
+
+        if 'cna_sigs' in self.Quantities['Full']:
+            try:
+                cna = FrameSignature.CNA(
+                    System=self.System.System, Frame=i,
+                    adj=self.result_cache['Adj'], Type = 'Full',
+                    Masterkey=self.Masterkey,
+                    Fingerprint='cna_patterns' in self.Quantities['Full']).calculate()
+                
+            except Exception as e:
+                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
+                    f.write('\nException raised while computing CNA properties: \n%s' % e)
+
+##############################################################################
+
+        # This block calculates the radius of
         # gyration for the whole system and sub-systems
 
+##############################################################################
 
         if 'gyration' in self.Quantities['Full']:
             try:
@@ -533,13 +519,6 @@ class Process(object):
             except Exception as e:
                 with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
                     f.write('\nException raised while computing Stat Radius properties: \n%s' % e)
-
-##############################################################################
-
-        # This is simply a progress updater which
-        # informs the user how every 5% is getting along.
-
-##############################################################################
         """
 
         #############################################################################################
@@ -618,27 +597,12 @@ class Process(object):
                     1000*(time.time() - self.timer)/self.NAtoms[int(i/self.Step)]))
         except Exception as e:
             print(e)
+            
+            
     def run_core(self):
         """
         Robert:
-            As above for the PDDF calculations.
 
-            Only here we calculate over all remaining frames.
-
-            All analyses and functions are facsimilies of their above counterparts.
-
-        """
-        with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
-            f.write("\nComputing the core calculations over %s threads.\n" % self.Cores)
-        
-        
-        """
-        p = mp.Pool(self.Cores)
-        with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
-            f.write("\nWorkers designated for calculations.\n")
-        _ = p.map(self.calculate, (self.All_Times))
-        p.close()
-        p.join()
         """
         
         for i in self.All_Times:
@@ -648,58 +612,6 @@ class Process(object):
             f.write('Time for completion is %s.\n' %
                     (time.strftime("%H:%M:%S", time.gmtime((self.T3-self.T)))))
             
-    def run_pdf(self):
-        """
-        Robert:
-
-            This section of the code runs the calculator over the list of frame indices
-            which the user wishes to calculate the PDDF and R_Cut for.
-
-            The reason for doing these first is that when parallelising over the remainder of the
-            simulation - one may call the R_Cut values as they are calculated and saved
-            a - priori.
-
-            The default number of threads to parallelise over is 1 fewer than the machine has available.
-            If you run a quad-core machine, then the default will be to run 7 threads in parallel.
-        """
-
-
-        with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
-            f.write("\nComputing the R_Cut calculations over %s threads.\n" %
-                    self.Cores)
-
-        p = mp.Pool(self.Cores)  # Create an instance of parallel workers.
-        # Provide the workers with the calculate function and list to iterate over.
-        self.result_pdf = np.asarray(p.map(self.calculate_pdf, (self.L1)), dtype=object)
-        p.close()
-        p.join()
-        self.T0 = time.time()
-        with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
-            f.write('Time for completing RCut calculation is %s.\n' %
-                    (time.strftime("%H:%M:%S", time.gmtime((self.T0-self.T)))))
-            
-        for i, num in enumerate(self.L1):
-            for Key in self.R_Cut:
-                # Organise the global metadata frame-wise for each key.
-                print(self.result_pdf[i][Key], Key)
-                print(self.R_Cut[Key], Key)
-                #self.R_Cut[Key][i] = self.result_pdf[i][Key]
-        self.T1 = time.time()
-        
-        with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
-            f.write('Time for cleaning up RCut calculation is %s.\n' %
-                    (time.strftime("%H:%M:%S", time.gmtime((self.T1-self.T0)))))
-
-        self.T2 = time.time()
-
-        with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
-            f.write('Time for completing core calculation is %s.\n' %
-                    (time.strftime("%H:%M:%S", time.gmtime((self.T2-self.T1)))))
-
-
-            self.T3 = time.time()
-            f.write('Time for completion is %s.\n' %
-                    (time.strftime("%H:%M:%S", time.gmtime((self.T3-self.T)))))
 
     def analyse(self, Stat_Tools=None):
         """
@@ -720,29 +632,6 @@ class Process(object):
 
 
             """
-
-        # This block handles the Lindemann indices.
-        """
-        try:
-            if bool(globals()['Lind']) is True:
-                Lind_Line = DistFuncs.Lindemann(self.filename, N_Atoms = self.metadata['NAtoms'],
-                                                CPUs = mp.cpu_count()-1)
-                self.metadata['Lind'] = Lind_Line.Main_Lind()
-
-        except KeyError:
-            pass
-
-        try:
-            if bool(bool(self.System.System['Homo'])*bool('Lind' in self.Calc_Quants.keys())) is True:
-                for x in self.System.System['Homo']:
-                    Lind_Line = DistFuncs.Lindemann(self.filename, N_Atoms = self.metadata['NAtoms'][i],
-                                                    CPUs = mp.cpu_count()-1,
-                                                    Ho = True, Specie = x,
-                                                    Elements = self.metadata['Elements'][int(i/self.Step)])
-                    self.metadata['Lind' + x] = Lind_Line.Main_Lind()
-        except KeyError:
-            pass
-        """
 
         for i in range(1, int((self.End - self.Start)/self.Step)):
 
