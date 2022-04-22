@@ -491,7 +491,8 @@ class Pair_Dist():
 
 class Gyration():
     
-    def __init__(self, System = None, Positions = None, Type = False, Metal = None, Elements = None, Masses = None, Frame = None):
+    def __init__(self, System = None, Positions = None, Type = False, 
+                 Metal = None, Elements = None, Masses = None, Frame = None):
         self.System = System
         self.Positions = Positions
         self.Type = Type
