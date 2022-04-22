@@ -86,10 +86,10 @@ class _Clean_System(object):
                 _exit()
 
             else:
-                if not os.path.isfile(self.System['movie_file_name']):
+                if not os.path.isfile(self.System['base_dir']+self.System['movie_file_name']):
                     self.System['movie_file_name'] = self.Default['movie_file_name']
                     warnings.warn(none_template % ('movie_file_name', self.Default['movie_file_name']))
-                    with open(self.System['movie_file_name']+self.file, 'a') as warn:
+                    with open(self.System['base_dir']+self.file, 'a') as warn:
                         warn.write(none_template % ('movie_file_name', self.Default['movie_file_name']))
                     _exit()
 

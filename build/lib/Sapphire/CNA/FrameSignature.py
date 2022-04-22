@@ -43,11 +43,11 @@ class CNA(object):
     """
     
     def __init__(self, system = None, adj = None, Masterkey = None,
-                         Fingerprint = True, Type = False):
+                         Fingerprint = True, Type = False, Frame = 0):
         
         self.system = system
         self.Type = Type
-        
+        self.Frame = Frame
         if adj is not None:
             try:
                 self.adj = adj.todense()
@@ -220,7 +220,7 @@ class CNA(object):
                     
                 self.particle_cnas.append(sig)
             if self.Fingerprint is not False:
-                self.Fingerprint[i] = self.fingers()    
+                self.Fingerprint[i] = self.fingers()  
     
     def fingers(self):
         Temp = set(self.particle_cnas)
@@ -239,9 +239,9 @@ class CNA(object):
             self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
             self.MakeFile(Attributes)
             with open(OutFile, 'a') as outfile:
-                outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.Sigs) +'\n')
+                outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in np.array(list(self.Sigs.values()), dtype = int)) +'\n')
                 
-            if self.Patterns:
+            if self.Fingerprint is not False:
    
                 #Write object for the homo CoM distances
                 Attributes = getattr(Out, str('pattern_indices')) #Loads in the write information for the object                  
@@ -249,4 +249,4 @@ class CNA(object):
                 self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
                 self.MakeFile(Attributes)
                 with open(OutFile, 'a') as outfile:
-                    outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.Finger) +'\n') 
+                    outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.Fingerprint) +'\n') 

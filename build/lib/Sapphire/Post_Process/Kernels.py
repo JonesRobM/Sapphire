@@ -172,7 +172,7 @@ class Gauss():
             from Sapphire.Utilities import OutputInfoHetero as Out  # Case 3
 
             Attributes = getattr(Out, str('hepdf')) #Loads in the write information for the object 
-            OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Ele
+            OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
             self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
             self.MakeFile(Attributes)
             with open(OutFile, 'a') as outfile:
@@ -181,7 +181,7 @@ class Gauss():
             
             Attributes = getattr(Out, str('hepdfspace')) #Loads in the write information for the object         
             
-            OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Ele
+            OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
             self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
             self.MakeFile(Attributes)
             with open(OutFile, 'a') as outfile:
@@ -190,11 +190,11 @@ class Gauss():
             
             Attributes = getattr(Out, str('hecut')) #Loads in the write information for the object         
             
-            OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Ele
+            OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
             self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
             self.MakeFile(Attributes)
             with open(OutFile, 'a') as outfile:
-                outfile.write(str(self.Framehomoed) + ' ' + str(self.R_Cut) +'\n')
+                outfile.write(str(self.Frame) + ' ' + str(self.R_Cut) +'\n')
             
 
 """
