@@ -68,12 +68,12 @@ class Model_Maker():
                 
                 f.close()
         else:
-            from Utilities
+            #from Utilities
             with open('Training_Info.txt', 'a')as f:
                 f.write(Utilities.Logo().Sapphire())
-                f.write('\n'*4)
-                f.write("This is a log created by %s on %s to detail the training 
-                        "which has gone into creating a support vector machine model"
+                f.write('\n')
+                f.write("This is a log created by %s on %s to detail the training " 
+                        "which has gone into creating a support vector machine model "
                         "\nfor the characterisation of metallic nanoparticles.\n")
                 f.write('\nMeaning of values from model prediction:\n')
                 f.write('0: Face Centered Cubic structure (To, Co, Oc)\n')
@@ -178,7 +178,7 @@ class Model_Maker():
 ##############################################################################
         
 
-    def Train(self, Filepath = '', ModelName = 'Model.pkl')
+    def Train(self, Filepath = '', ModelName = 'Model.pkl'):
         
         #RUNNING THROUGH ALL FILES IN THE XYZ DIRECTORY
         self.Structure_List = []

@@ -74,17 +74,17 @@ hordfspace = {
             }
 
 hocna_patterns = {
-            'Dir' : 'Time_Dependent/', 'File' : 'HomoCNA_Patterns', 'Iterate' : True, 'Bool' : False,
+            'Dir' : 'CNA/', 'File' : 'HomoCNA_Patterns', 'Iterate' : True, 'Bool' : False,
             'xyz' : False, 'array' : True, 'Exec' : False
             }
 
 hocna_sigs = {
-            'Dir' : 'Time_Dependent/', 'File' : 'HomoCNA_Signatures', 'Iterate' : True, 'Bool' : False,
+            'Dir' : 'CNA/', 'File' : 'HomoCNA_Signatures', 'Iterate' : True, 'Bool' : False,
             'xyz' : False, 'array' : True, 'Exec' : False
             }
 
 hoadj = {
-            'Dir' : 'Time_Dependent/', 'File' : 'HomoAdj', 'Iterate' : True, 'Bool' : False,
+            'Dir' : 'Adjacency/', 'File' : 'HomoAdj', 'Iterate' : True, 'Bool' : False,
             'xyz' : False, 'array' : True, 'Exec' : False
             }
 
@@ -110,6 +110,11 @@ homidcomdist = {
 
 hopair_distance = {
             'Dir' : 'Time_Dependent/', 'File' : 'HomoPair_Distance', 'Iterate' : True, 'Bool' : False,
+            'xyz' : False, 'array' : True, 'Exec' : False
+            }
+
+honn = {
+            'Dir' : 'Time_Dependent/', 'File' : 'HomoCoordination', 'Iterate' : True, 'Bool' : False,
             'xyz' : False, 'array' : True, 'Exec' : False
             }
 
