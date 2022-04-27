@@ -10,24 +10,63 @@ class Adjacency_Matrix():
 
     def __init__(self, System = None, Positions = None, Distances = None, 
                  Adj = None, agcn = None, Surf_Area = None, Surf_Atoms = None, CN = None,
-                 Elements = None, R_Cut = None, Type = None, Frame = None, Metals = None):
+                 Elements = None, R_Cut = None, Type = None, Frame = 0, Metals = None):
 
         """ Robert
             Args:
-                Not yet fully implemented but in theory will take arguments of a single frame
-                of an xyz trajectory to then be iterated over and the cut-off imposed to be the
-                nearest nieghbour distances
+                System : Type - Dict
+                    Description - Base system information regarding directories.
+                    Not necessary for separate use outside of Sapphire core, 
+                    but writing output is not possible without reference directories.
+                    
+                Positions : Type - numpy array
+                    Description - N X 3 array of atomic positions to be passed.
+                    Generally will be handled by the ase.Atoms.positions scheme,
+                    though this can be handled manually by an experienced user.
+                    
+                Distances : Type numpy array
+                    Description - N(N-1)/2 length numpy array of distances computed
+                    from the Sapphire.Post_Process.DistFuncs module.
+                    
+                Adj : Type - Boolean
+                    Description - Whether or not to compute and write this quantity.
+                    
+                agcn : Type - Boolean
+                    Description - Whether or not to compute and write this quantity.
+                    
+                Surf_Area : Type - Boolean
+                    Description - Whether or not to compute and write this quantity.
+                    
+                Surf_Atoms : Type - Boolean
+                    Description - Whether or not to compute and write this quantity.
+                     
+                CN : Type - Boolean
+                    Description - Whether or not to compute and write this quantity.
+                    
+                Elements : Type - numpy array
+                    Description -  N length vector of strings containing the names
+                    of the atomic species considered.
+                    
+                R_Cut : Type - Float
+                    Description - Cut-off distance for atoms to be considered neighbours.
+                    This value can either be passed directly, or more commonly computed
+                    from the Sapphire.Post_Process.Kernels module.
+                    
+                Type : Type - String
+                    Description - Whether or not to do the full set of calculations
+                    including the writing of outputs to specific files. Alternate 
+                    computations are 'Homo' or 'Hetero'.
+                    
+                Frame : Type - Integer
+                    Description - The frame being considered. All this really does
+                    is label the frame in written output files. Can be ignored if doing
+                    a single frame calculation.
+                    
+                Metals : Type - List
+                    Description - List of metal species considered. Essentially just the
+                    set of objects passed by Elements.
                 
-            Returns:
-                Distances:
-                    N x N array (N being number of atoms present) containing all pairwise distances 
-                    between atoms
-                    I.e., Entry[i][j] is the absolute distance between atoms i and j
-                
-                Adjacent: N x N array of 0s and 1s identifying the "Truth" of a given atom
-                pairing being neighbours based on the criterion of R_Cut
-                I.e., Dist<R_Cut returns a 1 for that entry as the condition has been met
-                All diagonal elements are set to 0 as it is meaningless to be your own neighbour.
+            Returns : None
                 
                 
             Writable objects:
@@ -210,14 +249,12 @@ class Adjacency_Matrix():
                 
             elif self.Type == 'Full':
                 Radii = [ (x, covalent_radii[atomic_numbers[x]]) for x in self.Metals ]
-                print(Radii)
                 Mod_aGCN = [ 12 - float(x) for x in self.AGCN ]
-                print("Size of modified agcn is %s.\n" %len(Mod_aGCN))
                 T1 = []; T2 = []
                 for i,x in enumerate(Mod_aGCN):
-                    if Radii[0][0] == self.Metals[i]:
+                    if Radii[0][0] == self.Elements[i]:
                         T1.append( (Radii[0][1]**2)*x )
-                    elif Radii[1][0] == self.Metals[i]:
+                    elif Radii[1][0] == self.Elements[i]:
                         T2.append( (Radii[1][1]**2)*x )  
                 self.Area = (1/3) * np.pi * (sum(T1) + sum(T2))
         except Exception as e:
@@ -238,7 +275,7 @@ class Adjacency_Matrix():
                 Temp = np.array(
                     [ float(x) for x in self.AGCN ], dtype = float)
                 Mask = Temp < 9.1
-                self.Surf_At = sum(Mask)
+                self.Surf_At = Mask.astype(int)
         except Exception as e:
             print("Exception raised whilst computing the Surfce Atoms:\n%s"%e)
 
@@ -286,7 +323,7 @@ class Adjacency_Matrix():
                 self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
                 self.MakeFile(Attributes)
                 with open(OutFile, 'a') as outfile:
-                    outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.Area) +'\n')
+                    outfile.write(str(self.Frame) + ' ' +  str(self.Area) +'\n')
                     
             if self.Surf_Atoms:
                 self.Surface_Atoms()
