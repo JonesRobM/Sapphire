@@ -6,27 +6,33 @@ import pickle
 class Extend():
     """This."""
 
-    def __init__(self, Traj, System, Names, Outfile='Extended.xyz'):
+    def __init__(self, Traj, System, Metadata, Names, Outfile='Extended.xyz'):
         """
         Parameters.
 
         ----------
+        
         Traj : ase atoms object
             This will be typically read into the class directly from the
             Process object. However, a user may also call seperately and in
             this case must pre-call the ase atoms object before this class.
+            
         System : python dictionary
             Dictionary of basic analysis parameters provided by both the
             user and the System_Clean module.
+            
         Metadata : python dictionary
             This is the dictionary style outpute of Sapphire which contains
             all of the relevant analysed information for facile reading/writing.
+            
         Names : list of strings
             The names of the quantities to be hunted for in the metadata.
             These will need to be given precisely as they are named in the
             documentation. Two additional names may also be provided.
+            
             E1NN : How many nearest neighbours each atom has which are atomic
             type 1. At present, this is crudely implemented.
+            
             E2NN : How many nearest neighbours each atom has which are atomic
             type 2. At present, this is crudely implemented.
 
@@ -38,18 +44,14 @@ class Extend():
         """
         self.System = System
         self.Base = self.System['base_dir']
+        self.Metadata = Metadata
         self.Names = Names
         self.Quants = []
         self.Traj = Traj
         self.Outfile = Outfile
         for name in self.Names:
             try:
-                if name == 'E1NN':
-                    self.Quants.append(self.E1NN())
-                elif name == 'E2NN':
-                    self.Quants.append(self.E2NN())
-                else:
-                    self.Quants.append(self.Metadata[name])
+                self.Quants.append(self.Metadata[name])
             except Exception as e:
                 self.Names.pop(name)
                 with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
@@ -88,63 +90,50 @@ class Extend():
                     movie.write(' \t'.join(str(item) for item in atom) + '\n')
                 movie.write(str(self.Metadata['NAtoms'][i]) + '\n')
                 movie.write('\n')
+                
+class Extend():
 
-    def E1NN(self):
+    def __init__(self):
         """
+        Parameters.
 
-
-        Returns.
-
-        -------
-        Temp : TYPE
+        ----------
+        Traj : TYPE
             DESCRIPTION.
-
-        """
-        Temp = []
-        for t in range(len(self.Metadata['headj'])):
-            Temp.append(self.Metadata['hoadjAu'][t] + self.Metadata['headj'][t][1])
-        return Temp
-
-    def E2NN(self):
-        """
-
-
-        Returns.
-
-        -------
-        Temp : TYPE
+        Metadata : TYPE
             DESCRIPTION.
-
-        """
-        Temp = []
-        for t in range(len(self.Metadata['headj'])):
-            Temp.append(self.Metadata['headj'][t][0] + self.Metadata['hoadjPt'][t])
-        return Temp
-
-    def count(self, Input, Value):
-        """
-
-
-        Returns.
-
-        -------
-        Temp : TYPE
+        Quants : TYPE
             DESCRIPTION.
+        Names : TYPE
+            DESCRIPTION.
+        Returns
+        -------
+        None.
 
         """
+
+    def ExtendXYZ(Traj, Metadata, Quants, Names):
+
+        with open('Extend.xyz', 'w') as movie:
+            movie.write(str(Metadata['NAtoms'][0]) + '\n')
+            movie.write('Extra columns are | \t')
+            for name in Names:
+                movie.write(str(name) + '\t')
+            movie.write('\n')
+            for i, Frame in enumerate(range(len(Metadata['agcn']))):
+                items = np.column_stack((Traj[i].get_chemical_symbols(),
+                                         Traj[i].positions))
+                for obj in Quants:
+                    items = np.column_stack((items, obj[i]))
+                for atom in items:
+                    movie.write(' \t'.join(str(item) for item in atom) + '\n')
+                movie.write(str(Metadata['NAtoms'][i]) + '\n')
+                movie.write('\n')
+
+    def count(Input, Value):
         return(len([x for x in Input if x == Value]))
 
-    def PtInfo(self):
-        """
-
-
-        Returns.
-
-        -------
-        Temp : TYPE
-            DESCRIPTION.
-
-        """
+    def PtInfo(Metadata):
         AvgPt = []
         Mat = np.zeros((len(Metadata['nn']), 13))
         for t in range(len(Metadata['nn'])):
@@ -154,17 +143,19 @@ class Extend():
         N = np.column_stack((Mat, AvgPt))
         np.savetxt('PtInfo.dat', N)
 
-    def Output(self):
-        """
+    def AuNN(Metadata):
+        Temp = []
+        for t in range(len(Metadata['headj'])):
+            Temp.append(Metadata['hoadjAu'][t] + Metadata['headj'][t][1])
+        return Temp
 
+    def PtNN(Metadata):
+        Temp = []
+        for t in range(len(Metadata['headj'])):
+            Temp.append(Metadata['headj'][t][0] + Metadata['hoadjPt'][t])
+        return Temp
 
-        Returns.
-
-        -------
-        Temp : TYPE
-            DESCRIPTION.
-
-        """
+    def Output():
         Traj = read('NewMovie.xyz', index=':')
         with open('Metadata.csv', 'rb') as file:
             Metadata = pickle.load(file)

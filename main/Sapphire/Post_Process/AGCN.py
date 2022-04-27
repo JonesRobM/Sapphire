@@ -1,7 +1,5 @@
 import scipy.sparse as spa
 import numpy as np
-import os
-from ase.data import covalent_radii, atomic_numbers
 
 """
 Function that reads an .xyz file and returns a list or the 
@@ -68,56 +66,6 @@ def agcn_generator(adj=None, NN=False):
         return(np.array(agcn, dtype = float),Matrix)
     elif NN is False:
         return np.array(agcn, dtype=float)
-    
-def Surface_Area(aGCN, Elements, Species = None, Homo = False):
-    
-    """
-    Computes the approximate surface area of the cluster in accordance with 
-    ACS Catal. 2020, 10, 6, 3911–3920
-    
-    A = sum_{atoms} (1/3) pi r_{atom}^{2} (12 - aGCN_{atom})
-    
-    This function will be passed directly into the Process Module and requires
-    the aGCN value computed by the above function, the list of elements in the 
-    system and the present atomic species.
-    Will return a float value 
-    """
-    
-    if Homo:
-        if not Species:
-            return None
-        else:
-            Radius =  covalent_radii[atomic_numbers[Homo]]
-            Homo_aGCN = [ float(aGCN[i]) for i,x in enumerate(Elements) if x == Homo ]
-            Temp = [ 12 - x for x in Homo_aGCN ]
-            return (1/3) * np.pi * Radius**2 * sum(Temp)
-        
-    else:
-        Radii = [ (x, covalent_radii[atomic_numbers[x]]) for x in Species ]
-        Mod_aGCN = [ 12 - float(x) for x in aGCN ]
-        T1 = []; T2 = []
-        for i,x in enumerate(Mod_aGCN):
-            if Radii[0][0] == Elements[i]:
-                T1.append( (Radii[0][1]**2)*x )
-            elif Radii[1][0] == Elements[i]:
-                T1.append( (Radii[1][1]**2)*x )  
-        return (1/3) * np.pi * (sum(T1) + sum(T2))
-
-            
-def Surface_Atoms(aGCN, Elements = None, Species = None, Homo = False):
-    if Homo:
-        Homo_aGCN = np.array(
-            [ float(aGCN[i]) for i,x in enumerate(Elements) if x == Homo ], 
-                             dtype = float
-                             )
-            
-        Mask = Homo_aGCN < 9.1
-        return sum(Mask)
-    else:
-        Temp = np.array(
-            [ float(x) for x in aGCN ], dtype = float)
-        Mask = Temp < 9.1
-        return sum(Mask)
     
 """
 
