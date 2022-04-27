@@ -1,6 +1,3 @@
-"""
-Robert
-
 The purpose of this set of scripts will be to allocate an output environment
 for each of the possible output quantites. 
 
@@ -41,5 +38,4 @@ Symbol Key:
     ¬ = With Homo enabled only
     
     @ = With Hetero enabled only
-    
-"""
+ 
