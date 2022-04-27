@@ -32,22 +32,14 @@ def cna_init(System = None, Pattern_Input = False):
         if not os.path.isfile(System['base_dir'] + 'CNA_Pattern_Info.txt'):
             with open(System['base_dir'] + 'CNA_Pattern_Info.txt', 'w') as f:
                 f.write("""
-                                
-                          _____         _____  _____  _    _ _____ _____  ______ 
-                         / ____|  /\   |  __ \|  __ \| |  | |_   _|  __ \|  ____|
-                        | (___   /  \  | |__) | |__) | |__| | | | | |__) | |__   
-                         \___ \ / /\ \ |  ___/|  ___/|  __  | | | |  _  /|  __|  
-                         ____) / ____ \| |    | |    | |  | |_| |_| | \ \| |____ 
-                        |_____/_/    \_\_|    |_|    |_|  |_|_____|_|  \_\______|
-                                                                          
-                         
-                                                  ____ 
-                                                 /\__/\ 
-                                                /_/  \_\ 
-                                                \ \__/ / 
-                                                 \/__\/ 
-                                                                                                                                       
-                                    """
+
+              _____         _____  _____  _    _ _____ _____  ______
+             / ____|  /\   |  __ \|  __ \| |  | |_   _|  __ \|  ____|     ____
+            | (___   /  \  | |__) | |__) | |__| | | | | |__) | |__       /\__/\
+             \___ \ / /\ \ |  ___/|  ___/|  __  | | | |  _  /|  __|     /_/  \_\
+             ____) / ____ \| |    | |    | |  | |_| |_| | \ \| |____    \ \__/ /
+            |_____/_/    \_\_|    |_|    |_|  |_|_____|_|  \_\______|    \/__\/
+                        """
                                     "\nRunning version  -- %s --\n"
                                     "\nCurrent user is [ %s ]\n"
                                     "\nCalculation beginning %s\n"
@@ -67,6 +59,9 @@ class Frame_CNA_Sigs():
     
     """
     Robert:
+        
+        THIS FUNCTION HAS SINCE BEEN DEPRACATED!
+        PLEASE INSTEAD USE fRAMEsIGNATURE
         
         This function takes the following input arguments:
             

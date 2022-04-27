@@ -5,7 +5,6 @@ import pickle
 System = {
     'base_dir': '/path/to/directory/',
     'movie_file_name': 'path/from/directory/to/movie_file_name.xyz',
-    'energy_file_name': 'path/from/directory/to/energy_file_name.out',
     'extend_xyz': ['', '', ''],
 
     'Homo': ['Element1', 'Element2'],
@@ -28,12 +27,6 @@ Quantities = {
         'cna_patterns': {'Write_Movie': True},
         'gyration': None, 'stat_radius': None,
         'surf_area': None, 'surf_atoms': None
-    },
-
-        'Energy':
-    {
-        'simtime': None, 'epot': None, 'etot': None,
-        'ekin': None, 'edelta': None, 'meanetot': None, 'temp': None
     },
 
         'Homo':
@@ -71,10 +64,8 @@ Analysis = {
     # "PStat" : ["rdf", "pdf"]
 }
 
-Data = Process.Process(
-    System=System, Quantities=Quantities,
-    Pattern_Input=CNA_Pattern_Settings, Cores=6
-)
+Data = Process.Process(System=System, Quantities=Quantities,
+                       Pattern_Input=CNA_Pattern_Settings)
 
 Meta = Data.analyse(Analysis)
 

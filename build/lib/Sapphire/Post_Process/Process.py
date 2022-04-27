@@ -115,12 +115,6 @@ class Process(object):
 
             This next block loads up the first frame of the trajectory and sets some initial file parameters and decides how to treat
             poly-metallic or mono-metallic systems depending on the user input.
-
-            Note that this is NOT robust for growth simulations.
-
-            It is a future goal to have the calculation react dynamically to a grand ensemble style of simulation
-            but that is not present on this version.
-
         """
 
 ##############################################################################
@@ -136,8 +130,6 @@ class Process(object):
         self.all_positions = self.Dataset[0].get_positions()
         self.max_dist = max(DistFuncs.Euc_Dist(self.all_positions))
         del(self.all_positions)
-        
-        #self.metadata['comspace'] = np.linspace(0, self.max_dist, 200)   #WRITE_REQUIRED
         
         #self.all_atoms contains the chemical symbols for all frames
         self.all_atoms = [ 
@@ -419,7 +411,9 @@ class Process(object):
                     Positions = self.result_cache['pos'],
                     Distances = self.result_cache['euc'],
                     R_Cut = self.result_cache['FullCut'],
-                    Type = 'Full', Frame = i, Metals = self.Species, Elements = self.result_cache['syms']
+                    Type = 'Full', Frame = i, 
+                    Metals = self.Species, 
+                    Elements = self.result_cache['syms']
                     ).ReturnAdj()
 
             except Exception as e:
@@ -441,7 +435,9 @@ class Process(object):
                         Positions = self.result_cache['pos'],
                         Distances = self.result_cache['euc'],
                         R_Cut = self.result_cache['FullCut'],
-                        Type = 'Homo', Frame = i, Metals = x, Elements = self.result_cache['syms']
+                        Type = 'Homo', Frame = i, 
+                        Metals = [x], 
+                        Elements = self.result_cache['syms']
                         ).ReturnAdj()
                 except Exception as e:
                     with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
@@ -457,7 +453,9 @@ class Process(object):
                     Positions = self.result_cache['pos'],
                     Distances = self.result_cache['euc'],
                     R_Cut = self.result_cache['FullCut'],
-                    Type = 'Hetero', Frame = i, Metals = self.Species, Elements = self.result_cache['syms']
+                    Type = 'Hetero', Frame = i, 
+                    Metals = self.Species, 
+                    Elements = self.result_cache['syms']
                     ).ReturnAdj() 
             except Exception as e:
                 with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
@@ -518,74 +516,6 @@ class Process(object):
             except Exception as e:
                 with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
                     f.write('\nException raised while computing Stat Radius properties: \n%s' % e)
-        """
-
-        #############################################################################################
-
-        Robert:
-            And now we check to see if the users wishes to evaluate any of the quantities
-            from the energy file and add them to the metadata.
-
-        """
-        if self.System.System['energy_file_name']:
-            self.energy = np.loadtxt(
-                self.System.System['base_dir'] + self.System.System['energy_file_name'])
-            try:
-                if 'simtime' in self.Quantities['Energy']:
-                    self.metadata['simtime'][int(
-                        i/self.Step)] = self.energy[:, 0][int(i)]
-            except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing simulation time: \n%s' % e)
-
-            try:
-                if 'epot' in self.Quantities['Energy']:
-                    self.metadata['epot'][int(i/self.Step)
-                                          ] = self.energy[:, 1][int(i)]
-            except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-        
-                    f.write('\nException raised while computing potential energy: \n%s' % e)
-
-            try:
-                if 'etot' in self.Quantities['Energy']:
-                    self.metadata['etot'][int(i/self.Step)
-                                          ] = self.energy[:, 2][int(i)]
-            except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing total energy: \n%s' % e)
-
-            try:
-                if 'ekin' in self.Quantities['Energy']:
-                    self.metadata['ekin'][int(i/self.Step)
-                                          ] = self.energy[:, 3][int(i)]
-            except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing kinetic energy: \n%s' % e)
-
-            try:
-                if 'edelta' in self.Quantities['Energy']:
-                    self.metadata['edelta'][int(
-                        i/self.Step)] = self.energy[:, 4][int(i)]
-            except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing excess energy: \n%s' % e)
-
-            try:
-                if 'meanetot' in self.Quantities['Energy']:
-                    self.metadata['meanetot'][int(
-                        i/self.Step)] = self.energy[:, 5][int(i)]
-            except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing mean total energy: \n%s' % e)
-
-            try:
-                if 'temp' in self.Quantities['Energy']:
-                    self.metadata['temp'][int(i/self.Step)
-                                          ] = self.energy[:, 6][int(i)]
-            except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing temperature: \n%s' % e)
 
         try:
     
@@ -736,7 +666,7 @@ class Process(object):
             Out.Run('Hetero')
 
         if self.System.System['extend_xyz'] is not None:
-            from Utilities import ExtendXYZ
+            from Sapphire.IO import ExtendXYZ
             Write = ExtendXYZ.Extend(
                 Traj=self.Dataset,
                 System=self.System.System,
