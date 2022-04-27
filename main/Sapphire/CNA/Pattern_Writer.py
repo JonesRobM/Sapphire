@@ -37,4 +37,4 @@ def Patterns(file='Metadata.csv', xyz = 'Strut.xyz', frame=0, outfile = 'Pattern
     ax.set_xlabel('Frequency', fontsize = 14)
     plt.yticks(X, X_Pats)
     ax.set_title(xyz[3:-4], fontsize=14)
-    plt.savefig(outfile+'.svg', dpi = 100, bbox_inches='tight')
+    plt.savefig(outfile+'.jpeg', dpi = 100, bbox_inches='tight')
