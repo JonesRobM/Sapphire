@@ -398,25 +398,6 @@ class Process(object):
             with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
                 f.write('\nException raised while computing hetero pair distances: \n%s' % e)
 
-##############################################################################
-
-        # This block calculates the CNA signatures
-        # and cna patterns for the whole system, only
-
-##############################################################################
-
-        if 'cna_sigs' in self.Quantities['Full']:
-            try:
-                cna = FrameSignature.Frame_CNA_Sigs(
-                    System=self.System.System, frame=i,
-                    R_Cut=self.result_cache['FullCut'], Type = 'Full',
-                    Masterkey=self.Masterkey, 
-                    Patterns='cna_patterns' in self.Quantities['Full'], 
-                    Fingerprint='cna_patterns' in self.Quantities['Full'])
-                
-            except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing CNA properties: \n%s' % e)
                     
 ##############################################################################
 
@@ -428,7 +409,7 @@ class Process(object):
         #The following block computes full-system adjacency properties
         if 'adj' in self.Quantities['Full']:
             try:
-                Adj = Adjacent.Adjacency_Matrix(
+                self.result_cache['Adj'] = Adjacent.Adjacency_Matrix(
                     System = self.System.System,
                     Adj = 'adj' in self.Quantities['Full'], 
                     agcn = 'agcn' in self.Quantities['Full'], 
@@ -483,6 +464,24 @@ class Process(object):
                     f.write('\nException raised while computing HeAdj properties: \n%s' % e)
         # This next section computes the mixing parameter
 
+##############################################################################
+
+        # This block calculates the CNA signatures
+        # and cna patterns for the whole system, only
+
+##############################################################################
+
+        if 'cna_sigs' in self.Quantities['Full']:
+            try:
+                cna = FrameSignature.CNA(
+                    System=self.System.System, Frame=i,
+                    adj=self.result_cache['Adj'], Type = 'Full',
+                    Masterkey=self.Masterkey,
+                    Fingerprint='cna_patterns' in self.Quantities['Full']).calculate()
+                
+            except Exception as e:
+                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
+                    f.write('\nException raised while computing CNA properties: \n%s' % e)
 
 ##############################################################################
 

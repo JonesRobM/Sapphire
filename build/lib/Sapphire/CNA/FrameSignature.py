@@ -221,7 +221,9 @@ class CNA(object):
                 self.particle_cnas.append(sig)
             if self.Fingerprint is not False:
                 self.Fingerprint[i] = self.fingers()  
-    
+        self.write()
+        
+        
     def fingers(self):
         Temp = set(self.particle_cnas)
         self.Keys.append(Temp)
