@@ -9,7 +9,6 @@ class Supported(object):
         self.Supported_Full=[
                 'rdf', 'cna_sigs', 'cna_patterns', 'adj', 'pdf',  'agcn', 'nn', 'com', 
                 'comdist', 'moi', 'gyration', 'stat_radius', 'surf_area', 'surf_atoms',
-                'simtime', 'epot', 'etot', 'ekin', 'edelta', 'meanetot', 'temp',
                 'concert', 'collect', 'pair_distance'
                 ]
         return self.Supported_Full

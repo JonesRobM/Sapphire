@@ -78,6 +78,7 @@ class Writer():
 
             A simple script to verify the existence of a directory
             given the path to it. If it does not exist, will create it.
+
         """
 
         directory = base_dir + file_path

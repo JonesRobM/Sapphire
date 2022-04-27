@@ -1,8 +1,4 @@
-"""
-Potential parameters for the RGL potentials.
-If you want to add your own parameters,
-please do so and cite where you got them from.
-"""
+"""Potential parameters for the Gupta potential."""
 
 # Parameter sequence: [p, q, A(eV), xi(eV), r0(Angs)]
 
