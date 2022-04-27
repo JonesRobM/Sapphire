@@ -1,19 +1,18 @@
 #Pre-designed pythonic libraries. Indepedent of Sapphire
 import numpy as np
 import time
-import multiprocessing as mp
 from inspect import getmembers, isfunction
 from ase.io import read
 import os
 
 #Objects written specificaly for processing data
-from Sapphire.Post_Process import Adjacent, Kernels, DistFuncs, Stats
+from Sapphire.Post_Process import Adjacent, Kernels, DistFuncs, Stats, Radii, AtomicEnvironment
 
 #Common Neighbour Analysis specific functions
 from Sapphire.CNA import FrameSignature, Utilities
 
 #General purpose utility functions for parsing and tidying
-from Sapphire.Utilities import Initial, Supported, System_Clean
+from Sapphire.Utilities import Initial, System_Clean
 
 class Process(object):
 
@@ -473,7 +472,7 @@ class Process(object):
             try:
                 cna = FrameSignature.CNA(
                     System=self.System.System, Frame=i,
-                    adj=self.result_cache['Adj'], Type = 'Full',
+                    Adj=self.result_cache['Adj'], Type = 'Full',
                     Masterkey=self.Masterkey,
                     Fingerprint='cna_patterns' in self.Quantities['Full']).calculate()
                 
@@ -490,7 +489,7 @@ class Process(object):
 
         if 'gyration' in self.Quantities['Full']:
             try:
-                Gyr = DistFuncs.Gyration(
+                Gyr = Radii.Gyration(
                     System = self.System.System, Positions = self.result_cache['pos'], 
                     Type = 'Full', Metal = None, Elements = None, 
                     Masses=self.All_Atoms.get_masses(), Frame = i)
@@ -502,7 +501,7 @@ class Process(object):
         if 'hogyration' in self.Quantities['Homo']:
             for Metal in self.System.System['Homo']:
                 try:
-                    HoGyr = DistFuncs.Gyration(
+                    HoGyr = Radii.Gyration(
                         System = self.System.System, Positions = self.result_cache['pos'], 
                         Type = 'Homo', Metal = Metal, Elements = self.result_cache['syms'], Frame = i)
                 except Exception as e:
@@ -512,7 +511,7 @@ class Process(object):
 
         if 'stat_radius' in self.Quantities['Full']:
             try:
-                Stat_Rad = DistFuncs.Stat_Radius(self.System.System, self.result_cache['pos'], Frame = i)
+                Stat_Rad = Radii.Stat_Radius(self.System.System, self.result_cache['pos'], Frame = i)
             except Exception as e:
                 with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
                     f.write('\nException raised while computing Stat Radius properties: \n%s' % e)

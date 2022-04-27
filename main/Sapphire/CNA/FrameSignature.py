@@ -42,15 +42,15 @@ class CNA(object):
 
     """
     
-    def __init__(self, system = None, adj = None, Masterkey = None,
+    def __init__(self, System = None, Adj = None, Masterkey = None,
                          Fingerprint = True, Type = False, Frame = 0):
         
-        self.system = system
+        self.System = System
         self.Type = Type
         self.Frame = Frame
-        if adj is not None:
+        if Adj is not None:
             try:
-                self.adj = adj.todense()
+                self.adj = Adj.todense()
             except Exception as e:
                 pass
         else:
