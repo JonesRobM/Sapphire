@@ -464,7 +464,6 @@ class Process(object):
                     f.write('\nException raised while computing HeAdj properties: \n%s' % e)
         # This next section computes the mixing parameter
 
-
 ##############################################################################
 
         # This block calculates the CNA signatures
