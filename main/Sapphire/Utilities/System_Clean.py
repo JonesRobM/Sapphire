@@ -106,9 +106,16 @@ class _Clean_System(object):
 
         with open(self.System['base_dir']+self.file, "a") as f:
             f.write('\nReading from the %s file.\n' % (self.System['base_dir']+self.System['movie_file_name']))
+            
+    """
 
     def Cenergy_file_name(self):
+        
+        """""""
+        
+        Please note that this command has since been removed due to being obsolete.
 
+        """""""
         def _no_file():
             self.System['energy_file_name'] = self.Default['energy_file_name']
             with open(self.System['base_dir']+self.file, 'a') as warn:
@@ -129,6 +136,7 @@ class _Clean_System(object):
 
         except Exception as e:
             _no_file()
+    """
 
     def Dextend_xyz(self):
 

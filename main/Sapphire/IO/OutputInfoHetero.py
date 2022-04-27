@@ -44,6 +44,11 @@ headj = {
             'xyz' : False, 'array' : True, 'Exec' : False
             }
 
+henn = {
+            'Dir' : 'Time_Dependent/', 'File' : 'HeCoordination', 'Iterate' : True, 'Bool' : False,
+            'xyz' : False, 'array' : True, 'Exec' : False
+            }
+
 hepdf = {
             'Dir' : 'Time_Dependent/', 'File' : 'HePDF', 'Iterate' : True, 'Bool' : False,
             'xyz' : False, 'array' : True, 'Exec' : False
@@ -68,13 +73,32 @@ mix = {
             'Dir' : 'Time_Dependent/', 'File' : 'Mixing', 'Iterate' : True, 'Bool' : False,
             'xyz' : False, 'array' : False, 'Exec' : False
             }
+ele_nn = {
+            'Dir' : 'Time_Dependent/', 'File' : 'Ele_NN', 'Iterate' : True, 'Bool' : False,
+            'xyz' : False, 'array' : False, 'Exec' : False
+            }
 
-he_pair_distance = {
+lae = {
+            'Dir' : 'Time_Dependent/', 'File' : 'LAE', 'Iterate' : True, 'Bool' : False,
+            'xyz' : False, 'array' : False, 'Exec' : False
+            }
+
+homo_bonds = {
+            'Dir' : 'Time_Dependent/', 'File' : 'Homo_Bonds', 'Iterate' : True, 'Bool' : False,
+            'xyz' : False, 'array' : False, 'Exec' : False
+            }
+
+hetero_bonds = {
+            'Dir' : 'Time_Dependent/', 'File' : 'Hetero_Bonds', 'Iterate' : True, 'Bool' : False,
+            'xyz' : False, 'array' : False, 'Exec' : False
+            }
+
+hepair_distance = {
             'Dir' : 'Time_Dependent/', 'File' : 'He_Pair_Distances', 'Iterate' : True, 'Bool' : False,
             'xyz' : False, 'array' : True, 'Exec' : False
             }
 
-he_pair_distancespace = {
+hepair_distancespace = {
             'Dir' : 'Time_Dependent/', 'File' : 'He_Pair_Distances_Space', 'Iterate' : True, 'Bool' : False,
             'xyz' : False, 'array' : True, 'Exec' : False
             }
