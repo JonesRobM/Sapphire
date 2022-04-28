@@ -233,7 +233,7 @@ class CNA(object):
     def write(self):
         
         if self.Type == 'Full':
-            from Sapphire.Utilities import OutputInfoFull as Out  # Case 1
+            from Sapphire.IO import OutputInfoFull as Out  # Case 1
             
             #Write object for the CoM
             Attributes = getattr(Out, str('cna_sigs')) #Loads in the write information for the object 
