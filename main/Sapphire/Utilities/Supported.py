@@ -16,12 +16,13 @@ class Supported(object):
     def Homo(self):
         self.Supported_Homo=[ 
             'hopdf', 'hordf', 'hocom', 'hoadj', 'hocomdist', 'homidcomdist', 'hopair_distance',
-         'euc', 'hocna_sigs', 'hocna_patterns', 'hogyration', 'hosurf_area', 'hosurf_atoms'
+         'euc', 'hocna_sigs', 'hocna_patterns', 'hogyration', 'hosurf_area', 'hosurf_atoms', 'homobonds'
          ]
         return self.Supported_Homo
         
     def Hetero(self):
         self.Supported_Hetero = [ 
-            'hepdf', 'herdf', 'headj', 'he_pair_distance', 'mix'
+            'hepdf', 'herdf', 'headj', 'he_pair_distance', 'mix', 'lae', 'ele_nn',
+            'heterobonds'
             ]
         return self.Supported_Hetero
