@@ -270,7 +270,6 @@ main/Sapphire/Light/Epsilon_ExpClass.py
 main/Sapphire/Light/__init__.py
 main/Sapphire/Light/__pycache__/ClassSpec.cpython-37.pyc
 main/Sapphire/Light/__pycache__/__init__.cpython-37.pyc
-main/Sapphire/Post_Process/AGCN.py
 main/Sapphire/Post_Process/Adjacent.py
 main/Sapphire/Post_Process/AtomicEnvironment.py
 main/Sapphire/Post_Process/DistFuncs.py
