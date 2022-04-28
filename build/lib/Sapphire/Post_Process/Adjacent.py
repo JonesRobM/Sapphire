@@ -282,7 +282,7 @@ class Adjacency_Matrix():
     def write(self):
     
         if self.Type == 'Full':
-            from Sapphire.Utilities import OutputInfoFull as Out  # Case 1
+            from Sapphire.IO import OutputInfoFull as Out  # Case 1
             
             #Write object for the CoM
             Attributes = getattr(Out, str('adj')) #Loads in the write information for the object 
@@ -336,7 +336,7 @@ class Adjacency_Matrix():
                     outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.Surf_At) +'\n')                    
 
         elif self.Type == 'Homo':
-            from Sapphire.Utilities import OutputInfoHomo as Out  # Case 2
+            from Sapphire.IO import OutputInfoHomo as Out  # Case 2
             
             #Write object for the homo CoM 
             Attributes = getattr(Out, str('hoadj')) #Loads in the write information for the object 
@@ -380,7 +380,7 @@ class Adjacency_Matrix():
                     outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.Surf_At) +'\n')   
                     
         elif self.Type == 'Hetero':
-            from Sapphire.Utilities import OutputInfoHetero as Out  # Case 3
+            from Sapphire.IO import OutputInfoHetero as Out  # Case 3
             
             Attributes = getattr(Out, str('headj')) #Loads in the write information for the object 
             OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File'] + str(self.Frame)

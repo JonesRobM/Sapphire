@@ -142,7 +142,7 @@ class CoM_Dist():
     def write(self):
     
         if self.Type == 'Full':
-            from Sapphire.Utilities import OutputInfoFull as Out  # Case 1
+            from Sapphire.IO import OutputInfoFull as Out  # Case 1
             
             #Write object for the CoM
             Attributes = getattr(Out, str('com')) #Loads in the write information for the object 
@@ -161,7 +161,7 @@ class CoM_Dist():
                 outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.Dist) +'\n')
 
         elif self.Type == 'Homo':
-            from Sapphire.Utilities import OutputInfoHomo as Out  # Case 2
+            from Sapphire.IO import OutputInfoHomo as Out  # Case 2
             
             #Write object for the homo CoM 
             Attributes = getattr(Out, str('hocom')) #Loads in the write information for the object 
@@ -305,7 +305,7 @@ class RDF():
     def write(self):
         
         if self.Type == 'Full':
-            from Sapphire.Utilities import OutputInfoFull as Out  # Case 1
+            from Sapphire.IO import OutputInfoFull as Out  # Case 1
           
             Attributes = getattr(Out, str('rdf')) #Loads in the write information for the object 
             OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
@@ -323,7 +323,7 @@ class RDF():
                 outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.Radii) +'\n')
 
         elif self.Type == 'Homo':
-            from Sapphire.Utilities import OutputInfoHomo as Out  # Case 2
+            from Sapphire.IO import OutputInfoHomo as Out  # Case 2
           
             Attributes = getattr(Out, str('hordf')) #Loads in the write information for the object 
             OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Species
@@ -341,7 +341,7 @@ class RDF():
                 outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.Radii) +'\n')
 
         elif self.Type == 'Hetero':
-            from Sapphire.Utilities import OutputInfoHetero as Out  # Case 3
+            from Sapphire.IO import OutputInfoHetero as Out  # Case 3
           
             Attributes = getattr(Out, str('herdf')) #Loads in the write information for the object 
             OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
@@ -419,7 +419,7 @@ class Pair_Dist():
     def write(self):
         
         if self.Type == 'Full':
-            from Sapphire.Utilities import OutputInfoFull as Out  # Case 1
+            from Sapphire.IO import OutputInfoFull as Out  # Case 1
           
             Attributes = getattr(Out, str('pair_distance')) #Loads in the write information for the object 
             OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
@@ -437,7 +437,7 @@ class Pair_Dist():
                 outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.bin_cents) +'\n')
 
         elif self.Type == 'Homo':
-            from Sapphire.Utilities import OutputInfoHomo as Out  # Case 2
+            from Sapphire.IO import OutputInfoHomo as Out  # Case 2
           
             Attributes = getattr(Out, str('hopair_distance')) #Loads in the write information for the object 
             OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Specie
@@ -455,7 +455,7 @@ class Pair_Dist():
                 outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.bin_cents) +'\n')
 
         elif self.Type == 'Hetero':
-            from Sapphire.Utilities import OutputInfoHetero as Out  # Case 3
+            from Sapphire.IO import OutputInfoHetero as Out  # Case 3
           
             Attributes = getattr(Out, str('hepair_distance')) #Loads in the write information for the object 
             OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']

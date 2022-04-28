@@ -76,7 +76,7 @@ class Gyration():
     def write(self):
         
         if self.Type == 'Full':
-            from Sapphire.Utilities import OutputInfoFull as Out  # Case 1
+            from Sapphire.IO import OutputInfoFull as Out  # Case 1
           
             Attributes = getattr(Out, str('gyration')) #Loads in the write information for the object 
             OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
@@ -86,7 +86,7 @@ class Gyration():
                 outfile.write(str(self.Frame) + ' ' +  str(self.Gyrate) + '\n')
 
         if self.Type == 'Homo':
-            from Sapphire.Utilities import OutputInfoHomo as Out  # Case 2
+            from Sapphire.IO import OutputInfoHomo as Out  # Case 2
           
             Attributes = getattr(Out, str('hogyration')) #Loads in the write information for the object 
             OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File'] + self.Metal
@@ -127,7 +127,7 @@ class Stat_Radius():
 
     def write(self):
         
-        from Sapphire.Utilities import OutputInfoFull as Out  # Case 1
+        from Sapphire.IO import OutputInfoFull as Out  # Case 1
       
         Attributes = getattr(Out, str('stat_radius')) #Loads in the write information for the object 
         OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']

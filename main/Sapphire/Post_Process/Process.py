@@ -176,7 +176,6 @@ class Process(object):
       
             with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
                 f.write("Checking user input for hetero atomic species.\n")
-            
 
 ##############################################################################
 
@@ -190,10 +189,7 @@ class Process(object):
                 self.Start, self.End,self.Step))
             self.Band = self.System.System['Band']
 
-
 ##############################################################################
-
-
 
     def calculate(self, i):
         """
@@ -276,7 +272,7 @@ class Process(object):
 
         if 'moi' in self.Quantities['Full']:
             self.moi = self.All_Atoms.get_moments_of_inertia()
-            from Sapphire.Utilities import OutputInfoFull as Out
+            from Sapphire.IO import OutputInfoFull as Out
             Attributes = getattr(Out, str('moi')) #Loads in the write information for the object 
             OutFile = self.System.System['base_dir'] + Attributes['Dir'] + Attributes['File']
             self.ensure_dir(base_dir=self.System.System['base_dir'], file_path=Attributes['Dir'])   
@@ -470,11 +466,10 @@ class Process(object):
 
         if 'cna_sigs' in self.Quantities['Full']:
             try:
-                cna = FrameSignature.CNA(
-                    System=self.System.System, Frame=i,
-                    Adj=self.result_cache['Adj'], Type = 'Full',
-                    Masterkey=self.Masterkey,
-                    Fingerprint='cna_patterns' in self.Quantities['Full']).calculate()
+                cna = FrameSignature.CNA(self.System.System, self.result_cache['Adj'], 
+                                         self.Masterkey, 
+                                         'cna_patterns' in self.Quantities['Full'] , 
+                                         Type = 'Full', Frame = i).calculate()
                 
             except Exception as e:
                 with open(self.Base + 'Sapphire_Errors.log', 'a') as f:

@@ -117,7 +117,7 @@ class Gauss():
     def write(self):
         
         if self.Type == 'Full':
-            from Sapphire.Utilities import OutputInfoFull as Out  # Case 1
+            from Sapphire.IO import OutputInfoFull as Out  # Case 1
           
             Attributes = getattr(Out, str('pdf')) #Loads in the write information for the object 
             OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
@@ -143,7 +143,7 @@ class Gauss():
                 outfile.write(str(self.Frame) + ' ' + str(self.R_Cut) +'\n')                
 
         elif self.Type == 'Homo':
-            from Sapphire.Utilities import OutputInfoHomo as Out  # Case 2
+            from Sapphire.IO import OutputInfoHomo as Out  # Case 2
           
             Attributes = getattr(Out, str('hopdf')) #Loads in the write information for the object 
             OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Ele
@@ -169,7 +169,7 @@ class Gauss():
                 outfile.write(str(self.Frame) + ' ' + str(self.R_Cut) +'\n')
        
         elif self.Type == 'Hetero':
-            from Sapphire.Utilities import OutputInfoHetero as Out  # Case 3
+            from Sapphire.IO import OutputInfoHetero as Out  # Case 3
 
             Attributes = getattr(Out, str('hepdf')) #Loads in the write information for the object 
             OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
