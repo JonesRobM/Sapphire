@@ -122,3 +122,8 @@ hopair_distancespace = {
             'Dir' : 'Time_Dependent/', 'File' : 'HomoPair_DistanceSpace', 'Iterate' : True, 'Bool' : False,
             'xyz' : False, 'array' : True, 'Exec' : False
             }
+
+homo_bonds = {
+            'Dir' : 'Time_Dependent/', 'File' : 'Homo_Bonds', 'Iterate' : True, 'Bool' : False,
+            'xyz' : False, 'array' : False, 'Exec' : False
+            }
