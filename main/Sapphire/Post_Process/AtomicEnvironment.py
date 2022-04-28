@@ -82,7 +82,7 @@ class LAE():
             
     def write(self):
 
-        from Sapphire.Utilities import OutputInfoHetero as Out  # Case 3
+        from Sapphire.IO import OutputInfoHetero as Out  # Case 3
         if self.Mix:
             #Write object for the CoM
             Attributes = getattr(Out, str('mix')) #Loads in the write information for the object 
