@@ -86,7 +86,6 @@ class Adjacency_Matrix():
         self.Frame = Frame
         self.Metals = Metals #Species present
         self.Elements = Elements #List of atomic elements in 1:1 correspondance with coordinates
-        self.NumAdj = np.zeros((len(self.Positions), len(self.Positions)), dtype=np.float64) #Instantiate the 'dense' matrix
         
         #Consider the calculable objects below
         self.Adjacent = [] #Primary point of this object
@@ -129,27 +128,46 @@ class Adjacency_Matrix():
         try:
             if self.Type == 'Homo':
                 self.Distances = DistFuncs.Euc_Dist(self.Positions, homo=True,
-                                                    specie=self.Metals, elements=self.Elements)
-                self.Positions = DistFuncs.get_subspecieslist(self.Metals, self.Elements, self.Positions)
+                                                    specie=self.Metals[0], elements=self.Elements)
+                self.Positions = DistFuncs.get_subspecieslist(self.Metals[0], self.Elements, self.Positions)
                 
+                self.NumAdj = np.zeros((len(self.Positions), len(self.Positions)), dtype=np.float64) #Instantiate the 'dense' matrix
+                
+                Tick = 0
+                for i in range(1,len(self.Positions)):
+                    self.Adjacent.append(self.Distances[Tick:Tick+len(self.Positions)-i])
+                    Tick += (len(self.Positions)-i)
+                for i in range(len(self.Positions)):
+                    for j in range(len(self.Positions)-(i+1)):
+                        self.NumAdj[i][j+i+1] = self.Adjacent[i][j]
+                        self.NumAdj[j+i+1][i] = self.Adjacent[i][j]
+                self.Adjacent=(self.NumAdj<self.R_Cut).astype(int) #Evaluate if a pair are within R_Cut of eachother
+                np.fill_diagonal(self.Adjacent,0)
+                    
+                self.Adjacent = spa.csc_matrix(self.Adjacent)   
             elif self.Type == 'Hetero':
                 
                 self.Positions = DistFuncs.Hetero(self.Positions, self.Metals, self.Elements)
-                self.Distances = functools.reduce(operator.iconcat, self.Positions, [])
-                
-            Tick = 0
-            for i in range(1,len(self.Positions)):
-                self.Adjacent.append(self.Distances[Tick:Tick+len(self.Positions)-i])
-                Tick += (len(self.Positions)-i)
-            for i in range(len(self.Positions)):
-                for j in range(len(self.Positions)-(i+1)):
-                    self.NumAdj[i][j+i+1] = self.Adjacent[i][j]
-                    self.NumAdj[j+i+1][i] = self.Adjacent[i][j]
+                self.Distances = np.asarray(functools.reduce(operator.iconcat, self.Positions, []))
+                self.Adjacent = self.Distances.reshape(np.shape(self.Positions))
+                self.Adjacent=(self.Adjacent<self.R_Cut).astype(int)
+                self.Adjacent = spa.csc_matrix(self.Adjacent)
             
-            self.Adjacent=(self.NumAdj<self.R_Cut).astype(int) #Evaluate if a pair are within R_Cut of eachother
-            np.fill_diagonal(self.Adjacent,0)
+            elif self.Type == 'Full':
                 
-            self.Adjacent = spa.csc_matrix(self.Adjacent)
+                Tick = 0
+                for i in range(1,len(self.Positions)):
+                    self.Adjacent.append(self.Distances[Tick:Tick+len(self.Positions)-i])
+                    Tick += (len(self.Positions)-i)
+                for i in range(len(self.Positions)):
+                    for j in range(len(self.Positions)-(i+1)):
+                        self.NumAdj[i][j+i+1] = self.Adjacent[i][j]
+                        self.NumAdj[j+i+1][i] = self.Adjacent[i][j]
+            
+                self.Adjacent=(self.NumAdj<self.R_Cut).astype(int) #Evaluate if a pair are within R_Cut of eachother
+                np.fill_diagonal(self.Adjacent,0)
+                    
+                self.Adjacent = spa.csc_matrix(self.Adjacent)
         except Exception as e:
             with open(self.System['base_dir'] + 'Sapphire_Errors.log', 'a') as f:
                 f.write("Exception raised whilst computing the Adjacency Matrix:\n%s"%e)
@@ -340,10 +358,10 @@ class Adjacency_Matrix():
             
             #Write object for the homo CoM 
             Attributes = getattr(Out, str('hoadj')) #Loads in the write information for the object 
-            OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Metals
+            OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Metals[0]
             self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
             self.MakeFile(Attributes)
-            self.filename = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Metals +'File%s' % str(self.Frame)
+            self.filename = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Metals[0] +'File%s' % str(self.Frame)
             self.Mat = spa.csr_matrix.todense(self.Adjacent)
             with open(self.filename, 'w') as f:
                 for line in self.Mat:
@@ -353,7 +371,7 @@ class Adjacency_Matrix():
                 self.get_coordination()
                 #Write object for the homo CoM distances
                 Attributes = getattr(Out, str('honn')) #Loads in the write information for the object                  
-                OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Metals
+                OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Metals[0]
                 self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
                 self.MakeFile(Attributes)
                 with open(OutFile, 'a') as outfile:
@@ -364,7 +382,7 @@ class Adjacency_Matrix():
                 #Write object for the homo CoM distances
                 Attributes = getattr(Out, str('surf_area')) #Loads in the write information for the object                  
                 OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
-                self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir']) + self.Metals
+                self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir']) + self.Metals[0]
                 self.MakeFile(Attributes)
                 with open(OutFile, 'a') as outfile:
                     outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.Area) +'\n')
@@ -373,7 +391,7 @@ class Adjacency_Matrix():
                 self.Surface_Atoms()
                 #Write object for the homo CoM distances
                 Attributes = getattr(Out, str('surf_atoms')) #Loads in the write information for the object                  
-                OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']  + self.Metals
+                OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']  + self.Metals[0]
                 self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
                 self.MakeFile(Attributes)
                 with open(OutFile, 'a') as outfile:
@@ -386,7 +404,7 @@ class Adjacency_Matrix():
             OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File'] + str(self.Frame)
             self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
             self.MakeFile(Attributes)
-            self.filename = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Metals +'File%s' % str(self.Frame)
+            self.filename = self.System['base_dir'] + Attributes['Dir'] + Attributes['File'] +'File%s' % str(self.Frame)
             self.Mat = spa.csr_matrix.todense(self.Adjacent)
             with open(self.filename, 'w') as f:
                 for line in self.Mat:
