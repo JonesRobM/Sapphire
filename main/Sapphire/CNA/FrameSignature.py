@@ -215,7 +215,6 @@ class CNA(object):
                 try:
                     self.Sigs[sig]+=1
                 except KeyError:
-                    print(sig)
                     self.Sigs[sig] = 1
                     
                 self.particle_cnas.append(sig)

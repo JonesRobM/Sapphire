@@ -83,11 +83,6 @@ lae = {
             'xyz' : False, 'array' : False, 'Exec' : False
             }
 
-homo_bonds = {
-            'Dir' : 'Time_Dependent/', 'File' : 'Homo_Bonds', 'Iterate' : True, 'Bool' : False,
-            'xyz' : False, 'array' : False, 'Exec' : False
-            }
-
 hetero_bonds = {
             'Dir' : 'Time_Dependent/', 'File' : 'Hetero_Bonds', 'Iterate' : True, 'Bool' : False,
             'xyz' : False, 'array' : False, 'Exec' : False

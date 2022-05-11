@@ -12,6 +12,18 @@ class LAE():
                  EleNN = None, lae = None, HomoBonds = None, HeteroBonds = None, Mix = None,
                  Metal = None, Species = None):
         
+        """
+        Robert:
+            This class function faacilitates the computation of heterogeneous 
+            atomic quantities which requires adjacenency information to be fed in
+            from the Sapphire.Post_Process.Adjacent module.
+            
+            System : Type - Dict
+            Description - Full Sapphire calculation information regarding base directories and file composition.
+        
+        
+        """
+        
         self.System = System
         self.Frame = Frame
         self.Adj1 = Adj1

@@ -129,8 +129,8 @@ class Adjacency_Matrix():
         try:
             if self.Type == 'Homo':
                 self.Distances = DistFuncs.Euc_Dist(self.Positions, homo=True,
-                                                    specie=self.Metals, elements=self.Elements)
-                self.Positions = DistFuncs.get_subspecieslist(self.Metals, self.Elements, self.Positions)
+                                                    specie=self.Metals[0], elements=self.Elements)
+                self.Positions = DistFuncs.get_subspecieslist(self.Metals[0], self.Elements, self.Positions)
                 
             elif self.Type == 'Hetero':
                 
@@ -340,10 +340,10 @@ class Adjacency_Matrix():
             
             #Write object for the homo CoM 
             Attributes = getattr(Out, str('hoadj')) #Loads in the write information for the object 
-            OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Metals
+            OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Metals[0]
             self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
             self.MakeFile(Attributes)
-            self.filename = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Metals +'File%s' % str(self.Frame)
+            self.filename = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Metals[0] +'File%s' % str(self.Frame)
             self.Mat = spa.csr_matrix.todense(self.Adjacent)
             with open(self.filename, 'w') as f:
                 for line in self.Mat:
@@ -353,7 +353,7 @@ class Adjacency_Matrix():
                 self.get_coordination()
                 #Write object for the homo CoM distances
                 Attributes = getattr(Out, str('honn')) #Loads in the write information for the object                  
-                OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Metals
+                OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Metals[0]
                 self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
                 self.MakeFile(Attributes)
                 with open(OutFile, 'a') as outfile:
@@ -364,7 +364,7 @@ class Adjacency_Matrix():
                 #Write object for the homo CoM distances
                 Attributes = getattr(Out, str('surf_area')) #Loads in the write information for the object                  
                 OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
-                self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir']) + self.Metals
+                self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir']) + self.Metals[0]
                 self.MakeFile(Attributes)
                 with open(OutFile, 'a') as outfile:
                     outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.Area) +'\n')
@@ -373,7 +373,7 @@ class Adjacency_Matrix():
                 self.Surface_Atoms()
                 #Write object for the homo CoM distances
                 Attributes = getattr(Out, str('surf_atoms')) #Loads in the write information for the object                  
-                OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']  + self.Metals
+                OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']  + self.Metals[0]
                 self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
                 self.MakeFile(Attributes)
                 with open(OutFile, 'a') as outfile:
@@ -386,7 +386,7 @@ class Adjacency_Matrix():
             OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File'] + str(self.Frame)
             self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
             self.MakeFile(Attributes)
-            self.filename = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Metals +'File%s' % str(self.Frame)
+            self.filename = self.System['base_dir'] + Attributes['Dir'] + Attributes['File'] +'File%s' % str(self.Frame)
             self.Mat = spa.csr_matrix.todense(self.Adjacent)
             with open(self.filename, 'w') as f:
                 for line in self.Mat:
