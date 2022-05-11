@@ -511,6 +511,31 @@ class Process(object):
                 with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
                     f.write('\nException raised while computing Stat Radius properties: \n%s' % e)
 
+##############################################################################
+
+        # This block evaluates local atomic environment variables such as the
+        # mixing parameter, LAE, and homo / hetero "bond" analyses.
+
+##############################################################################
+
+        if 'lae' in self.Quantities['Hetero']:
+            try:
+                LAE = AtomicEnvironment.LAE(System = None, Frame = None, 
+                                            Adj1 = None, Adj2 = None, HeAdj = None, 
+                                            EleNN = None, lae = None, HomoBonds = None, 
+                                            HeteroBonds = None, Mix = None,
+                                            Metal = None, Species = None)
+            except Exception as e:
+                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
+                    f.write('\nException raised while computing Gyration properties: \n%s' % e)
+
+##############################################################################
+
+        # This block simply writes a summary of the ith step of the
+        # post-processing.
+
+##############################################################################
+
         try:
     
             with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
