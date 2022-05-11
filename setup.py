@@ -31,7 +31,10 @@ setup(
         'sklearn', 
         'ruptures',
         'tensorflow',
-        'pygdm2'
+        'pygdm2',
+        'mir-flare',
+        'ray==1.0.1.post1',
+        'scikit-learn'
     ],
     extras_require={'plotting': ['matplotlib', 'jupyter', 'seaborn']},
     setup_requires=['pytest-runner', 'flake8'],
