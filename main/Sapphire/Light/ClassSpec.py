@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import Epsilon_ExpClass as Epsilon
-import os
 
 from pyGDM2 import structures
 from pyGDM2 import fields
@@ -17,8 +16,42 @@ from ase.io import read
 ## --------------- Setup structure
 
 class Spectrum(object):
+
     
-    def __init__(self, Structure, Step = 2.88, wl = np.linspace(300, 800, 101),
+    """This is a conceptual class representation of a simple BLE device
+    (GATT Server). It is essentially an extended combination of the
+    :class:`bluepy.btle.Peripheral` and :class:`bluepy.btle.ScanEntry` classes
+
+    :param client: A handle to the :class:`simpleble.SimpleBleClient` client
+        object that detected the device
+    :type client: class:`simpleble.SimpleBleClient`
+    :param addr: Device MAC address, defaults to None
+    :type addr: str, optional
+    :param addrType: Device address type - one of ADDR_TYPE_PUBLIC or
+        ADDR_TYPE_RANDOM, defaults to ADDR_TYPE_PUBLIC
+    :type addrType: str, optional
+    :param iface: Bluetooth interface number (0 = /dev/hci0) used for the
+        connection, defaults to 0
+    :type iface: int, optional
+    :param data: A list of tuples (adtype, description, value) containing the
+        AD type code, human-readable description and value for all available
+        advertising data items, defaults to None
+    :type data: list, optional
+    :param rssi: Received Signal Strength Indication for the last received
+        broadcast from the device. This is an integer value measured in dB,
+        where 0 dB is the maximum (theoretical) signal strength, and more
+        negative numbers indicate a weaker signal, defaults to 0
+    :type rssi: int, optional
+    :param connectable: `True` if the device supports connections, and `False`
+        otherwise (typically used for advertising ‘beacons’).,
+        defaults to `False`
+    :type connectable: bool, optional
+    :param updateCount: Integer count of the number of advertising packets
+        received from the device so far, defaults to 0
+    :type updateCount: int, optional
+    """
+
+    def __init__(self, Structure, Frame = -1, Step = 2.88, wl = np.linspace(300, 800, 101),
                  wavetype = 'planewave', angles = [0], n1 = 1, n2 = 1, scale = 1):
         
         self.wl = wl
@@ -141,78 +174,3 @@ class Spectrum(object):
         plt.ylabel("y (nm)")
         plt.savefig('E-Field'+self.name[:-4]+'.png', dpi = 400, bbox_inches = 'tight')
         plt.show()
-  
-if __name__ =='__main__':      
-      
-    for Strut in os.listdir():
-        if Strut.endswith('.xyz'):
-            Spec = Spectrum(Structure = Strut, scale = 0.1)
-            Spec.Plot_EField()
-            Spec.Plot_Spectrum_En()
-            Spec.Plot_Spectrum_Wl()
-    
-    import matplotlib.colors as mcol
-    import matplotlib.cm as cm
-    
-    # Make a user-defined colormap.
-    cm1 = mcol.LinearSegmentedColormap.from_list("MyCmapName",["r","b"])
-    cnorm = mcol.Normalize(vmin=91,vmax=112)
-    cpick = cm.ScalarMappable(norm=cnorm,cmap=cm1)
-    cpick.set_array([])
-    
-    os.chdir('../')
-    fig, axs = plt.subplots(1,3, True)
-    fig.set_size_inches(20/2.5, 4/2.5)
-    fig.subplots_adjust(wspace=0, hspace=0)
-    ax1,ax2,ax3= axs.flatten()
-    os.chdir('Au32/')
-    Temp = {}
-    for Strut in os.listdir():
-        if (Strut.endswith('.txt') and Strut.startswith('Spectrum')):
-            Temp[Strut[-7:-4]] = np.loadtxt(Strut)
-        New = dict(sorted(Temp.items()))
-    for i, item in enumerate(New):
-        gamma = str("{:.2f}".format(float(item)/100 - 1))
-        if ('1' in gamma or '3' in gamma or '6' in gamma or '9' in gamma):
-            ax1.plot(1.2415285500000001e3/New[item][:,0], New[item][:,1],
-            color=cpick.to_rgba(float(item)))
-    ax1.plot(1.2415285500000001e3/New['100'][:,0], New['100'][:,1],
-    label = '0.00', color = 'g')
-    os.chdir('../Cu32/')
-    Temp = {}
-    for Strut in os.listdir():
-        if (Strut.endswith('.txt') and Strut.startswith('Spectrum')):
-            Temp[Strut[-7:-4]] = np.loadtxt(Strut)
-        New = dict(sorted(Temp.items()))
-    for i, item in enumerate(New):
-        gamma = str("{:.2f}".format(float(item)/100 - 1))
-        if ('1' in gamma or '3' in gamma or '6' in gamma or '9' in gamma):
-            ax2.plot(1.2415285500000001e3/New[item][:,0], New[item][:,1],
-            color=cpick.to_rgba(float(item)))
-    ax2.plot(1.2415285500000001e3/New['100'][:,0], New['100'][:,1], color = 'g')
-    os.chdir('../Ag32/')
-    Temp = {}
-    for Strut in os.listdir():
-        if (Strut.endswith('.txt') and Strut.startswith('Spectrum')):
-            Temp[Strut[-7:-4]] = np.loadtxt(Strut)
-        New = dict(sorted(Temp.items()))
-    for i, item in enumerate(New):
-        gamma = str("{:.2f}".format(float(item)/100 - 1))
-        if ('1' in gamma or '3' in gamma or '6' in gamma or '9' in gamma):
-            ax3.plot(1.2415285500000001e3/New[item][:,0], New[item][:,1],
-            label = (str("{:.2f}".format(float(item)/100 - 1))),
-            color=cpick.to_rgba(float(item)))
-    ax3.plot(1.2415285500000001e3/New['100'][:,0], New['100'][:,1], color = 'g')
-    ax1.set_yticklabels([])
-    ax2.set_yticklabels([])
-    ax3.set_yticklabels([])
-    
-    #ax1.set_ylabel('Ext. (a.u.)', fontsize = 10)
-    fig.text(0.1, 0.33, 'Ext. (a.u.)', fontsize = 10, rotation = 90)
-    fig.text(0.45, -0.1, 'Energy (eV)', fontsize = 10)
-    fig.text(0.225, 0.75, 'Au', fontsize = 10)
-    fig.text(0.475, 0.75, 'Cu', fontsize = 10)
-    fig.text(0.725, 0.75,'Ag', fontsize = 10)
-    fig.legend(bbox_to_anchor=(0.125, 0.9, 0.775, .12), loc = 3,
-    ncol = 10, title = r'$\gamma$', fontsize = 8, mode="expand", borderaxespad=0.)
-    plt.savefig('../ClassicalSpectra_Smol.png', dpi = 600, bbox_inches = 'tight')

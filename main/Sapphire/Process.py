@@ -12,10 +12,96 @@ from Sapphire.Post_Process import Adjacent, Kernels, DistFuncs, Stats, Radii, At
 from Sapphire.CNA import FrameSignature, Utilities
 
 #General purpose utility functions for parsing and tidying
-from Sapphire.Utilities import Initial, System_Clean
+from Sapphire.Utilities import Initial, System_Clean, Pattern_Clean
 
 class Process(object):
 
+    """
+    Parameters.
+
+    ----------
+   
+    System : python dictionary
+        Dictionary of basic analysis parameters provided by both the
+        user and the System_Clean module.
+       
+    Quantities : python dictionary
+        Dictionary of basic analysis parameters provided by both the
+        user and the System_Clean module.
+       
+    Pattern_Input : python dictionary
+        This is the dictionary style outpute of Sapphire which contains
+        all of the relevant analysed information for facile reading/writing.
+
+    Returns
+    -------
+    Performs the full analysis of a given structure / trajectory given the input
+    information fed into the Quantities and System arguments.
+    Each of the sub-modules may be indivudually interrogated.
+   
+    An example of a given input scheme may be found in the IO/input.py file
+   
+    System = {
+        'base_dir': '/path/to/directory/',
+        'movie_file_name': 'path/from/directory/to/movie_file_name.xyz',
+        'extend_xyz': ['', '', ''],
+
+        'Homo': ['Element1', 'Element2'],
+
+        'Hetero': True,
+
+        'Start': 0, 'End': None, 'Step': 1, 'Skip': 50, 'UniformPDF': False, 'Band': 0.05
+    }
+
+    # Define the quantities you want calculating given the names
+    # in the supporting documentation.
+
+    Quantities = {
+        'Full':
+        {
+            'euc': None, 'rdf': None, 'pos': None,  'comdist': None,
+            'moi': None, 'adj': None, 'pdf': None, 'pair_distance': None,
+            'agcn': {'Write_Movie': False},
+            'nn': None, 'com': None, 'cna_sigs': None,
+            'cna_patterns': {'Write_Movie': True},
+            'gyration': None, 'stat_radius': None,
+            'surf_area': None, 'surf_atoms': None
+        },
+
+            'Homo':
+        {
+            'hopdf': None, 'hordf': None,
+            'hocom': None, 'hoadj': None,
+            'hocomdist': None, 'homidcomdist': None,
+            'euc': None, 'hocna_sigs': None,
+            'hocna_patterns': None, 'hogyration': None,
+            'hosurf_area': None, 'hosurf_atoms': None,
+            'hopair_distance': None
+        },
+
+            'Hetero':
+        {
+            'hepdf': None, 'herdf': None,
+            'headj': None, 'mix': None,
+            'he_pair_distance': None
+        }
+    }
+
+    CNA_Pattern_Settings = {
+        'npz_dir': 'CNA_npz/',  # folder to save the npz files in
+        'new_xyz_dir': 'CNA_XYZs/',
+        'APPEND_DICTIONARY': False,
+        'FROM_MEMORY': False,
+        'BULK_MASTERKEY': True,
+        'SAVING_XYZ': True,
+        'PRINTING_PATTERNS': True
+    }
+
+    Data = Process.Process(System=System, Quantities=Quantities,
+                           Pattern_Input=CNA_Pattern_Settings)
+
+    """
+    
     def __init__(self, System=None, Quantities=None,
                  Pattern_Input=False):
         
@@ -23,9 +109,14 @@ class Process(object):
 
         self.System = System
         self.Quantities = Quantities
+        
+        #Check for user CNAP info - If not present - allow the cleanup 
+        #module to sanitise and pass apropriate input in the Initialising step.
         if Pattern_Input:
             self.Pattern_Input = Pattern_Input
-
+        else:
+            self.Pattern_Input = None
+            
         self.filename = System['base_dir']+System['movie_file_name']
         Initial.Logo(self.System['base_dir'])._write_()
         Initial.Info(self.System['base_dir'])._write_()
@@ -44,26 +135,25 @@ class Process(object):
         Initialise the CNA signature masterkey
         """
 
-        try:
-            if self.Pattern_Input['BULK_MASTERKEY']:
-                self.Masterkey = Utilities.CNA_Masterkey().Key()
-
-            else:
-                self.Masterkey = []
-        except KeyError:
-            self.Masterkey = Utilities.CNA_Masterkey().Key()
         self.Initialising()
         #self.run_pdf()
         self.run_core()
 
     def ensure_dir(self, base_dir='', file_path=''):
-        """
+        
+        """Returns a list containing :class:`bluepy.btle.Characteristic`
+        objects for the peripheral. If no arguments are given, will return all
+        characteristics. If startHnd and/or endHnd are given, the list is
+        restricted to characteristics whose handles are within the given range.
 
-        Robert:
-
-            A simple script to verify the existence of a directory
-            given the path to it. If it does not exist, will create it.
-
+        :param startHnd: Start index, defaults to 1
+        :type startHnd: int, optional
+        :param endHnd: End index, defaults to 0xFFFF
+        :type endHnd: int, optional
+        :param uuids: a list of UUID strings, defaults to None
+        :type uuids: list, optional
+        :return: List of returned :class:`bluepy.btle.Characteristic` objects
+        :rtype: list
         """
 
         directory = base_dir + file_path
@@ -72,10 +162,26 @@ class Process(object):
             os.makedirs(directory)
 
     def MakeFile(self, Attributes):
-        self.out = self.System.System['base_dir'] + Attributes['Dir'] + Attributes['File']
+        
+        """Returns a list containing :class:`bluepy.btle.Characteristic`
+        objects for the peripheral. If no arguments are given, will return all
+        characteristics. If startHnd and/or endHnd are given, the list is
+        restricted to characteristics whose handles are within the given range.
+        
+        :param startHnd: Start index, defaults to 1
+        :type startHnd: int, optional
+        :param endHnd: End index, defaults to 0xFFFF
+        :type endHnd: int, optional
+        :param uuids: a list of UUID strings, defaults to None
+        :type uuids: list, optional
+        :return: List of returned :class:`bluepy.btle.Characteristic` objects
+        :rtype: list
+        """
+        
+        self.out = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
 
         if not os.path.isfile(self.out):
-            with open(self.System.System['base_dir'] + Attributes['Dir'] + Attributes['File'], 'w') as out:
+            with open(self.System['base_dir'] + Attributes['Dir'] + Attributes['File'], 'w') as out:
                 out.close()
         else:
             pass
@@ -85,23 +191,40 @@ class Process(object):
     def Initialising(self):
 
 
+        """Returns a list containing :class:`bluepy.btle.Characteristic`
+        objects for the peripheral. If no arguments are given, will return all
+        characteristics. If startHnd and/or endHnd are given, the list is
+        restricted to characteristics whose handles are within the given range.
+        """
+
         self.Calc_Quants = {}
         # This next sub-block instantiates the system object.
+        # It parses the user input into a clean-up module to sanitise arguments.
+        self.System = System_Clean._Clean_System(self.System).System
+        
+        self.Pattern_Input = Pattern_Clean._Clean_Pattern(
+            self.System,self.Pattern_Input).Pattern_Input
+        
+        try:
+            if self.Pattern_Input['BULK_MASTERKEY']:
+                self.Masterkey = Utilities.CNA_Masterkey().Key()
 
-        self.System = System_Clean._Clean_System(self.System)
-
+            else:
+                self.Masterkey = []
+        except KeyError:
+            self.Masterkey = Utilities.CNA_Masterkey().Key()
 
         self.Time = int(
-            (self.System.System['End'] - self.System.System['Start']) / (self.System.System['Step']))
-        self.Step = self.System.System['Step']
-        self.Skip = self.System.System['Skip']
-        self.End = self.System.System['End']
-        self.Start = self.System.System['Start']
-        self.Base = self.System.System['base_dir']
+            (self.System['End'] - self.System['Start']) / (self.System['Step']))
+        self.Step = self.System['Step']
+        self.Skip = self.System['Skip']
+        self.End = self.System['End']
+        self.Start = self.System['Start']
+        self.Base = self.System['base_dir']
 
 ##############################################################################
 
-        with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
+        with open(self.System['base_dir']+'Sapphire_Info.txt', "a") as f:
             f.write("Initialising system environment took %.3f seconds.\n" %
                     (time.time()-self.tick))
 
@@ -112,18 +235,18 @@ class Process(object):
         """
         Robert:
 
-            This next block loads up the first frame of the trajectory and sets some initial file parameters and decides how to treat
-            poly-metallic or mono-metallic systems depending on the user input.
+            This next block loads up the first frame of the trajectory and sets some initial file parameters
+            deciding how to treat poly-metallic or mono-metallic systems depending on the user input.
         """
 
 ##############################################################################
 
-        with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
+        with open(self.System['base_dir']+'Sapphire_Info.txt', "a") as f:
             f.write("Loading in the dataset to be analysed.\n")
             f.write("Be aware that this may take a while for a large file.\n")
         Read_Time = time.time()
         self.Dataset = read(self.filename, index=':')
-        with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
+        with open(self.System['base_dir']+'Sapphire_Info.txt', "a") as f:
             f.write("Opened the dataset in %.3f seconds.\n" %
                     (time.time()-Read_Time))
         self.all_positions = self.Dataset[0].get_positions()
@@ -133,7 +256,7 @@ class Process(object):
         #self.all_atoms contains the chemical symbols for all frames
         self.all_atoms = [ 
             self.Dataset[t].get_chemical_symbols() for t in range(
-                self.System.System['Start'], self.System.System['End'], self.System.System['Step']
+                self.System['Start'], self.System['End'], self.System['Step']
             )
         ] 
 
@@ -162,24 +285,24 @@ class Process(object):
         
 ##############################################################################
 
-        with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
+        with open(self.System['base_dir']+'Sapphire_Info.txt', "a") as f:
             f.write("Checking user input for calculating homo properties in this run.\n")
 
-        if self.System.System['Homo'] is None:
-            with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
+        if self.System['Homo'] is None:
+            with open(self.System['base_dir']+'Sapphire_Info.txt', "a") as f:
                 f.write("No bimetallic properties will be calculated in this run.\n")
 
         else:
-            with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
+            with open(self.System['base_dir']+'Sapphire_Info.txt', "a") as f:
                 f.write("Homo atom properties will be caluclated for %s in this run.\n" % (
-                    self.System.System['Homo']))
+                    self.System['Homo']))
       
-            with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
+            with open(self.System['base_dir']+'Sapphire_Info.txt', "a") as f:
                 f.write("Checking user input for hetero atomic species.\n")
 
 ##############################################################################
 
-            with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
+            with open(self.System['base_dir']+'Sapphire_Info.txt', "a") as f:
                 f.write("Initialising Metadata took %.3f seconds.\n" %
                         (time.time() - tick))
 
@@ -187,12 +310,25 @@ class Process(object):
 
             self.All_Times = list(range(
                 self.Start, self.End,self.Step))
-            self.Band = self.System.System['Band']
+            self.Band = self.System['Band']
 
 ##############################################################################
 
     def calculate(self, i):
-        """
+        """Returns a list containing :class:`bluepy.btle.Characteristic`
+        objects for the peripheral. If no arguments are given, will return all
+        characteristics. If startHnd and/or endHnd are given, the list is
+        restricted to characteristics whose handles are within the given range.
+        
+        :param startHnd: Start index, defaults to 1
+        :type startHnd: int, optional
+        :param endHnd: End index, defaults to 0xFFFF
+        :type endHnd: int, optional
+        :param uuids: a list of UUID strings, defaults to None
+        :type uuids: list, optional
+        :return: List of returned :class:`bluepy.btle.Characteristic` objects
+        :rtype: list
+
 
         Robert:
 
@@ -225,10 +361,10 @@ class Process(object):
 
         self.timer = time.time()
 
-        with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
+        with open(self.System['base_dir']+'Sapphire_Info.txt', "a") as f:
             f.write("\nLoading in atoms for frame %s.\n" % i)
         self.All_Atoms = self.Dataset[i]
-        with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
+        with open(self.System['base_dir']+'Sapphire_Info.txt', "a") as f:
             f.write("Loaded the atoms in %.3f seconds.\n" % (time.time()-self.timer))
 
         self.result_cache['pos'] = self.All_Atoms.get_positions()
@@ -239,7 +375,7 @@ class Process(object):
             try:
                 self.result_cache['FullCut'] = Kernels.Gauss(Data = self.result_cache['euc'], Band = self.Band, 
                                                                 Ele = None, Type = 'Full', Space = None, 
-                                                                System = self.System.System, Frame = i).ReturnRCut()
+                                                                System = self.System, Frame = i).ReturnRCut()
             except Exception as e:
                 with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
                     f.write('\nException raised while computing Full PDF was: \n%s' % e)
@@ -251,19 +387,19 @@ class Process(object):
                 
                 self.result_cache['HeCut'] = Kernels.Gauss(Data = self.result_cache['heteropos'][0], Band = self.Band, 
                                                           Ele = None, Type='Hetero', Space = None, 
-                                                          System = self.System.System, Frame = i).ReturnRCut()
+                                                          System = self.System, Frame = i).ReturnRCut()
 
                 
 
         if 'hopdf' in self.Quantities['Homo']:
-            for x in self.System.System['Homo']:
+            for x in self.System['Homo']:
                 self.result_cache['homoed'+x] = DistFuncs.Euc_Dist(positions=self.result_cache['pos'], homo=True, specie=x, elements=self.result_cache['syms'])
                 if self.result_cache['homoed'+x] is not None:
                     try:
                         self.result_cache[x+'Cut'] = Kernels.Gauss(self.result_cache['homoed'+x], 
                                               Band = self.Band, Ele = x, 
                                               Type='Homo', Space = None, 
-                                              System = self.System.System, Frame = i).ReturnRCut()
+                                              System = self.System, Frame = i).ReturnRCut()
                     except Exception as e:
                         with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
                             f.write(
@@ -274,8 +410,8 @@ class Process(object):
             self.moi = self.All_Atoms.get_moments_of_inertia()
             from Sapphire.IO import OutputInfoFull as Out
             Attributes = getattr(Out, str('moi')) #Loads in the write information for the object 
-            OutFile = self.System.System['base_dir'] + Attributes['Dir'] + Attributes['File']
-            self.ensure_dir(base_dir=self.System.System['base_dir'], file_path=Attributes['Dir'])   
+            OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
+            self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
             self.MakeFile(Attributes)
             with open(OutFile, 'a') as outfile:
                 outfile.write(str(i) + ' ' +  ' '.join(str(item) for item in self.moi) +'\n')        
@@ -290,26 +426,26 @@ class Process(object):
 
         if 'rdf' in self.Quantities['Full']:
             try:
-                RDF = DistFuncs.RDF(System = self.System.System,
+                RDF = DistFuncs.RDF(System = self.System,
                     Positions = self.result_cache['pos'], Type = 'Full', Frame = i)
                 
             except Exception as e:
                 with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
                     f.write('\nException raised while computing Full RDF was: \n%s' % e)
                     
-                if self.System.System['Homo'] and 'hordf' in self.Quantities['Homo']:
+                if self.System['Homo'] and 'hordf' in self.Quantities['Homo']:
                     try:
-                        for x in self.System.System['Homo']:
+                        for x in self.System['Homo']:
                             self.result_cache['homopos'+x] = DistFuncs.get_subspecieslist(x, self.result_cache['syms'], self.result_cache['pos'])
                             HoRDF = DistFuncs.RDF(self.result_cache['homopos'+x], 
-                                                  Type = 'Homo', Species = x, Frame = i, System = self.System.System)                          
+                                                  Type = 'Homo', Species = x, Frame = i, System = self.System)                          
                     except Exception as e:
                         with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
                             f.write('\nException raised while computing Homo RDF was: \n%s' % e)
 
-                if self.System.System['Hetero'] and 'herdf' in self.Quantities['Hetero']:
+                if self.System['Hetero'] and 'herdf' in self.Quantities['Hetero']:
                     try:
-                        HeRDF = DistFuncs.RDF(self.result_cache['pos'], Type = 'Hetero', System = self.System.System,
+                        HeRDF = DistFuncs.RDF(self.result_cache['pos'], Type = 'Hetero', System = self.System,
                                               Species=self.Species, Elements=self.result_cache['syms'], Frame = i)
                     except Exception as e:
                         with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
@@ -329,16 +465,16 @@ class Process(object):
                 if 'comdist' in self.Quantities['Full']:
                     CoMDist = DistFuncs.CoM_Dist(Positions=self.result_cache['pos'],
                                                        CoM=self.result_cache['com'],
-                                                       Type = 'Full', Frame = i, System = self.System.System)
+                                                       Type = 'Full', Frame = i, System = self.System)
 
             except Exception as e:
                 with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
                     f.write('\nException raised while computing Full CoM Distances was: \n%s' % e)
 
         try:
-            if self.System.System['Homo'] and 'hocom' in self.Quantities['Homo']:
-                for x in self.System.System['Homo']:
-                    self.New_Temp = DistFuncs.CoM_Dist(Positions=self.result_cache['pos'], System = self.System.System,
+            if self.System['Homo'] and 'hocom' in self.Quantities['Homo']:
+                for x in self.System['Homo']:
+                    self.New_Temp = DistFuncs.CoM_Dist(Positions=self.result_cache['pos'], System = self.System,
                                                        CoM = self.result_cache['com'], Type = 'Homo',
                                                        Specie = x, Elements = self.result_cache['syms'], Frame = i) #W.r.t sub-system
         except Exception as e:
@@ -357,16 +493,16 @@ class Process(object):
             if 'pair_distance' in self.Quantities['Full']:
                 try:
                     PD = DistFuncs.Pair_Dist(Positions = self.result_cache['pos'], 
-                                             Type = 'Full', Frame = i, System = self.System.System)
+                                             Type = 'Full', Frame = i, System = self.System)
                 except Exception as e:
                     with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
                         f.write('\nException raised while computing pair distances: \n%s' % e)
 
 
         if 'hopair_distance' in self.Quantities['Homo']:
-            for x in self.System.System['Homo']:
+            for x in self.System['Homo']:
                 try:
-                    HoPD = DistFuncs.Pair_Dist(System = self.System.System,
+                    HoPD = DistFuncs.Pair_Dist(System = self.System,
                         Positions = self.result_cache['pos'], Type = 'Homo', 
                         Specie=x, Elements=self.result_cache['syms'], Frame = i)
                 except Exception as e:
@@ -376,7 +512,7 @@ class Process(object):
 
         try:
             if('he_pair_distance' in self.Quantities['Hetero']):
-                PDHe = DistFuncs.Pair_Dist(System = self.System.System,
+                PDHe = DistFuncs.Pair_Dist(System = self.System,
                     Positions = self.result_cache['pos'], Specie=self.Species, 
                     Type = 'Hetero', Elements=self.result_cache['syms'], Frame = i
                 )
@@ -397,7 +533,7 @@ class Process(object):
         if 'adj' in self.Quantities['Full']:
             try:
                 self.result_cache['Adj'] = Adjacent.Adjacency_Matrix(
-                    System = self.System.System,
+                    System = self.System,
                     Adj = 'adj' in self.Quantities['Full'], 
                     agcn = 'agcn' in self.Quantities['Full'], 
                     Surf_Area = 'surf_area' in self.Quantities['Full'], 
@@ -418,10 +554,10 @@ class Process(object):
 
         #The following block computes homo-type adjacency properties
         if 'hoadj' in self.Quantities['Homo']:
-            for x in self.System.System['Homo']: #Considering metals in the system
+            for x in self.System['Homo']: #Considering metals in the system
                 try:
                     self.result_cache['HoAdj'+x] = Adjacent.Adjacency_Matrix(
-                        System = self.System.System,
+                        System = self.System,
                         Adj = 'adj' in self.Quantities['Homo'], 
                         agcn = 'agcn' in self.Quantities['Homo'], 
                         Surf_Area = 'surf_area' in self.Quantities['Homo'], 
@@ -442,7 +578,7 @@ class Process(object):
         if 'headj' in self.Quantities['Hetero']:
             try:
                 self.result_cache['HeAdj'] = Adjacent.Adjacency_Matrix(
-                    System = self.System.System,
+                    System = self.System,
                     Adj = 'adj' in self.Quantities['Hetero'],
                     CN = 'henn' in self.Quantities['Hetero'],
                     Positions = self.result_cache['pos'],
@@ -466,7 +602,7 @@ class Process(object):
 
         if 'cna_sigs' in self.Quantities['Full']:
             try:
-                cna = FrameSignature.CNA(self.System.System, self.result_cache['Adj'], 
+                cna = FrameSignature.CNA(self.System, self.result_cache['Adj'], 
                                          self.Masterkey, 
                                          'cna_patterns' in self.Quantities['Full'] , 
                                          Type = 'Full', Frame = i).calculate()
@@ -485,7 +621,7 @@ class Process(object):
         if 'gyration' in self.Quantities['Full']:
             try:
                 Gyr = Radii.Gyration(
-                    System = self.System.System, Positions = self.result_cache['pos'], 
+                    System = self.System, Positions = self.result_cache['pos'], 
                     Type = 'Full', Metal = None, Elements = None, 
                     Masses=self.All_Atoms.get_masses(), Frame = i)
             except Exception as e:
@@ -494,10 +630,10 @@ class Process(object):
 
 
         if 'hogyration' in self.Quantities['Homo']:
-            for Metal in self.System.System['Homo']:
+            for Metal in self.System['Homo']:
                 try:
                     HoGyr = Radii.Gyration(
-                        System = self.System.System, Positions = self.result_cache['pos'], 
+                        System = self.System, Positions = self.result_cache['pos'], 
                         Type = 'Homo', Metal = Metal, Elements = self.result_cache['syms'], Frame = i)
                 except Exception as e:
                     with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
@@ -506,7 +642,7 @@ class Process(object):
 
         if 'stat_radius' in self.Quantities['Full']:
             try:
-                Stat_Rad = Radii.Stat_Radius(self.System.System, self.result_cache['pos'], Frame = i)
+                Stat_Rad = Radii.Stat_Radius(self.System, self.result_cache['pos'], Frame = i)
             except Exception as e:
                 with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
                     f.write('\nException raised while computing Stat Radius properties: \n%s' % e)
@@ -538,7 +674,7 @@ class Process(object):
 
         try:
     
-            with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
+            with open(self.System['base_dir']+'Sapphire_Info.txt', "a") as f:
                 f.write("\nAnalysis of frame %s required %.3f seconds.\n" %
                         (i, time.time() - self.timer))
                 f.write("\nThis is approximately %.3fms for each atom.\n" % (
@@ -548,24 +684,22 @@ class Process(object):
             
             
     def run_core(self):
-        """
-        Robert:
-
+        """Returns a list containing :class:`bluepy.btle.Characteristic`
+        objects for the peripheral. If no arguments are given, will return all
+        characteristics. If startHnd and/or endHnd are given, the list is
+        restricted to characteristics whose handles are within the given range.
         """
         
         for i in self.All_Times:
             self.calculate(i)
-        with open(self.System.System['base_dir']+'Sapphire_Info.txt', "a") as f:
+        with open(self.System['base_dir']+'Sapphire_Info.txt', "a") as f:
             self.T3 = time.time()
             f.write('Time for completion is %s.\n' %
                     (time.strftime("%H:%M:%S", time.gmtime((self.T3-self.T)))))
             
 
     def analyse(self, Stat_Tools=None):
-        """
-        Robert:
-
-            In general, the user will define which functions they wish to call on each distribution in the input file.
+        """ In general, the user will define which functions they wish to call on each distribution in the input file.
 
             This will then create a function object for each tool to be used and enters it into a tuple with the metadata keys
             for quantities to be analysed by that function.
@@ -577,9 +711,10 @@ class Process(object):
 
             Moreover, for H / C statistics, these have T-1 and T-2 entries respectively and so new storage arrays for them
             must be instantiated separately while the latter is dependent on the former.
-
-
-            """
+        
+        :param startHnd: Start index, defaults to 1
+        :type startHnd: int, optional
+        """
 
         for i in range(1, int((self.End - self.Start)/self.Step)):
 
@@ -612,7 +747,7 @@ class Process(object):
                             self.pattern_key.append(str(atom))
                         Temp_List[i] += self.pattern_key.index(str(atom))
                     self.metadata['pattern_indices'][j] = Temp_List
-                with open(self.System.System['base_dir'] + 'AllPatterns.txt', 'w') as outfile:
+                with open(self.System['base_dir'] + 'AllPatterns.txt', 'w') as outfile:
                     for i, thing in enumerate(self.pattern_key):
                         outfile.write(str(i) + ')\t' + str(thing)+'\n')
 
@@ -677,18 +812,18 @@ class Process(object):
                                     % (obj, A_Key))
             del(self.result_cache)
         from Utilities import Output
-        Out = Output.Writer(self.System.System, self.metadata)
+        Out = Output.Writer(self.System, self.metadata)
         Out.Run('Full')
-        if not self.System.System['Homo'] is None:
+        if not self.System['Homo'] is None:
             Out.Run('Homo')
-        if not self.System.System['Hetero'] is None:
+        if not self.System['Hetero'] is None:
             Out.Run('Hetero')
 
-        if self.System.System['extend_xyz'] is not None:
+        if self.System['extend_xyz'] is not None:
             from Sapphire.IO import ExtendXYZ
             Write = ExtendXYZ.Extend(
                 Traj=self.Dataset,
-                System=self.System.System,
+                System=self.System,
                 Metadata=self.metadata,
-                Names=self.System.System['extend_xyz']
+                Names=self.System['extend_xyz']
             )
