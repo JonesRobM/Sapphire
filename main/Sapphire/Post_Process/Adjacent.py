@@ -7,77 +7,94 @@ from ase.data import covalent_radii, atomic_numbers
 from Sapphire.Post_Process import DistFuncs
 
 class Adjacency_Matrix():
-
+    """ 
+    This class function is desined for the fast evaluation of adjacency matrices
+    for nanoparticles. Data required will typically be fed in from the DistFuncs.EucDist
+    function as distances are required to evaluate the truth in 2 atoms being 
+    considered to be adjacent.
+    
+    The object Adjacency_Matrix.Adjacent IS the matrix stored in sparse diagonal form.
+    
+    It is not explicitly returned as there are qrite flags which may be fed into the __init__ 
+    task to determine if writing is required. Two forms of writing are available:
+        1. Save as numpy object which must be appropriately decompressed by python
+        handlers. This is the most preferable form of long-term storage given the 
+        scaling of an NxN matrix consisting only boolean value.
+        2. Writeable as a full matrix in .txt form for each desired frame. 
+        This is strongly counter-indicated due to the heavy nature of storing/writing
+        this objec. Though this feature has been left for those who wish to seamlessly maniplate
+        the adjacency matrix in ways otherwise not anticipated by the Sapphire development team.
+    
+        Args:
+            System : Type - Dict
+                Description - Base system information regarding directories.
+                Not necessary for separate use outside of Sapphire core, 
+                but writing output is not possible without reference directories.
+                
+            Positions : Type - numpy array
+                Description - N X 3 array of atomic positions to be passed.
+                Generally will be handled by the ase.Atoms.positions scheme,
+                though this can be handled manually by an experienced user.
+                
+            Distances : Type numpy array
+                Description - N(N-1)/2 length numpy array of distances computed
+                from the Sapphire.Post_Process.DistFuncs module.
+                
+            Adj : Type - Boolean
+                Description - Whether or not to compute and write this quantity.
+                
+            agcn : Type - Boolean
+                Description - Whether or not to compute and write this quantity.
+                
+            Surf_Area : Type - Boolean
+                Description - Whether or not to compute and write this quantity.
+                
+            Surf_Atoms : Type - Boolean
+                Description - Whether or not to compute and write this quantity.
+                 
+            CN : Type - Boolean
+                Description - Whether or not to compute and write this quantity.
+                
+            Elements : Type - numpy array
+                Description -  N length vector of strings containing the names
+                of the atomic species considered.
+                
+            R_Cut : Type - Float
+                Description - Cut-off distance for atoms to be considered neighbours.
+                This value can either be passed directly, or more commonly computed
+                from the Sapphire.Post_Process.Kernels module.
+                
+            Type : Type - String
+                Description - Whether or not to do the full set of calculations
+                including the writing of outputs to specific files. Alternate 
+                computations are 'Homo' or 'Hetero'.
+                
+            Frame : Type - Integer
+                Description - The frame being considered. All this really does
+                is label the frame in written output files. Can be ignored if doing
+                a single frame calculation.
+                
+            Metals : Type - List
+                Description - List of metal species considered. Essentially just the
+                set of objects passed by Elements.
+            
+        Returns : None
+            
+            
+        Writable objects:
+            Adjacency matrix - Sparse scipy matrix written in NPZ format
+            
+            CN - Coordination number of a given atom written as an N length vector
+            
+            AGCN -  atop generalised CN, similar to above
+            
+            Surface area/atoms - Uses above value to determine surface-type properties
+    """ 
+    
     def __init__(self, System = None, Positions = None, Distances = None, 
                  Adj = None, agcn = None, Surf_Area = None, Surf_Atoms = None, CN = None,
                  Elements = None, R_Cut = None, Type = None, Frame = 0, Metals = None):
 
-        """ Robert
-            Args:
-                System : Type - Dict
-                    Description - Base system information regarding directories.
-                    Not necessary for separate use outside of Sapphire core, 
-                    but writing output is not possible without reference directories.
-                    
-                Positions : Type - numpy array
-                    Description - N X 3 array of atomic positions to be passed.
-                    Generally will be handled by the ase.Atoms.positions scheme,
-                    though this can be handled manually by an experienced user.
-                    
-                Distances : Type numpy array
-                    Description - N(N-1)/2 length numpy array of distances computed
-                    from the Sapphire.Post_Process.DistFuncs module.
-                    
-                Adj : Type - Boolean
-                    Description - Whether or not to compute and write this quantity.
-                    
-                agcn : Type - Boolean
-                    Description - Whether or not to compute and write this quantity.
-                    
-                Surf_Area : Type - Boolean
-                    Description - Whether or not to compute and write this quantity.
-                    
-                Surf_Atoms : Type - Boolean
-                    Description - Whether or not to compute and write this quantity.
-                     
-                CN : Type - Boolean
-                    Description - Whether or not to compute and write this quantity.
-                    
-                Elements : Type - numpy array
-                    Description -  N length vector of strings containing the names
-                    of the atomic species considered.
-                    
-                R_Cut : Type - Float
-                    Description - Cut-off distance for atoms to be considered neighbours.
-                    This value can either be passed directly, or more commonly computed
-                    from the Sapphire.Post_Process.Kernels module.
-                    
-                Type : Type - String
-                    Description - Whether or not to do the full set of calculations
-                    including the writing of outputs to specific files. Alternate 
-                    computations are 'Homo' or 'Hetero'.
-                    
-                Frame : Type - Integer
-                    Description - The frame being considered. All this really does
-                    is label the frame in written output files. Can be ignored if doing
-                    a single frame calculation.
-                    
-                Metals : Type - List
-                    Description - List of metal species considered. Essentially just the
-                    set of objects passed by Elements.
-                
-            Returns : None
-                
-                
-            Writable objects:
-                Adjacency matrix - Sparse scipy matrix written in NPZ format
-                
-                CN - Coordination number of a given atom written as an N length vector
-                
-                AGCN -  atop generalised CN, similar to above
-                
-                Surface area/atoms - Uses above value to determine surface-type properties
-        """ 
         self.System = System
         self.Positions = Positions
         self.Distances = Distances

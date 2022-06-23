@@ -1,4 +1,4 @@
-import np as np
+import numpy as np
 from scipy.stats import ks_2samp
 import ruptures as rpt
 import scipy.sparse as spa
