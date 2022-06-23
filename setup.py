@@ -33,7 +33,7 @@ setup(
         'tensorflow',
         'pygdm2',
         'mir-flare',
-        'ray==1.0.1.post1',
+        'ray',
         'scikit-learn'
     ],
     extras_require={'plotting': ['matplotlib', 'jupyter', 'seaborn']},

@@ -79,9 +79,6 @@ class CNA(object):
 
     def ensure_dir(self, base_dir='', file_path=''):
         """
-
-        Robert:
-
             A simple script to verify the existence of a directory
             given the path to it. If it does not exist, will create it.
 
@@ -93,6 +90,12 @@ class CNA(object):
             os.makedirs(directory)
 
     def MakeFile(self, Attributes):
+        
+        """
+            Checks for the existence of a file to write output to. Creates one if it doe not exist.
+
+        """
+        
         self.out = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
 
         if not os.path.isfile(self.out):

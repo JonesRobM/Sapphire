@@ -1,39 +1,61 @@
 import numpy as np
 from scipy.stats import ks_2samp
 import ruptures as rpt
+import scipy.sparse as spa
 
-def KB_Dist(P,Q):
-    
-    """ Robert
-    Calculates the Kullback-Liebler divergence between two distributions.
-    
-    P: The "initial" distribution against which one wishes to measure the mutual
-    entropy of the distribution
-    
-    Q:
-    
-    At the moment, there is no actual provision to protect against zero division errors.
-    One possible solution could be to define a local varaible, epsilon, which is added to 
-    every point in P and prevents it from being zero at any point. 
-    
-    Note that these two distributions must have identical dimensions or the script
-    will not run. 
-    
-    A reasonable work-around is to define both from an identical linspace.
-    """
-    
-    
-    return np.sum(np.where(P != 0, P * np.log(P / Q), 0))
+class KB_Dist():
 
-def JSD_Dist(P,Q):
+    def __init__(self,P,Q):
+        
+        
+        """ Robert
+        Calculates the Kullback-Liebler divergence between two distributions.
+        
+        P: The "initial" distribution against which one wishes to measure the mutual
+        entropy of the distribution
+        
+        Q:
+        
+        At the moment, there is no actual provision to protect against zero division errors.
+        One possible solution could be to define a local varaible, epsilon, which is added to 
+        every point in P and prevents it from being zero at any point. 
+        
+        Note that these two distributions must have identical dimensions or the script
+        will not run. 
+        
+        A reasonable work-around is to define both from an identical linspace.
+        """
+        
+        self.P = P; self.Q = Q
+        
+        return None
+        
+    def calculate(self):
+        
+        return np.sum(np.where(self.P != 0, self.P * np.log(self.P / self.Q), 0))
 
-    K=0
-    Epsilon=0.000001
-    Q+=Epsilon
-    P+=Epsilon
-    for x in range(len(Q)):
-        K-=0.5*(P[x]*np.log(2*Q[x]/(Q[x]+P[x])) + Q[x]*np.log(2*P[x]/(P[x]+Q[x])))
-    return np.sqrt(K)
+class JSD_Dist():
+    
+    def __init__(self, P, Q):
+        
+        self.P = P; self.Q = Q
+        
+        return None
+        
+    def calculate(self):
+
+        K=0
+        Epsilon=0.000001
+        self.Q+=Epsilon
+        self.P+=Epsilon
+        
+        """
+        * Change this to list comprehension for added efficiency 12/05/22
+        """
+        
+        for x in range(len(Q)):
+            K-=0.5*(P[x]*np.log(2*Q[x]/(Q[x]+P[x])) + Q[x]*np.log(2*P[x]/(P[x]+Q[x])))
+        return np.sqrt(K)
 
 
 
@@ -148,80 +170,104 @@ class Dist_Stats():
             """
         
         J = (JSD_Dist(Ref_Dist,Test_Dist))
-        #if frame+1 == len(Dist):
-            #print(wikiquote.quotes(wikiquote.random_titles(max_titles=1)[0]))
         return J
 
-def autocorr1(x,lags):
-    '''numpy.corrcoef, partial'''
+class autocorr():
+    
+    def __init__(self):
 
-    corr=[1. if l==0 else numpy.corrcoef(x[l:],x[:-l])[0][1] for l in lags]
-    return numpy.array(corr)
+        return None    
+    
+    def autocorr1(x,lags):
+        '''np.corrcoef, partial'''
+    
+        corr=[1. if l==0 else np.corrcoef(x[l:],x[:-l])[0][1] for l in lags]
+        return np.array(corr)
+    
+    def autocorr2(x,lags):
+        '''manualy compute, non partial'''
+    
+        mean=np.mean(x)
+        var=np.var(x)
+        xp=x-mean
+        corr=[1. if l==0 else np.sum(xp[l:]*xp[:-l])/len(x)/var for l in lags]
+    
+        return np.array(corr)
+    
+    def autocorr3(x,lags):
+        '''fft, pad 0s, non partial'''
+    
+        n=len(x)
+        # pad 0s to 2n-1
+        ext_size=2*n-1
+        # nearest power of 2
+        fsize=2**np.ceil(np.log2(ext_size)).astype('int')
+    
+        xp=x-np.mean(x)
+        var=np.var(x)
+    
+        # do fft and ifft
+        cf=np.fft.fft(xp,fsize)
+        sf=cf.conjugate()*cf
+        corr=np.fft.ifft(sf).real
+        corr=corr/var/n
+    
+        return corr[:len(lags)]
+    
+    def autocorr4(x,lags):
+        '''fft, don't pad 0s, non partial'''
+        mean=x.mean()
+        var=np.var(x)
+        xp=x-mean
+    
+        cf=np.fft.fft(xp)
+        sf=cf.conjugate()*cf
+        corr=np.fft.ifft(sf).real/var/len(x)
+    
+        return corr[:len(lags)]
+    
+    def autocorr5(x,lags):
+        '''np.correlate, non partial'''
+        mean=x.mean()
+        var=np.var(x)
+        xp=x-mean
+        corr=np.correlate(xp,xp,'full')[len(x)-1:]/var/len(x)
+    
+        return corr[:len(lags)]
 
-def autocorr2(x,lags):
-    '''manualy compute, non partial'''
+class ChangePoints():
+    
+    def __init__(self, Data, model = 'rbf', lag = 10):
+        
+        self.Data = Data
+        self.model = model
+        self.lag = lag
+        
+        return None
 
-    mean=numpy.mean(x)
-    var=numpy.var(x)
-    xp=x-mean
-    corr=[1. if l==0 else numpy.sum(xp[l:]*xp[:-l])/len(x)/var for l in lags]
+    def calculates(self):
+        algo = rpt.Pelt(model=self.model).fit(self.Data)
+        result = algo.predict(pen=self.lag)
+        return result
 
-    return numpy.array(corr)
+class Mobility():
+    
+    def __init__(self, All_Adjacencies):
+        self.Adj = All_Adjacencies
+        return None
 
-def autocorr3(x,lags):
-    '''fft, pad 0s, non partial'''
+    def R(AdjT, AdjDeltaT):
+        TempT = spa.csr_matrix.todense(AdjT)
+        TempDeltaT = spa.csr_matrix.todense(AdjDeltaT)
+        Temp = TempT-TempDeltaT
+        return [ bool(x) for x in Temp.sum(1) ]
+    
+    def Collectivity(R):
+        return float(sum(R)/len(R))
+    
+    def Concertedness(H1, H2):
+        return abs(H2-H1)
 
-    n=len(x)
-    # pad 0s to 2n-1
-    ext_size=2*n-1
-    # nearest power of 2
-    fsize=2**numpy.ceil(numpy.log2(ext_size)).astype('int')
 
-    xp=x-numpy.mean(x)
-    var=numpy.var(x)
-
-    # do fft and ifft
-    cf=numpy.fft.fft(xp,fsize)
-    sf=cf.conjugate()*cf
-    corr=numpy.fft.ifft(sf).real
-    corr=corr/var/n
-
-    return corr[:len(lags)]
-
-def autocorr4(x,lags):
-    '''fft, don't pad 0s, non partial'''
-    mean=x.mean()
-    var=numpy.var(x)
-    xp=x-mean
-
-    cf=numpy.fft.fft(xp)
-    sf=cf.conjugate()*cf
-    corr=numpy.fft.ifft(sf).real/var/len(x)
-
-    return corr[:len(lags)]
-
-def autocorr5(x,lags):
-    '''numpy.correlate, non partial'''
-    mean=x.mean()
-    var=numpy.var(x)
-    xp=x-mean
-    corr=numpy.correlate(xp,xp,'full')[len(x)-1:]/var/len(x)
-
-    return corr[:len(lags)]
-
-def Changes(Data, model = 'rbf', lag = 10):
-    algo = rpt.Pelt(model=model).fit(Data)
-    result = algo.predict(pen=10)
-    return result
-
-def R(AdjT, AdjDeltaT):
-    TempT = spa.csr_matrix.todense(AdjT)
-    TempDeltaT = spa.csr_matrix.todense(AdjDeltaT)
-    Temp = TempT-TempDeltaT
-    return [ bool(x) for x in Temp.sum(1) ]
-
-def Collectivity(R):
-    return float(sum(R)/len(R))
-
-def Concertedness(H1, H2):
-    return abs(H2-H1)
+    def calculate(self):
+        return None

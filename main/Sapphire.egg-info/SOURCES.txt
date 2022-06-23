@@ -202,6 +202,7 @@ main/.eggs/pytest_runner-6.0.0-py3.8.egg/EGG-INFO/entry_points.txt
 main/.eggs/pytest_runner-6.0.0-py3.8.egg/EGG-INFO/requires.txt
 main/.eggs/pytest_runner-6.0.0-py3.8.egg/EGG-INFO/top_level.txt
 main/.eggs/pytest_runner-6.0.0-py3.8.egg/ptr/__init__.py
+main/Sapphire/Process.py
 main/Sapphire/__init__.py
 main/Sapphire.egg-info/PKG-INFO
 main/Sapphire.egg-info/SOURCES.txt
@@ -275,7 +276,6 @@ main/Sapphire/Post_Process/AtomicEnvironment.py
 main/Sapphire/Post_Process/DistFuncs.py
 main/Sapphire/Post_Process/Kernels.py
 main/Sapphire/Post_Process/Mass_Activity.py
-main/Sapphire/Post_Process/Process.py
 main/Sapphire/Post_Process/Radii.py
 main/Sapphire/Post_Process/Stats.py
 main/Sapphire/Post_Process/__init__.py
@@ -349,6 +349,7 @@ main/Sapphire/Tutorials/NiSnapshot/Test.xyz
 main/Sapphire/Tutorials/NiSnapshot/.ipynb_checkpoints/Example-checkpoint.ipynb
 main/Sapphire/Utilities/ExtendXYZ.py
 main/Sapphire/Utilities/Initial.py
+main/Sapphire/Utilities/Pattern_Clean.py
 main/Sapphire/Utilities/Supported.py
 main/Sapphire/Utilities/System_Clean.py
 main/Sapphire/Utilities/__init__.py

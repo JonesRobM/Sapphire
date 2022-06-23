@@ -156,15 +156,15 @@ class Model_Maker():
             
         if [((4,2,1),12)] in list(self.Pattern_Dict['masterkey']):
             self.FCC=list(self.Pattern_Dict['masterkey']).index([((4,2,1),12)])
-            print('FCC:\t\t %s' %FCC)
+            print('FCC:\t\t %s' %self.FCC)
             self.Bulk_Pattern_Rows.append(self.FCC)
             
         with open('Training_Info.txt', 'a')as f:
-            f.writelines(Bulk_Pattern_Rows)
+            f.writelines(self.Bulk_Pattern_Rows)
             f.close()
         
         #ACCESSING THE COORDINATION NUMBER OF ALL PATTERNS
-        self.k=[]
+        k=[]
         for i in range(len(self.Pattern_Dict['masterkey'])):
             #print(Pattern_Dict['masterkey'][i])
             c = 0
@@ -172,7 +172,7 @@ class Model_Maker():
                 c += self.Pattern_Dict['masterkey'][i][j][1]
             k.append(c)
             
-        self.Coordination_Number=np.asarray(self.k)
+        self.Coordination_Number=np.asarray(k)
                
         
 ##############################################################################

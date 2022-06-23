@@ -9,6 +9,9 @@ sklearn
 ruptures
 tensorflow
 pygdm2
+mir-flare
+ray
+scikit-learn
 
 [plotting]
 matplotlib
