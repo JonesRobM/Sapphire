@@ -7,17 +7,6 @@ from ase.io import read
 none_template = '\nSystem property "%s" is bad. Typically, this is because the ' \
                 'required information has not been provied by the user or is given incorrectly.\n' \
                 'Reverting to System default "%s".\n'
-"""
-CNA_Pattern_Settings = {
-    'npz_dir': 'CNA_npz/',  # folder to save the npz files in
-    'new_xyz_dir': 'CNA_XYZs/',
-    'APPEND_DICTIONARY': False,
-    'FROM_MEMORY': False,
-    'BULK_MASTERKEY': True,
-    'SAVING_XYZ': True,
-    'PRINTING_PATTERNS': True
-}
-"""
 
 def ensure_dir(base_dir='', file_path=''):
     """
@@ -38,13 +27,26 @@ def ensure_dir(base_dir='', file_path=''):
 
 class _Clean_Pattern(object):
 
-    """This is a cleanup class which serves 
+    """This is a cleanup class which serves to preprocess user requests regarding CNAPs
+    Defaults assume that if a user is requesting CNAPs, they wish for these only.
+    Setting flags otherwise will signal to Sapphire to call the SVC method found
+    in the CNA/Classification.py module.
 
-    :param client: A handle to the :class:`simpleble.SimpleBleClient` client
-        object that detected the device
-    :type client: class:`simpleble.SimpleBleClient`
-    :param addr: Device MAC address, defaults to None
-    :type addr: str, optional
+    :param System: The system information for the data being analysed.
+        Contains details on base directories to write log files to.
+    :type System: dict, always passed by a previous cleanup module in
+        Utilities/System_Clean.py
+    
+    :param Pattern_Input: Device MAC address, defaults to default arguments
+        {
+            'npz_dir': 'CNA_npz/',  # folder to save the npz files in
+            'APPEND_DICTIONARY': False,
+            'FROM_MEMORY': False,
+            'BULK_MASTERKEY': True,
+            'SAVING_XYZ': True,
+            'PRINTING_PATTERNS': True
+        }
+    :type Pattern_Input: dict
     """
 
     def __init__(self, System, Pattern_Input):
@@ -65,8 +67,7 @@ class _Clean_Pattern(object):
             'APPEND_DICTIONARY': False,
             'FROM_MEMORY': False,
             'BULK_MASTERKEY': True,
-            'SAVING_XYZ': True,
-            'PRINTING_PATTERNS': True
+            'PRINTING_PATTERNS': False
         }
         self.Keys = list(self.Default.keys())
 
@@ -83,14 +84,12 @@ class _Clean_Pattern(object):
 
     def Anpz_dir(self):
 
-        """Returns a list containing :class:`bluepy.btle.Characteristic`
-        objects for the peripheral. If no arguments are given, will return all
-        characteristics. If startHnd and/or endHnd are given, the list is
-        restricted to characteristics whose handles are within the given range.
+        """Parses and cleans the user input relating the the CNAP directory.
         """
         
         def _no_base():
-            """Print info about device
+            """Provides a warning that an input location is inappropriate and
+                creates a suitable directory for patterns to be saved into.
             """  
             with open(self.System['base_dir']+self.file, 'a') as warn:
                 warn.write(none_template % (self.Pattern_Input['npz_dir'], self.Default['npz_dir']))
@@ -103,59 +102,34 @@ class _Clean_Pattern(object):
                 self._no_base()
 
             else:
-                if self.Pattern_Input['npz_dir'] == self.Defaults['npz_dir']:
-                    ensure_dir(self.System['base_dir'], self.Pattern_Input['npz_dir'])
-                else:
-                    if not os.path.isdir(self.Pattern_Input['base_dir']):
-                        _no_base()
+                ensure_dir(self.System['base_dir'], self.Pattern_Input['npz_dir'])
         except KeyError:
             _no_base()
-        with open(self.System['base_dir']+self.file, "a") as f:
-            f.write("\nInitialising...\n")
+
 
     def CAPPEND_DICTIONARY(self):
         
-        """Returns a list containing :class:`bluepy.btle.Characteristic`
-        objects for the peripheral. If no arguments are given, will return all
-        characteristics. If startHnd and/or endHnd are given, the list is
-        restricted to characteristics whose handles are within the given range.
+        """Parses and cleans user input on if an existing Pattern Dictionary should
+            be appended to. In principle, this will exist within the user's home Sapphire
+            directory. However, it is strongly advised that users do not enable this
+            unless they know what they are doing!!!
         """
-        
-        def _no_file():
-            
-            """Returns a list containing :class:`bluepy.btle.Characteristic`
-            objects for the peripheral. If no arguments are given, will return all
-            characteristics. If startHnd and/or endHnd are given, the list is
-            restricted to characteristics whose handles are within the given range.
-            """
-            
-            self.System['energy_file_name'] = self.Default['energy_file_name']
-            with open(self.System['base_dir']+self.file, 'a') as warn:
-                warn.write("\nNo energy file can be found at the specified location.\n'%s'\n"
-                           "Please check your local directories and re-write your input file if you want energetic analysis.\n"
-                           % (self.System['base_dir']))
 
         try:
-            if type(self.System['energy_file_name']) is not str:
-                self.System['energy_file_name'] = self.Default['energy_file_name']
+            if type(self.Pattern_Input['energy_file_name']) is not bool:
                 warnings.warn(none_template % ('energy_file_name', self.Default['energy_file_name']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
                     warn.write(none_template % ('energy_file_name', self.Default['energy_file_name']))
-                _no_file()
-            else:
-                if not os.path.isfile(self.System['base_dir']+self.System['energy_file_name']):
-                    _no_file()
-
+                    
+                self.Pattern_Input['energy_file_name'] = self.Default['energy_file_name']
         except Exception as e:
-            _no_file()
+            del(e)
+            self.Pattern_Input['energy_file_name'] = self.Default['energy_file_name']
 
 
     def DFROM_MEMORY(self):
         
-        """Returns a list containing :class:`bluepy.btle.Characteristic`
-        objects for the peripheral. If no arguments are given, will return all
-        characteristics. If startHnd and/or endHnd are given, the list is
-        restricted to characteristics whose handles are within the given range.
+        """
         """
 
         try:
@@ -179,18 +153,6 @@ class _Clean_Pattern(object):
             warnings.warn(none_template % ('extend_xyz', self.Default['extend_xyz']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
                 warn.write(none_template % ('extend_xyz', self.Default['extend_xyz']))
-
-    def _no_homo(self):
-        
-        """Returns a list containing :class:`bluepy.btle.Characteristic`
-        objects for the peripheral. If no arguments are given, will return all
-        characteristics. If startHnd and/or endHnd are given, the list is
-        restricted to characteristics whose handles are within the given range.
-        """
-
-        with open(self.System['base_dir']+self.file, 'a') as warn:
-            warn.write("\nNo specie-specific properties for homo species will be calculated in this run.\n")
-        self.System['Homo'] = self.Default['Homo']
 
     def EBULK_MASTERKEY(self):
         
@@ -228,37 +190,6 @@ class _Clean_Pattern(object):
             self.System['Homo'] = Temp
         except Exception as e:
             self._no_homo()
-
-    def _no_hetero(self):
-        
-        """Returns a list containing :class:`bluepy.btle.Characteristic`
-        objects for the peripheral. If no arguments are given, will return all
-        characteristics. If startHnd and/or endHnd are given, the list is
-        restricted to characteristics whose handles are within the given range.
-        """
-        
-        with open(self.System['base_dir']+self.file, 'a') as warn:
-            warn.write("\nNo specie-specific properties for homo species will be calculated in this run.\n")
-        self.System['Hetero'] = self.Default['Hetero']
-
-    def GSAVING_XYZ(self):
-        
-        """Returns a list containing :class:`bluepy.btle.Characteristic`
-        objects for the peripheral. If no arguments are given, will return all
-        characteristics. If startHnd and/or endHnd are given, the list is
-        restricted to characteristics whose handles are within the given range.
-        """
-
-        with open(self.System['base_dir']+self.file, "a") as f:
-            f.write("\nChecking user input for calculating homo properties in this run.\n")
-
-        try:
-            self.System['Hetero']
-
-            if self.System['Hetero'] is None:
-                self._no_hetero()
-        except KeyError:
-            self._no_hetero()
 
     def IPRINTING_PATTERNS(self):
         
