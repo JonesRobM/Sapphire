@@ -103,7 +103,7 @@ class Process(object):
     """
     
     def __init__(self, System=None, Quantities=None,
-                 Pattern_Input=False):
+                 Pattern_Input=None):
         
         self.tick = time.time()
 
@@ -378,8 +378,8 @@ class Process(object):
                                                                 System = self.System, Frame = i).ReturnRCut()
             except Exception as e:
                 with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing Full PDF was: \n%s' % e)
-
+                    f.write('\nException raised while computing Full PDF: \n%s' % e)
+        if self.System['Hetero']:
             if 'hepdf' in self.Quantities['Hetero']:
                 
                 self.result_cache['heteropos'] = DistFuncs.Hetero(self.result_cache['pos'], self.Species,
@@ -403,7 +403,7 @@ class Process(object):
                     except Exception as e:
                         with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
                             f.write(
-                                '\nException raised while computing Homo rcut was: \n%s' % e)
+                                '\nException raised while computing Homo rcut: \n%s' % e)
 
 
         if 'moi' in self.Quantities['Full']:
@@ -438,18 +438,20 @@ class Process(object):
                         for x in self.System['Homo']:
                             self.result_cache['homopos'+x] = DistFuncs.get_subspecieslist(x, self.result_cache['syms'], self.result_cache['pos'])
                             HoRDF = DistFuncs.RDF(self.result_cache['homopos'+x], 
-                                                  Type = 'Homo', Species = x, Frame = i, System = self.System)                          
+                                                  Type = 'Homo', Species = x, Frame = i, System = self.System)
+                            
                     except Exception as e:
                         with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                            f.write('\nException raised while computing Homo RDF was: \n%s' % e)
-
+                            f.write('\nException raised while computing Homo RDF: \n%s' % e)
+                            
+            if self.System['Hetero']:
                 if self.System['Hetero'] and 'herdf' in self.Quantities['Hetero']:
                     try:
                         HeRDF = DistFuncs.RDF(self.result_cache['pos'], Type = 'Hetero', System = self.System,
                                               Species=self.Species, Elements=self.result_cache['syms'], Frame = i)
                     except Exception as e:
                         with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                            f.write('\nException raised while computing Hetero RDF was: \n%s' % e)
+                            f.write('\nException raised while computing Hetero RDF: \n%s' % e)
 
 
 ##############################################################################
@@ -511,11 +513,12 @@ class Process(object):
                             '\nException raised while computing homo pair distances: \n%s' % e)
 
         try:
-            if('he_pair_distance' in self.Quantities['Hetero']):
-                PDHe = DistFuncs.Pair_Dist(System = self.System,
-                    Positions = self.result_cache['pos'], Specie=self.Species, 
-                    Type = 'Hetero', Elements=self.result_cache['syms'], Frame = i
-                )
+            if self.System['Hetero']:
+                if('he_pair_distance' in self.Quantities['Hetero']):
+                    PDHe = DistFuncs.Pair_Dist(System = self.System,
+                        Positions = self.result_cache['pos'], Specie=self.Species, 
+                        Type = 'Hetero', Elements=self.result_cache['syms'], Frame = i
+                    )
         except Exception as e:
             
             with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
@@ -575,22 +578,23 @@ class Process(object):
                         f.write('\nException raised while computing HoAdj%s properties: \n%s' %(x,e))
                     
         #This next block computes adjacency properties for hetero-type interactions
-        if 'headj' in self.Quantities['Hetero']:
-            try:
-                self.result_cache['HeAdj'] = Adjacent.Adjacency_Matrix(
-                    System = self.System,
-                    Adj = 'adj' in self.Quantities['Hetero'],
-                    CN = 'henn' in self.Quantities['Hetero'],
-                    Positions = self.result_cache['pos'],
-                    Distances = self.result_cache['euc'],
-                    R_Cut = self.result_cache['FullCut'],
-                    Type = 'Hetero', Frame = i, 
-                    Metals = self.Species, 
-                    Elements = self.result_cache['syms']
-                    ).ReturnAdj() 
-            except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing HeAdj properties: \n%s' % e)
+        if self.System['Hetero']:
+            if 'headj' in self.Quantities['Hetero']:
+                try:
+                    self.result_cache['HeAdj'] = Adjacent.Adjacency_Matrix(
+                        System = self.System,
+                        Adj = 'adj' in self.Quantities['Hetero'],
+                        CN = 'henn' in self.Quantities['Hetero'],
+                        Positions = self.result_cache['pos'],
+                        Distances = self.result_cache['euc'],
+                        R_Cut = self.result_cache['FullCut'],
+                        Type = 'Hetero', Frame = i, 
+                        Metals = self.Species, 
+                        Elements = self.result_cache['syms']
+                        ).ReturnAdj() 
+                except Exception as e:
+                    with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
+                        f.write('\nException raised while computing HeAdj properties: \n%s' % e)
         # This next section computes the mixing parameter
 
 ##############################################################################
@@ -653,17 +657,17 @@ class Process(object):
         # mixing parameter, LAE, and homo / hetero "bond" analyses.
 
 ##############################################################################
-
-        if 'lae' in self.Quantities['Hetero']:
-            try:
-                LAE = AtomicEnvironment.LAE(System = None, Frame = None, 
-                                            Adj1 = None, Adj2 = None, HeAdj = None, 
-                                            EleNN = None, lae = None, HomoBonds = None, 
-                                            HeteroBonds = None, Mix = None,
-                                            Metal = None, Species = None)
-            except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing Gyration properties: \n%s' % e)
+        if self.System['Hetero']:
+            if 'lae' in self.Quantities['Hetero']:
+                try:
+                    LAE = AtomicEnvironment.LAE(System = None, Frame = None, 
+                                                Adj1 = None, Adj2 = None, HeAdj = None, 
+                                                EleNN = None, lae = None, HomoBonds = None, 
+                                                HeteroBonds = None, Mix = None,
+                                                Metal = None, Species = None)
+                except Exception as e:
+                    with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
+                        f.write('\nException raised while computing Gyration properties: \n%s' % e)
 
 ##############################################################################
 
@@ -811,19 +815,19 @@ class Process(object):
                             f.write("Type error raised by %s when performing statistical analysis of %s."
                                     % (obj, A_Key))
             del(self.result_cache)
-        from Utilities import Output
-        Out = Output.Writer(self.System, self.metadata)
-        Out.Run('Full')
-        if not self.System['Homo'] is None:
-            Out.Run('Homo')
-        if not self.System['Hetero'] is None:
-            Out.Run('Hetero')
+
 
         if self.System['extend_xyz'] is not None:
             from Sapphire.IO import ExtendXYZ
-            Write = ExtendXYZ.Extend(
+            ExtendXYZ.Extend(
                 Traj=self.Dataset,
                 System=self.System,
                 Metadata=self.metadata,
                 Names=self.System['extend_xyz']
             )
+
+    def write_meta(self):
+        
+        from Sapphire.IO import OutputInfoExec
+        for o in getmembers(OutputInfoExec):
+            self.metadata[o] = self.o 

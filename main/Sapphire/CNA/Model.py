@@ -16,37 +16,34 @@ from sklearn.externals import joblib
 from CNA import Utilities
 
 class Model_Maker():
+    """
+    Robert:
+        
+        This class of functions will allow the user to train a Support Vector Machine
+        (SVM) model based on pre-loaded CNA Patterns.
+        
+        One may also retrain an existing model with new data/structures if one finds
+        that the current model is insufficient.
+        
+        In general, the model SHOULD be independent of elemental composition
+        
+        A S S U M I N G
+        
+        that the user has set a reasonable value for R_Cut when loading new data in.
+        
+        At present, the Parameters argument for the function will contain information on :
+            
+            MasterKey - List of tuples - Basically, should the default be used or does
+            the user wish to use their own? 
+            One is advised to leave this argument as None and use the default.
+            
+            XYZ_Path - String - This will be the path from the working directory in which
+            the code has been run to where one may find a directory of *.xyz files.
+            Leaving this as None or empty will mean that no new *.xyz files will be used 
+            to (re)train the SVM model.
+    """
     
     def __init__(self, Parameters = None):
-        
-        """
-        Robert:
-            
-            This class of functions will allow the user to train a Support Vector Machine
-            (SVM) model based on pre-loaded CNA Patterns.
-            
-            One may also retrain an existing model with new data/structures if one finds
-            that the current model is insufficient.
-            
-            In general, the model SHOULD be independent of elemental composition
-            
-            A S S U M I N G
-            
-            that the user has set a reasonable value for R_Cut when loading new data in.
-            
-            At present, the Parameters argument for the function will contain information on :
-                
-                MasterKey - List of tuples - Basically, should the default be used or does
-                the user wish to use their own? 
-                One is advised to leave this argument as None and use the default.
-                
-                XYZ_Path - String - This will be the path from the working directory in which
-                the code has been run to where one may find a directory of *.xyz files.
-                Leaving this as None or empty will mean that no new *.xyz files will be used 
-                to (re)train the SVM model.
-        """
-        
-
 
         self.script_path = os.path.dirname(os.path.realpath(__file__))+'/'
         

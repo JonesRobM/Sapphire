@@ -18,8 +18,8 @@ setup(
         "Operating System :: OS Independent",
     ],
     author_email='Robert.M.Jones@kcl.ac.uk',
-    package_dir={'': 'main/Sapphire'},
-    packages=find_packages(where="main/Sapphire"),
+    package_dir={'': 'main'},
+    packages=find_packages(where="main"),
     install_requires=[
         'numpy',
         'networkx',

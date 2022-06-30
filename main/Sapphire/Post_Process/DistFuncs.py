@@ -21,7 +21,7 @@ def CoMDist(positions, CoM = None, homo = False, specie = None, elements = None)
         return [distance(x, CoM) for x in Temp]
         
 def get_CoM(positions):
-    return (np.average(positions, axis = 0))
+    return (np.average(positions))
 
 def get_subspecieslist(specie, elements, positions):
     Temp = np.column_stack((elements,positions))
