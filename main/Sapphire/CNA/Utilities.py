@@ -95,3 +95,15 @@ class Logo():
     |_____/_/    \_\_|    |_|    |_|  |_|_____|_|  \_\______|    \/__\/
                 """
         return self.Sapphire
+"""  
+class parse_sigs():
+    
+    def __init__(self, system, sig_file_root, master_file_root):
+        
+        
+        self.sf_root = sig_file_root
+        self.mk_root = master_file_root
+        self.system = system
+        
+    def parse_frame(self,i):
+"""

@@ -7,7 +7,7 @@ import numpy as np
 from ase.io import read
 import scipy.sparse as sp
 
-from Utilities import Initial
+from Sapphire.Utilities import Initial
 
 no_dir_template = "\nThere does not exist a suitable directory in which to place these" \
     "quantities.\n\nInstead, we shall generate one at '%s'.\n"
