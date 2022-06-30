@@ -256,10 +256,10 @@ main/Sapphire/Graphing/__pycache__/Reader.cpython-38.pyc
 main/Sapphire/IO/ExtendXYZ.py
 main/Sapphire/IO/Grav_input.sh
 main/Sapphire/IO/HPC_input.sh
-main/Sapphire/IO/MetaWrite.py
 main/Sapphire/IO/OutWrite.py
 main/Sapphire/IO/Output.py
 main/Sapphire/IO/OutputInfo.py
+main/Sapphire/IO/OutputInfoExec.py
 main/Sapphire/IO/OutputInfoFull.py
 main/Sapphire/IO/OutputInfoHetero.py
 main/Sapphire/IO/OutputInfoHomo.py

@@ -11,6 +11,7 @@ Classifier: Programming Language :: Python :: 3.6
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
 Provides-Extra: plotting
+License-File: LICENSE
 
 Installation instructions:
 

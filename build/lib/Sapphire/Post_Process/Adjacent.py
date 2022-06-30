@@ -171,6 +171,7 @@ class Adjacency_Matrix():
                 self.Adjacent = spa.csc_matrix(self.Adjacent)
             
             elif self.Type == 'Full':
+                self.NumAdj = np.zeros((len(self.Positions), len(self.Positions)), dtype=np.float64)
                 
                 Tick = 0
                 for i in range(1,len(self.Positions)):

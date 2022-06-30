@@ -93,17 +93,20 @@ class _Clean_Pattern(object):
             """  
             with open(self.System['base_dir']+self.file, 'a') as warn:
                 warn.write(none_template % (self.Pattern_Input['npz_dir'], self.Default['npz_dir']))
-            self.Pattern_Input['npz_dir'] = self.Defaults['npz_dir']
+            self.Pattern_Input['npz_dir'] = self.Default['npz_dir']
             ensure_dir(self.System['base_dir'], self.Pattern_Input['npz_dir'])
 
         try:
             self.Pattern_Input['npz_dir']
             if type(self.Pattern_Input['npz_dir']) is not str:
-                self._no_base()
+                _no_base()
 
             else:
                 ensure_dir(self.System['base_dir'], self.Pattern_Input['npz_dir'])
-        except KeyError:
+                with open(self.System['base_dir']+self.file, 'a') as warn:
+                    warn.write("Directory for storing patterns for this run has been set to ' %s '.\n" %(self.Pattern_Input['npz_dir']))
+                
+        except Exception:
             _no_base()
 
 
@@ -116,15 +119,16 @@ class _Clean_Pattern(object):
         """
 
         try:
-            if type(self.Pattern_Input['energy_file_name']) is not bool:
-                warnings.warn(none_template % ('energy_file_name', self.Default['energy_file_name']))
+            if type(self.Pattern_Input['APPEND_DICTIONARY']) is not bool:
+                warnings.warn(none_template % ('APPEND_DICTIONARY', self.Default['APPEND_DICTIONARY']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
-                    warn.write(none_template % ('energy_file_name', self.Default['energy_file_name']))
+                    warn.write(none_template % ('APPEND_DICTIONARY', self.Default['APPEND_DICTIONARY']))
                     
-                self.Pattern_Input['energy_file_name'] = self.Default['energy_file_name']
-        except Exception as e:
-            del(e)
-            self.Pattern_Input['energy_file_name'] = self.Default['energy_file_name']
+                self.Pattern_Input['APPEND_DICTIONARY'] = self.Default['APPEND_DICTIONARY']
+        except Exception:
+            self.Pattern_Input['APPEND_DICTIONARY'] = self.Default['APPEND_DICTIONARY']
+            with open(self.System['base_dir']+self.file, 'a') as warn:
+                warn.write("Argument for appending to a known pattern dictionary has been set to ' %s '.\n"  %(self.Pattern_Input['APPEND_DICTIONARY']))
 
 
     def DFROM_MEMORY(self):
@@ -134,25 +138,24 @@ class _Clean_Pattern(object):
 
         try:
 
-            if type(self.System['extend_xyz']) is not list:
+            if type(self.System['FROM_MEMORY']) is not bool:
 
-                self.System['extend_xyz'] = self.Default['extend_xyz']
-                warnings.warn(none_template % ('extend_xyz', self.Default['extend_xyz']))
+                self.System['FROM_MEMORY'] = self.Default['FROM_MEMORY']
+                warnings.warn(none_template % ('FROM_MEMORY', self.Default['FROM_MEMORY']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
-                    warn.write(none_template % ('extend_xyz', self.Default['extend_xyz']))
+                    warn.write(none_template % ('FROM_MEMORY', self.Default['FROM_MEMORY']))
             else:
 
                 with open(self.System['base_dir']+self.file, 'a') as warn:
-                    warn.write("Will attempt to write the following quantities into an extended xyz file:\n")
-                    for x in self.System['extend_xyz']:
-                        warn.write("%s\n" % x)
+                    warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" %(self.Pattern_Input['FROM_MEMORY']))
 
-        except KeyError:
 
-            self.System['extend_xyz'] = self.Default['extend_xyz']
-            warnings.warn(none_template % ('extend_xyz', self.Default['extend_xyz']))
+        except Exception:
+
+            self.System['FROM_MEMORY'] = self.Default['FROM_MEMORY']
+            warnings.warn(none_template % ('FROM_MEMORY', self.Default['FROM_MEMORY']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
-                warn.write(none_template % ('extend_xyz', self.Default['extend_xyz']))
+                warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" %(self.Pattern_Input['FROM_MEMORY']))
 
     def EBULK_MASTERKEY(self):
         
@@ -161,35 +164,28 @@ class _Clean_Pattern(object):
         characteristics. If startHnd and/or endHnd are given, the list is
         restricted to characteristics whose handles are within the given range.
         """
-
-        with open(self.System['base_dir']+self.file, "a") as f:
-            f.write("\nChecking user input for calculating homo properties in this run.\n")
-
+        
         try:
-            self.System['Homo']
-            if self.System['Homo'] is None:
-                self._no_homo()
 
-            elif type(self.System['Homo']) is list:
-                Temp = read(
-                    self.System['base_dir']+self.System['movie_file_name'],
-                    index=0).get_chemical_symbols()
-            used = set()
-            Species = [x for x in Temp
-                       if x not in used and (used.add(x) or True)]
-            Temp = []
-            for x in self.System['Homo']:
-                if x not in Species:
-                    with open(self.System['base_dir']+self.file, "a") as f:
-                        f.write("\nChemical specie %s not present in the trajectory."
-                                "Consequently, this shall be discarded from Homo.\n" % x)
-                else:
-                    Temp.append(x)
-            with open(self.System['base_dir']+self.file, "a") as f:
-                f.write("\nSpecies being considered are:\n"+'\t'.join(str(x) for x in Temp))
-            self.System['Homo'] = Temp
-        except Exception as e:
-            self._no_homo()
+            if type(self.System['BULK_MASTERKEY']) is not bool:
+
+                self.System['BULK_MASTERKEY'] = self.Default['BULK_MASTERKEY']
+                warnings.warn(none_template % ('BULK_MASTERKEY', self.Default['BULK_MASTERKEY']))
+                with open(self.System['base_dir']+self.file, 'a') as warn:
+                    warn.write(none_template % ('BULK_MASTERKEY', self.Default['BULK_MASTERKEY']))
+            else:
+
+                with open(self.System['base_dir']+self.file, 'a') as warn:
+                    warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" %(self.Pattern_Input['BULK_MASTERKEY']))
+
+
+        except Exception:
+
+            self.System['BULK_MASTERKEY'] = self.Default['BULK_MASTERKEY']
+            warnings.warn(none_template % ('BULK_MASTERKEY', self.Default['BULK_MASTERKEY']))
+            with open(self.System['base_dir']+self.file, 'a') as warn:
+                warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" %(self.Pattern_Input['BULK_MASTERKEY']))
+
 
     def IPRINTING_PATTERNS(self):
         
@@ -200,19 +196,22 @@ class _Clean_Pattern(object):
         """
         
         try:
-            self.System['Start']
-            if type(self.System['Start']) is not int or self.System['Start'] < 0:
-                self.System['Start'] = 0
-                warnings.warn(none_template % ('Start', self.Default['Start']))
+
+            if type(self.System['PRINTING_PATTERNS']) is not bool:
+
+                self.System['PRINTING_PATTERNS'] = self.Default['PRINTING_PATTERNS']
+                warnings.warn(none_template % ('PRINTING_PATTERNS', self.Default['PRINTING_PATTERNS']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
-                    warn.write(none_template % ('Start', self.Default['Start']))
-
+                    warn.write(none_template % ('PRINTING_PATTERNS', self.Default['PRINTING_PATTERNS']))
             else:
-                with open(self.System['base_dir']+self.file, 'a') as file:
-                    file.write("\nInitial frame has been set to %s.\n" % self.System['Start'])
 
-        except KeyError:
-            self.System['Start'] = 0
-            warnings.warn(none_template % ('Start', self.Default['Start']))
+                with open(self.System['base_dir']+self.file, 'a') as warn:
+                    warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" %(self.Pattern_Input['PRINTING_PATTERNS']))
+
+
+        except Exception:
+
+            self.System['PRINTING_PATTERNS'] = self.Default['PRINTING_PATTERNS']
+            warnings.warn(none_template % ('PRINTING_PATTERNS', self.Default['PRINTING_PATTERNS']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
-                warn.write(none_template % ('Start', self.Default['Start']))
+                warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" %(self.Pattern_Input['PRINTING_PATTERNS']))
