@@ -24,7 +24,7 @@ class Spectrum(object):
 
     :param client: A handle to the :class:`simpleble.SimpleBleClient` client
         object that detected the device
-    :type client: class:`simpleble.SimpleBleClient`
+    :type client: class:`simpleb le.SimpleBleClient`
     :param addr: Device MAC address, defaults to None
     :type addr: str, optional
     :param addrType: Device address type - one of ADDR_TYPE_PUBLIC or

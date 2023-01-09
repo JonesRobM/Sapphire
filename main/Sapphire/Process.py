@@ -4,6 +4,8 @@ import time
 from inspect import getmembers, isfunction
 from ase.io import read
 import os
+import functools
+import operator
 
 #Objects written specificaly for processing data
 from Sapphire.Post_Process import Adjacent, Kernels, DistFuncs, Stats, Radii, AtomicEnvironment
@@ -382,10 +384,12 @@ class Process(object):
         if self.System['Hetero']:
             if 'hepdf' in self.Quantities['Hetero']:
                 
-                self.result_cache['heteropos'] = DistFuncs.Hetero(self.result_cache['pos'], self.Species,
+                TempPos = DistFuncs.Hetero(self.result_cache['pos'], self.Species,
                                                                   self.result_cache['syms'])
                 
-                self.result_cache['HeCut'] = Kernels.Gauss(Data = self.result_cache['heteropos'][0], Band = self.Band, 
+                self.result_cache['heteropos'] = np.asarray(functools.reduce(operator.iconcat, TempPos, []))     
+                
+                self.result_cache['HeCut'] = Kernels.Gauss(Data = self.result_cache['heteropos'], Band = self.Band, 
                                                           Ele = None, Type='Hetero', Space = None, 
                                                           System = self.System, Frame = i).ReturnRCut()
 

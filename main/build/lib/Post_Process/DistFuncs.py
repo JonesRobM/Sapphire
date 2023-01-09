@@ -1,5 +1,8 @@
 import numpy as np
 import os
+import operator
+import functools
+
 
 def distance(a, b):
     
@@ -21,7 +24,7 @@ def CoMDist(positions, CoM = None, homo = False, specie = None, elements = None)
         return [distance(x, CoM) for x in Temp]
         
 def get_CoM(positions):
-    return (np.average(positions, axis = 0))
+    return (np.average(positions))
 
 def get_subspecieslist(specie, elements, positions):
     Temp = np.column_stack((elements,positions))
@@ -80,7 +83,7 @@ def Hetero(positions, species, elements):
             Dist=[]
             for x in TempA:
                 Dist.append( [distance(x, TempB) ])
-            return Dist
+            return np.asarray(functools.reduce(operator.iconcat, Dist, []))
             print("You have only one of a specific atom type in your simulation. I hope that this is correct.", "\n")
     except IndexError:
         try:
