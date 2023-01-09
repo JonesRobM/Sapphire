@@ -84,6 +84,12 @@ AgPt_parameters = {
 Below are Au (Gold) - based potentials
 """
 
+AuCo_parameters = {
+    'Au': [10.53, 4.30, 0.2197, 1.855, 2.89],
+    'Co': [8.80, 2.96, 0.1888, 1.9066, 2.50],
+    ('Au', 'Co') : []
+}
+
 AuCu_parameters = {
     'Au': [10.229, 4.0360, 0.2061, 1.7900, 2.884],
     'Cu': [10.96, 2.2780, 0.0855, 1.224, 2.556],
