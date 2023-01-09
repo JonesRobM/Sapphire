@@ -1,5 +1,8 @@
 import numpy as np
 import os
+import operator
+import functools
+
 
 def distance(a, b):
     
@@ -80,7 +83,7 @@ def Hetero(positions, species, elements):
             Dist=[]
             for x in TempA:
                 Dist.append( [distance(x, TempB) ])
-            return Dist
+            return np.asarray(functools.reduce(operator.iconcat, Dist, []))
             print("You have only one of a specific atom type in your simulation. I hope that this is correct.", "\n")
     except IndexError:
         try:
