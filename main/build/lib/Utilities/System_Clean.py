@@ -93,7 +93,7 @@ class _Clean_System(object):
                         warn.write(none_template % ('movie_file_name', self.Default['movie_file_name']))
                     _exit()
 
-        except Exception as e:
+        except Exception:
             self.System['movie_file_name'] = self.Default['movie_file_name']
             warnings.warn(none_template % ('movie_file_name', self.Default['movie_file_name']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
@@ -196,7 +196,7 @@ class _Clean_System(object):
             with open(self.System['base_dir']+self.file, "a") as f:
                 f.write("\nSpecies being considered are:\n"+'\t'.join(str(x) for x in Temp))
             self.System['Homo'] = Temp
-        except Exception as e:
+        except Exception:
             self._no_homo()
 
     def _no_hetero(self):

@@ -230,7 +230,24 @@ class CNA(object):
         Temp = set(self.particle_cnas)
         self.Keys.append(Temp)
         return tuple((self.particle_cnas.count(x), x) for x in Temp) 
-    
+
+    """
+    def dictionary_saver(self):
+        #Saving the created dictionary in an npz file
+        self.values_to_save={}
+        for key in self.Pattern_Dict:
+            #creating an argument dictionary to input in np.savez
+            self.values_to_save[key]=self.Pattern_Dict[key]
+        #saving the npz file
+        os.chdir(self.script_path)
+        os.chdir('../')
+        self.path_to_npz = self.System['base_dir'] + 'CNA_npz/pattern_dictionary.npz'
+        np.savez(self.path_to_npz, **self.values_to_save)
+        
+        with open(self.System['base_dir'] + 'CNA_Pattern_Info.txt', 'a') as f:
+            f.write("\nPatterns saved in %s.\n"%('CNA_npz/pattern_dictionary.npz'))
+            f.close()
+    """
     
     def write(self):
         
@@ -244,7 +261,7 @@ class CNA(object):
             self.MakeFile(Attributes)
             with open(OutFile, 'a') as outfile:
                 outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in np.array(list(self.Sigs.values()), dtype = int)) +'\n')
-                
+            
             if self.Fingerprint is not False:
    
                 #Write object for the homo CoM distances
@@ -254,3 +271,15 @@ class CNA(object):
                 self.MakeFile(Attributes)
                 with open(OutFile, 'a') as outfile:
                     outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.Fingerprint) +'\n') 
+                    
+        from Sapphire.IO import OutputInfoExec as Out
+        
+        Attributes = getattr(Out, str('masterkey')) #Loads in the write information for the object 
+        OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
+        self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
+        self.MakeFile(Attributes)
+        keys = list(self.Sigs.keys())
+        with open(OutFile, 'a') as outfile:
+            for item in keys:
+                outfile.write(''.join(str(index) for index in item ) +' ')
+                

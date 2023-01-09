@@ -93,21 +93,21 @@ class _Clean_Pattern(object):
             """  
             with open(self.System['base_dir']+self.file, 'a') as warn:
                 warn.write(none_template % (self.Pattern_Input['npz_dir'], self.Default['npz_dir']))
-            self.Pattern_Input['npz_dir'] = self.Defaults['npz_dir']
+            self.Pattern_Input['npz_dir'] = self.Default['npz_dir']
             ensure_dir(self.System['base_dir'], self.Pattern_Input['npz_dir'])
 
         try:
             self.Pattern_Input['npz_dir']
             if type(self.Pattern_Input['npz_dir']) is not str:
-                self._no_base()
+                _no_base()
 
             else:
                 ensure_dir(self.System['base_dir'], self.Pattern_Input['npz_dir'])
                 with open(self.System['base_dir']+self.file, 'a') as warn:
-                    warn.write("Directory for storing patterns for this run has been set to ' %s '.\n" (self.Pattern_Input['npz_dir']))
+                    warn.write("Directory for storing patterns for this run has been set to ' %s '.\n" %(self.Pattern_Input['npz_dir']))
                 
         except Exception:
-            self._no_base()
+            _no_base()
 
 
     def CAPPEND_DICTIONARY(self):
@@ -128,7 +128,7 @@ class _Clean_Pattern(object):
         except Exception:
             self.Pattern_Input['APPEND_DICTIONARY'] = self.Default['APPEND_DICTIONARY']
             with open(self.System['base_dir']+self.file, 'a') as warn:
-                warn.write("Argument for appending to a known pattern dictionary has been set to ' %s '.\n"  % (self.Pattern_Input['APPEND_DICTIONARY']))
+                warn.write("Argument for appending to a known pattern dictionary has been set to ' %s '.\n"  %(self.Pattern_Input['APPEND_DICTIONARY']))
 
 
     def DFROM_MEMORY(self):
@@ -147,7 +147,7 @@ class _Clean_Pattern(object):
             else:
 
                 with open(self.System['base_dir']+self.file, 'a') as warn:
-                    warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" (self.Pattern_Input['FROM_MEMORY']))
+                    warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" %(self.Pattern_Input['FROM_MEMORY']))
 
 
         except Exception:
@@ -155,7 +155,7 @@ class _Clean_Pattern(object):
             self.System['FROM_MEMORY'] = self.Default['FROM_MEMORY']
             warnings.warn(none_template % ('FROM_MEMORY', self.Default['FROM_MEMORY']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
-                warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" (self.Pattern_Input['FROM_MEMORY']))
+                warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" %(self.Pattern_Input['FROM_MEMORY']))
 
     def EBULK_MASTERKEY(self):
         
@@ -176,7 +176,7 @@ class _Clean_Pattern(object):
             else:
 
                 with open(self.System['base_dir']+self.file, 'a') as warn:
-                    warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" (self.Pattern_Input['BULK_MASTERKEY']))
+                    warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" %(self.Pattern_Input['BULK_MASTERKEY']))
 
 
         except Exception:
@@ -184,7 +184,7 @@ class _Clean_Pattern(object):
             self.System['BULK_MASTERKEY'] = self.Default['BULK_MASTERKEY']
             warnings.warn(none_template % ('BULK_MASTERKEY', self.Default['BULK_MASTERKEY']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
-                warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" (self.Pattern_Input['BULK_MASTERKEY']))
+                warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" %(self.Pattern_Input['BULK_MASTERKEY']))
 
 
     def IPRINTING_PATTERNS(self):
@@ -206,7 +206,7 @@ class _Clean_Pattern(object):
             else:
 
                 with open(self.System['base_dir']+self.file, 'a') as warn:
-                    warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" (self.Pattern_Input['PRINTING_PATTERNS']))
+                    warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" %(self.Pattern_Input['PRINTING_PATTERNS']))
 
 
         except Exception:
@@ -214,4 +214,4 @@ class _Clean_Pattern(object):
             self.System['PRINTING_PATTERNS'] = self.Default['PRINTING_PATTERNS']
             warnings.warn(none_template % ('PRINTING_PATTERNS', self.Default['PRINTING_PATTERNS']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
-                warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" (self.Pattern_Input['PRINTING_PATTERNS']))
+                warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" %(self.Pattern_Input['PRINTING_PATTERNS']))

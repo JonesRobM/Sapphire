@@ -1,7 +1,5 @@
 numpy
-networkx
 numba
-networkx
 pandas
 ase
 scipy
@@ -9,9 +7,6 @@ sklearn
 ruptures
 tensorflow
 pygdm2
-mir-flare
-ray
-scikit-learn
 
 [plotting]
 matplotlib
