@@ -4,6 +4,7 @@ __all__ = [
     'ExtendXYZ',
     'Initial',
     'Pattern_Clean',
+    'log',
     'Supported',
     'System_Clean',
     'Building',
