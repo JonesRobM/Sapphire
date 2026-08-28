@@ -32,7 +32,7 @@ def Patterns(file='Metadata.csv', xyz = 'Strut.xyz', frame=0, outfile = 'Pattern
     fig, ax  = plt.subplots()
     fig.set_size_inches(12,8)
     X = np.array(range(len(X_Pats)))
-    Plot = ax.barh(X, Plotting, color = cmap( X / (len(X)-1) ) )
+    ax.barh(X, Plotting, color = cmap( X / (len(X)-1) ) )
     ax.set_ylabel('CNA Pattern', fontsize = 14)
     ax.set_xlabel('Frequency', fontsize = 14)
     plt.yticks(X, X_Pats)

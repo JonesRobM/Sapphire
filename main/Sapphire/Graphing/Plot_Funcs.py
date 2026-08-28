@@ -481,11 +481,11 @@ class Plot_Funcs():
         for Frame in Frames:
             try:
                 X_CNA = [ str(a) for a in self.Meta['masterkey'] ] # Create a set of ticks for the x-axis
-                fig = plt.figure(figsize = (9,3) )
+                plt.figure(figsize = (9,3) )
                 if Errors is True:
-                    ax = plt.bar( X_CNA, self.Meta['cna_sigs'][Frame], yerr = self.Err['cna_sigs'][Frame], tick_label = X_CNA )
+                    plt.bar( X_CNA, self.Meta['cna_sigs'][Frame], yerr = self.Err['cna_sigs'][Frame], tick_label = X_CNA )
                 else:
-                    ax = plt.bar( X_CNA, self.Meta['cna_sigs'][Frame], tick_label = X_CNA)
+                    plt.bar( X_CNA, self.Meta['cna_sigs'][Frame], tick_label = X_CNA)
                 plt.xlabel("CNA Signature", fontsize = 14)
                 plt.ylabel("Probability", fontsize = 14)
                 plt.xticks(rotation=90,fontsize = 14)

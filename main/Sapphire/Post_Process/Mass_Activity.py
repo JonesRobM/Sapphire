@@ -16,7 +16,7 @@ U_bins = 1299 #binning of the voltages (v)
  
 #Change the temperature at whihc you want the catalytic activities to be performed at.
 r=1.28*10**(-9) #atomic radius of your atoms (in cm)?
-mass_cu = 1.0552e-19 #mass of your atoms (in mg)?
+AMU_MG = 1.66053906660e-21  # 1 atomic mass unit in mg; masses come from ase Atoms.get_masses()
 C = 12.56 # constant in equation, to be calculated from initial conditions
 
 def heatmap(agcn):
@@ -59,7 +59,8 @@ def catalytic_analysis (filename, agcn):
                 spec=spec+sitecurrent
             site[h]=spec
         current.append(site)
-        mass_NP = len(traj[j]) * mass_cu  # nanoparticle mass from atom count (was undefined)
+        # Nanoparticle mass: sum over species of (count x relative atomic mass), in mg.
+        mass_NP = float(np.sum(traj[j].get_masses())) * AMU_MG
         mass_activity.append(-site[int(1299-applied_V*1000)]*surf_area/mass_NP)
             
     """Plotting the current density at different applied potentials for different

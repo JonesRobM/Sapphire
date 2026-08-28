@@ -98,7 +98,6 @@ def hebond(data):
         c.append( [ data[t+1][0][x] - data[t][0][x] for x in data[t][0] ] )
         d.append( [data[t+1][0][x] - data[t][0][x] for x in data[t][1] ] )
     e = []
-    f = []
     for t in range(len(data)):      
         e.append(np.concatenate((c[t], d[t])))
     e = np.array(e)

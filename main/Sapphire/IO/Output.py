@@ -299,7 +299,8 @@ class Writer():
 
         self.Write_List = []
 
-        for self.x in self.Metadata.keys():  # Things such as: 'pdf', 'R_Cut', ...
+        for x in self.Metadata.keys():  # Things such as: 'pdf', 'R_Cut', ...
+            self.x = x
 
             try:
                 if Output_Type == 'Homo' and self.x.startswith('ho'):

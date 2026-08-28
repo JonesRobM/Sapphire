@@ -403,12 +403,12 @@ class Pair_Dist():
             try:
                 self.distances = Euc_Dist(self.Positions, True, self.Specie, self.Elements)
                 #(positions, homo = False, specie = None, elements = None)
-            except Exception as e:
+            except Exception:
                 pass
         elif self.Type == 'Hetero':
             try:
                 self.distances = Hetero(self.Positions, self.Specie, self.Elements)
-            except Exception as e:
+            except Exception:
                 pass
         else:
             self.distances = Euc_Dist(self.Positions)

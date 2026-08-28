@@ -111,7 +111,7 @@ class Gauss():
         try:
             self.R_Cut = self.Space[Min][np.where(self.Space[Min]>3)][0] #We expect a minimum in this region
             
-        except Exception as e:
+        except Exception:
             return None
         
     def ReturnRCut(self):
@@ -281,7 +281,7 @@ class Uniform():
         try:
             self.R_Cut = self.Space[Min][np.where(self.Space[Min]>3)][0] #We expect a minimum in this region
             
-        except Exception as e:
+        except Exception:
             return None
         
     def ReturnRCut(self):
@@ -423,7 +423,7 @@ class Epan():
         try:
             self.R_Cut = self.Space[Min][np.where(self.Space[Min]>3)][0] #We expect a minimum in this region
             
-        except Exception as e:
+        except Exception:
             return None
         
     def ReturnRCut(self):

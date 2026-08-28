@@ -441,7 +441,7 @@ class Process(object):
 
         if 'rdf' in self.Quantities['Full']:
             try:
-                RDF = DistFuncs.RDF(System = self.System,
+                DistFuncs.RDF(System = self.System,
                     Positions = self.result_cache['pos'], Type = 'Full', Frame = i)
                 
             except Exception as e:
@@ -452,7 +452,7 @@ class Process(object):
                     try:
                         for x in self.System['Homo']:
                             self.result_cache['homopos'+x] = DistFuncs.get_subspecieslist(x, self.result_cache['syms'], self.result_cache['pos'])
-                            HoRDF = DistFuncs.RDF(self.result_cache['homopos'+x], 
+                            DistFuncs.RDF(self.result_cache['homopos'+x], 
                                                   Type = 'Homo', Species = x, Frame = i, System = self.System)
                             
                     except Exception as e:
@@ -462,7 +462,7 @@ class Process(object):
             if self.System['Hetero']:
                 if self.System['Hetero'] and 'herdf' in self.Quantities['Hetero']:
                     try:
-                        HeRDF = DistFuncs.RDF(self.result_cache['pos'], Type = 'Hetero', System = self.System,
+                        DistFuncs.RDF(self.result_cache['pos'], Type = 'Hetero', System = self.System,
                                               Species=self.Species, Elements=self.result_cache['syms'], Frame = i)
                     except Exception as e:
                         with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
@@ -480,7 +480,7 @@ class Process(object):
             self.result_cache['com'] = self.All_Atoms.get_center_of_mass() #CoM of WHOLE cluster
             try:
                 if 'comdist' in self.Quantities['Full']:
-                    CoMDist = DistFuncs.CoM_Dist(Positions=self.result_cache['pos'],
+                    DistFuncs.CoM_Dist(Positions=self.result_cache['pos'],
                                                        CoM=self.result_cache['com'],
                                                        Type = 'Full', Frame = i, System = self.System)
 
@@ -509,7 +509,7 @@ class Process(object):
 
             if 'pair_distance' in self.Quantities['Full']:
                 try:
-                    PD = DistFuncs.Pair_Dist(Positions = self.result_cache['pos'], 
+                    DistFuncs.Pair_Dist(Positions = self.result_cache['pos'], 
                                              Type = 'Full', Frame = i, System = self.System)
                 except Exception as e:
                     with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
@@ -519,7 +519,7 @@ class Process(object):
         if 'hopair_distance' in self.Quantities['Homo']:
             for x in self.System['Homo']:
                 try:
-                    HoPD = DistFuncs.Pair_Dist(System = self.System,
+                    DistFuncs.Pair_Dist(System = self.System,
                         Positions = self.result_cache['pos'], Type = 'Homo', 
                         Specie=x, Elements=self.result_cache['syms'], Frame = i)
                 except Exception as e:
@@ -530,7 +530,7 @@ class Process(object):
         try:
             if self.System['Hetero']:
                 if('he_pair_distance' in self.Quantities['Hetero']):
-                    PDHe = DistFuncs.Pair_Dist(System = self.System,
+                    DistFuncs.Pair_Dist(System = self.System,
                         Positions = self.result_cache['pos'], Specie=self.Species, 
                         Type = 'Hetero', Elements=self.result_cache['syms'], Frame = i
                     )
@@ -621,7 +621,7 @@ class Process(object):
 
         if 'cna_sigs' in self.Quantities['Full']:
             try:
-                cna = FrameSignature.CNA(self.System, self.result_cache['Adj'], 
+                FrameSignature.CNA(self.System, self.result_cache['Adj'], 
                                          self.Masterkey, 
                                          'cna_patterns' in self.Quantities['Full'] , 
                                          Type = 'Full', Frame = i).calculate()
@@ -639,7 +639,7 @@ class Process(object):
 
         if 'gyration' in self.Quantities['Full']:
             try:
-                Gyr = Radii.Gyration(
+                Radii.Gyration(
                     System = self.System, Positions = self.result_cache['pos'], 
                     Type = 'Full', Metal = None, Elements = None, 
                     Masses=self.All_Atoms.get_masses(), Frame = i)
@@ -651,7 +651,7 @@ class Process(object):
         if 'hogyration' in self.Quantities['Homo']:
             for Metal in self.System['Homo']:
                 try:
-                    HoGyr = Radii.Gyration(
+                    Radii.Gyration(
                         System = self.System, Positions = self.result_cache['pos'], 
                         Type = 'Homo', Metal = Metal, Elements = self.result_cache['syms'], Frame = i)
                 except Exception as e:
@@ -661,7 +661,7 @@ class Process(object):
 
         if 'stat_radius' in self.Quantities['Full']:
             try:
-                Stat_Rad = Radii.Stat_Radius(self.System, self.result_cache['pos'], Frame = i)
+                Radii.Stat_Radius(self.System, self.result_cache['pos'], Frame = i)
             except Exception as e:
                 with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
                     f.write('\nException raised while computing Stat Radius properties: \n%s' % e)
@@ -675,7 +675,7 @@ class Process(object):
         if self.System['Hetero']:
             if 'lae' in self.Quantities['Hetero']:
                 try:
-                    LAE = AtomicEnvironment.LAE(System = None, Frame = None, 
+                    AtomicEnvironment.LAE(System = None, Frame = None, 
                                                 Adj1 = None, Adj2 = None, HeAdj = None, 
                                                 EleNN = None, lae = None, HomoBonds = None, 
                                                 HeteroBonds = None, Mix = None,

@@ -169,7 +169,6 @@ class Nanoct:
            new_dist.append(round(dist[i],3))
 
         values, counts = np.unique(new_dist, return_counts=True)
-        freq = np.dstack((values,counts)).reshape(-1,2)
         sorted_nano = nanoparticle[np.argsort(new_dist)]
 
         # spliting the nanoparticle in the number of declared elements

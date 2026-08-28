@@ -38,3 +38,7 @@
 - `CNA/FrameSignature.py` — row-iteration over the scipy sparse adjacency matrix raised under numpy 2; the matrix is densified once and neighbour lookups are vectorised (same results, much faster).
 - `Process.Initialising` — `All_Times`/`Band` were only set in the bimetallic branch, so **every monometallic run crashed**; missing `Quantities` groups (`Homo`/`Hetero`) now default to `{}`.
 - `Process.__init__` — `self.metadata = {}` so `analyse()`/`write_meta()` no longer raise; note the in-memory metadata design was superseded by `Time_Dependent/` file output in 1.0 and those two methods need a Reader-based redesign (open item).
+
+### Follow-up (2026-08-28, after first push)
+- CI was failing at the `ruff` step (24 residual findings, exit code 1) before `pytest` ran. All cleared: unused result bindings in `Process.calculate`, unused `as e`, dead `freq`/`fig`/`ax`/`Plot`/`f` locals, and `for self.x in …` in `IO/Output.py`.
+- `Mass_Activity` — nanoparticle mass is now Σ over atoms of the species' relative atomic mass (`ase Atoms.get_masses()`), converted to mg via `AMU_MG`. Replaces the single-species `mass_cu` constant.
