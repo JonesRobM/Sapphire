@@ -1,7 +1,4 @@
 import numpy as np
-import itertools 
-import collections
-from scipy import ndimage
 
 class Nanodeca:
     

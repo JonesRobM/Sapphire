@@ -1,5 +1,4 @@
 from ase.cluster.octahedron import Octahedron
-from ase.io import write
 import numpy as np
 
 class Nanoct:

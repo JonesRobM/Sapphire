@@ -1,8 +1,6 @@
 import os
-import sys
 import warnings
 from inspect import getmembers, isfunction
-from ase.io import read
 
 none_template = '\nSystem property "%s" is bad. Typically, this is because the ' \
                 'required information has not been provied by the user or is given incorrectly.\n' \
@@ -56,7 +54,8 @@ class _Clean_Pattern(object):
 
         self.System = System
 
-        self.Pattern_Input = Pattern_Input
+        # None / falsy -> empty dict so every cleaner below can fall back to its default.
+        self.Pattern_Input = dict(Pattern_Input) if Pattern_Input else {}
 
         self.file = 'Sapphire_Info.txt' #Note that this file already exists assuming prescribed use of Sapphire
 
@@ -69,6 +68,8 @@ class _Clean_Pattern(object):
             'BULK_MASTERKEY': True,
             'PRINTING_PATTERNS': False
         }
+        for k, v in self.Default.items():
+            self.Pattern_Input.setdefault(k, v)
         self.Keys = list(self.Default.keys())
 
         #Calls the alphebetised list of functions to pass through.
@@ -92,7 +93,7 @@ class _Clean_Pattern(object):
                 creates a suitable directory for patterns to be saved into.
             """  
             with open(self.System['base_dir']+self.file, 'a') as warn:
-                warn.write(none_template % (self.Pattern_Input['npz_dir'], self.Default['npz_dir']))
+                warn.write(none_template % (self.Pattern_Input.get('npz_dir'), self.Default['npz_dir']))
             self.Pattern_Input['npz_dir'] = self.Default['npz_dir']
             ensure_dir(self.System['base_dir'], self.Pattern_Input['npz_dir'])
 
@@ -138,9 +139,9 @@ class _Clean_Pattern(object):
 
         try:
 
-            if type(self.System['FROM_MEMORY']) is not bool:
+            if type(self.Pattern_Input['FROM_MEMORY']) is not bool:
 
-                self.System['FROM_MEMORY'] = self.Default['FROM_MEMORY']
+                self.Pattern_Input['FROM_MEMORY'] = self.Default['FROM_MEMORY']
                 warnings.warn(none_template % ('FROM_MEMORY', self.Default['FROM_MEMORY']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
                     warn.write(none_template % ('FROM_MEMORY', self.Default['FROM_MEMORY']))
@@ -152,7 +153,7 @@ class _Clean_Pattern(object):
 
         except Exception:
 
-            self.System['FROM_MEMORY'] = self.Default['FROM_MEMORY']
+            self.Pattern_Input['FROM_MEMORY'] = self.Default['FROM_MEMORY']
             warnings.warn(none_template % ('FROM_MEMORY', self.Default['FROM_MEMORY']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
                 warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" %(self.Pattern_Input['FROM_MEMORY']))
