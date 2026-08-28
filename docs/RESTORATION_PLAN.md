@@ -119,14 +119,21 @@ Data strategy (decided 2026-08-28):
    listed verbatim in `docs/HISTORY_REWRITE.md` for Rob to run. Expected
    result: `.git` < 10 MB.
 
+## Phase 6 — file-backed metadata + strictness  ☑ done 2026-08-28
+
+Decision (Rob, 2026-08-28): files under the run directory are the source of truth; analysis
+tools read them back. Goal: make Sapphire usable on output from general-purpose MNP codes.
+
+* `IO/Reader.py` maps `OutputInfo*` tables → arrays; `Process.load_metadata()` uses it.
+* `analyse()`, `write_meta()`, extended-xyz rewired; `Process(strict=True)`; `logging`.
+* Follow-ups: `Graphing.Read_Meta` still expects the old `Metadata.csv` pickle layout — port it
+  to `Reader`; document the `Time_Dependent/` file contract for external producers.
+
 ---
 
 ## Open items carried forward
 * `Emerald/` and `CNA/main.py` intent — Rob doesn't recall; parked in `legacy/`.
 * Whether `mir-flare` / `tensorflow` / `ray` still belong in the roadmap.
 * `Logs/DocStrings.xlsx` — likely a docstring audit sheet; keep or convert to md?
-* `Process.analyse()` / `write_meta()` / `extend_xyz` still assume an in-memory `self.metadata` that the
-  1.0 file-output design no longer populates. Needs a `Reader`-backed redesign (Phase 6 candidate).
-* 76 broad `except:` blocks still log-and-continue. Suggest a `strict=True` flag on `Process` that re-raises.
-* 99 `print()` calls → `logging`.
-* `Graphing/` has never been exercised by a test; needs a fixture with real `Time_Dependent/` output.
+* `Graphing.Read_Meta`/`Plot_Funcs` port to `IO.Reader` (only `Get_Heights_Ovito` is tested so far).
+* Remaining broad `except:` blocks outside `Process` (Adjacent, Kernels, DistFuncs) could route via a shared reporter.

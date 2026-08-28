@@ -2,6 +2,9 @@ import numpy as np
 import os
 import networkx as nx
 from Sapphire.CNA import Utilities
+from Sapphire.Utilities.log import get_logger
+
+log = get_logger('Sapphire.CNA.FrameSignature')
 
 class CNA(object):
     """
@@ -54,7 +57,7 @@ class CNA(object):
                 # conversion under numpy>=2 (and were O(N) per lookup anyway).
                 self.Adj = np.asarray(Adj.todense())
             except Exception as e:
-                print(e)
+                log.info(e)
         else:
             pass
         if Fingerprint:

@@ -2,6 +2,9 @@ import pickle
 import numpy as np
 import os
 import traceback 
+from Sapphire.Utilities.log import get_logger
+
+log = get_logger('Sapphire.Graphing.Plotter')
 
 
 """
@@ -167,11 +170,11 @@ class Plot_Meta():
                     Truth = type(self.BigMeta[self.Iter[0]][obj][1]) is list
                     
                 except TypeError:
-                    print("\nTypeError for %s as it is %s.\n"%(obj, type(self.BigMeta[self.Iter[0]][obj])))
+                    log.info("\nTypeError for %s as it is %s.\n"%(obj, type(self.BigMeta[self.Iter[0]][obj])))
                     Truth = False
                     
                 except IndexError:
-                    print("\nIndexError for %s.\n"%(obj))
+                    log.info("\nIndexError for %s.\n"%(obj))
                     Truth = False
                     
                 if Truth:
@@ -195,11 +198,11 @@ class Plot_Meta():
                     Truth = type(self.BigMeta[self.Iter[0]][obj][2]) is tuple
                     
                 except TypeError:
-                    print("\nTypeError for %s as it is %s.\n"%(obj, type(self.BigMeta[self.Iter[0]][obj])))
+                    log.info("\nTypeError for %s as it is %s.\n"%(obj, type(self.BigMeta[self.Iter[0]][obj])))
                     Truth = False
                     
                 except IndexError:
-                    print("\nIndexError for %s.\n"%(obj))
+                    log.info("\nIndexError for %s.\n"%(obj))
                     Truth = False
 
                 if Truth:
@@ -219,15 +222,15 @@ class Plot_Meta():
                     Truth = 'float' in str(type(self.BigMeta[self.Iter[0]][obj][1]))
                     
                 except TypeError:
-                    print("\nTypeError for %s as it is %s.\n"%(obj, type(self.BigMeta[self.Iter[0]][obj])))
+                    log.info("\nTypeError for %s as it is %s.\n"%(obj, type(self.BigMeta[self.Iter[0]][obj])))
                     Truth = False
                     
                 except IndexError:
-                    print("\nIndexError for %s.\n"%(obj))
+                    log.info("\nIndexError for %s.\n"%(obj))
                     Truth = False
                     
                 if Truth:
-                    print("\n%s\n"%obj)
+                    log.info("\n%s\n"%obj)
                     for It in self.Iter:
                         self.BigMeta[It][obj] = [ float(x) for x in self.BigMeta[It][obj] if x!= None ]
                     self.AverageMeta[obj] = np.average( [ self.BigMeta[x][obj] for x in self.Iter ], axis = 0)
@@ -290,7 +293,7 @@ class Plot_Meta():
         
         
     def Add_Quant_List(self, Quant, Range = None):
-        print("\n%s\n"%Quant)
+        log.info("\n%s\n"%Quant)
         
         Val, Err = [], []
         
@@ -313,7 +316,7 @@ class Plot_Meta():
         return Val, Err
 
     def Add_Quant_Tuple(self, Quant, Range = None):
-        print("\n%s\n"%Quant)
+        log.info("\n%s\n"%Quant)
         
         if Range is None:
             Range = range(self.AverageMeta['Start'], self.AverageMeta['End'], self.AverageMeta['Step'])

@@ -14,6 +14,9 @@ import numpy as np
 _trapz = getattr(np, 'trapezoid', None) or np.trapz  # noqa: NPY201
 
 import matplotlib.pyplot as plt
+from Sapphire.Utilities.log import get_logger
+
+log = get_logger('Sapphire.Graphing.Read_Plot')
 
 def distance(a, b):
     
@@ -54,7 +57,7 @@ def Collect_CNA(Data, Sig):
 
         return [ Data[x][0][Index] for x in range(len(Data)) ]
     except Exception as e:
-        print(e)
+        log.info(e)
         return None
 
 Sims = ['Sim-1345/', 'Sim-2783/', 'Sim-3987/', 'Sim-4009/']
@@ -230,9 +233,9 @@ def Reader(T, Seed, Struts, Sims):
                     init[20][Strut+Sim] = Temp['gyration'] #t-type: number
                     init[21][Strut+Sim] = headj
                     del(Temp)
-                    print(Strut+Sim)
+                    log.info(Strut+Sim)
             except Exception as e:
-                print(e)
+                log.info(e)
     return init
 
 def clean(data, strut):
@@ -269,7 +272,7 @@ def clean(data, strut):
         'AvgCoPt' : np.zeros(len(data[15]), dtype = object)
         }
     Keys = data[0].keys()
-    print(Keys)
+    log.info(Keys)
     
     Tempedelta = []; Tempcomspace = []; Temp421 = []; Temp422 = []; Temp555 = []
     Tempcom = []; Tempcomdist = []; Tempsurf_atoms = [] 
@@ -315,7 +318,7 @@ def clean(data, strut):
             #New_File(Key+'NewMovie.xyz', new_movie=Key+'Quantity_movie.xyz', Quantities = [HeAdj[1], HeAdj[2]])
 
         except Exception as e:
-            print(e)
+            log.info(e)
 
     System['edetla'] = np.average(Tempedelta, axis = 0)
     System['comspace'] = np.average(Tempcomspace, axis = 0)

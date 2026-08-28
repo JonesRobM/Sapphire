@@ -7,4 +7,5 @@ __all__ = [
     'OutputInfoFull',
     'OutputInfoHetero',
     'OutputInfoHomo',
+    'Reader',
 ]

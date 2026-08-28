@@ -15,7 +15,8 @@ are satisfied.
 ```bash
 gh release create data-v1 --title "Tutorial MD data v1" \
   --notes "Four bimetallic 14 ns trajectories used by the tutorials. See Tutorials/Data/ReadMe.md." \
-  ~/SapphireData/AgNi.tar.gz ~/SapphireData/AuPd.tar.gz ~/SapphireData/AuPt.tar.gz ~/SapphireData/CuNi.tar.gz
+  main/Sapphire/Tutorials/Data/AgNi.tar.gz main/Sapphire/Tutorials/Data/AuPd.tar.gz \
+  main/Sapphire/Tutorials/Data/AuPt.tar.gz main/Sapphire/Tutorials/Data/CuNi.tar.gz
 ```
 Then verify one download end-to-end: `python -c "from Sapphire.Tutorials import data; print(data.fetch('AuPt'))"`.
 
@@ -24,8 +25,7 @@ Then verify one download end-to-end: `python -c "from Sapphire.Tutorials import 
 cd ~/tmp && git clone --mirror https://github.com/JonesRobM/Sapphire.git Sapphire-rewrite.git
 cd Sapphire-rewrite.git
 # strip: big tarballs, every build artefact ever committed, eggs, copied .git internals
-git filter-repo \
-  --path-glob 'main/Sapphire/Tutorials/Data/*.tar.gz' \
+git filter-repo --strip-blobs-bigger-than 2M \
   --path build --path main/build --path main/dist --path main/.eggs \
   --path-glob '*.egg-info' --path-glob '*.egg' --path-glob '**/__pycache__' \
   --path-glob '**/.ipynb_checkpoints' \
@@ -33,11 +33,12 @@ git filter-repo \
   --path main/description --path main/hooks --path main/info \
   --invert-paths
 git reflog expire --expire=now --all && git gc --prune=now --aggressive
-du -sh objects   # expect < 15 MB
+du -sh objects        # ~10 MB after the 2026-08-28 rewrite
 ```
 
 ## 3. Push and re-clone
 ```bash
+git remote add origin https://github.com/JonesRobM/Sapphire.git   # filter-repo removes it
 git push --force --all origin
 git push --force --tags origin
 # then, from a clean directory:

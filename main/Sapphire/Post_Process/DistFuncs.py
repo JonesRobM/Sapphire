@@ -2,6 +2,9 @@ import numpy as np
 import os
 import operator
 import functools
+from Sapphire.Utilities.log import get_logger
+
+log = get_logger('Sapphire.Post_Process.DistFuncs')
 
 
 def distance(a, b):
@@ -55,7 +58,7 @@ def Euc_Dist(positions, homo = False, specie = None, elements = None):
                     Distances.append(Euc)
             return Distances
     else:
-        print("Variables used were:\n%s\n%s\n%s\n" %(homo, specie, (elements[0], elements[1])))
+        log.info("Variables used were:\n%s\n%s\n%s\n" %(homo, specie, (elements[0], elements[1])))
         raise TypeError("Euc_Dist function has encountered an error.\n")
         
         
@@ -84,14 +87,14 @@ def Hetero(positions, species, elements):
             for x in TempA:
                 Dist.append( [distance(x, TempB) ])
             return np.asarray(functools.reduce(operator.iconcat, Dist, []))
-            print("You have only one of a specific atom type in your simulation. I hope that this is correct.", "\n")
+            log.info("You have only one of a specific atom type in your simulation. I hope that this is correct.", "\n")
     except IndexError:
         try:
             np.shape(TempB)[1]           
             return [ distance(TempA, b) for b in TempB ]
-            print("You have only one of a specific atom type in your simulation. I hope that this is correct.", "\n")
+            log.info("You have only one of a specific atom type in your simulation. I hope that this is correct.", "\n")
         except IndexError:
-            print("You only have two atoms.\nIs this correct?", "\n")
+            log.info("You only have two atoms.\nIs this correct?", "\n")
             return None
         
 

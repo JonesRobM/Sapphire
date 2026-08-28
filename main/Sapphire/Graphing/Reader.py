@@ -4,6 +4,9 @@ import os
 import sys
 
 from Sapphire.CNA.Utilities import Logo
+from Sapphire.Utilities.log import get_logger
+
+log = get_logger('Sapphire.Graphing.Reader')
 
 """
 Supported=[
@@ -93,7 +96,7 @@ def ensure_dir(file_path=''):
     directory = os.path.dirname(file_path+'/')
     if not os.path.exists(directory):
         os.makedirs(directory)
-        print("Made a new directory.")
+        log.info("Made a new directory.")
 
 
 class Read_Meta():

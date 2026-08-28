@@ -12,6 +12,9 @@ from pyGDM2 import tools
 from pyGDM2 import linear
 
 from ase.io import read
+from Sapphire.Utilities.log import get_logger
+
+log = get_logger('Sapphire.Light.ClassSpec')
 
 ## --------------- Setup structure
 
@@ -115,7 +118,7 @@ class Spectrum(object):
 
         field_kwargs = tools.get_possible_field_params_spectra(self.sim)
         for i, conf in enumerate(field_kwargs):
-            print("config", i, ":", conf)
+            log.info("config", i, ":", conf)
         
       
             wl, spectrum = tools.calculate_spectrum(self.sim,
@@ -140,7 +143,7 @@ class Spectrum(object):
 
         field_kwargs = tools.get_possible_field_params_spectra(self.sim)
         for i, conf in enumerate(field_kwargs):
-            print("config", i, ":", conf)
+            log.info("config", i, ":", conf)
         
       
             wl, spectrum = tools.calculate_spectrum(self.sim,

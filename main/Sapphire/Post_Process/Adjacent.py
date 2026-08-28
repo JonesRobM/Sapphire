@@ -5,6 +5,9 @@ import functools
 import operator
 from ase.data import covalent_radii, atomic_numbers
 from Sapphire.Post_Process import DistFuncs
+from Sapphire.Utilities.log import get_logger
+
+log = get_logger('Sapphire.Post_Process.Adjacent')
 
 class Adjacency_Matrix():
     """ 
@@ -204,7 +207,7 @@ class Adjacency_Matrix():
             self.CoordA = [ self.Adjacent[i].sum() for i in range(len(self.Adjacent)) ]
             self.CoordB = [ self.Adjacent[:,j].sum() for j in range(len(self.Adjacent[0])) ]
         except Exception as e:
-            print("Exception raised whilst computing the Hetero Coordination:\n%s"%e)
+            log.info("Exception raised whilst computing the Hetero Coordination:\n%s"%e)
 
     def ReturnAdj(self):
         """
@@ -261,7 +264,7 @@ class Adjacency_Matrix():
                 Tick+=Matrix[i]
                 self.AGCN = np.array(agcn, dtype=float)
         except Exception as e:
-            print("Exception raised whilst computing the agcn:\n%s"%e)
+            log.info("Exception raised whilst computing the agcn:\n%s"%e)
 
     def Surface_Area(self):
         
@@ -294,7 +297,7 @@ class Adjacency_Matrix():
                         T2.append( (Radii[1][1]**2)*x )  
                 self.Area = (1/3) * np.pi * (sum(T1) + sum(T2))
         except Exception as e:
-            print("Exception raised whilst computing the Surfce Area:\n%s"%e)
+            log.info("Exception raised whilst computing the Surfce Area:\n%s"%e)
 
     def Surface_Atoms(self):
         try:
@@ -313,7 +316,7 @@ class Adjacency_Matrix():
                 Mask = Temp < 9.1
                 self.Surf_At = Mask.astype(int)
         except Exception as e:
-            print("Exception raised whilst computing the Surfce Atoms:\n%s"%e)
+            log.info("Exception raised whilst computing the Surfce Atoms:\n%s"%e)
 
     def write(self):
     

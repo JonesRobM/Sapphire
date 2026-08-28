@@ -9,6 +9,9 @@ import os
 import sys
 from inspect import getmembers, isfunction
 import inspect
+from Sapphire.Utilities.log import get_logger
+
+log = get_logger('Sapphire.Graphing.Plot_Funcs')
 
 plt.rcParams.update({'figure.max_open_warning': 0})
 
@@ -200,7 +203,7 @@ class Plot_Funcs():
             plt.savefig(self.Base+self.Images+'/'+Name, dpi = 100, bbox_inches='tight')
             plt.close()
         except KeyError:
-            print("\nThis quantity does not exist in the metadata.\n")
+            log.info("\nThis quantity does not exist in the metadata.\n")
             return None           
     
 
@@ -585,7 +588,7 @@ class Plot_Funcs():
                                     np.asarray(self.Collect_CNA(x)) - np.asarray(self.Collect_CNA_error(x)),
                                     alpha = 0.25)
             except ValueError:
-                print(x, type(x))
+                log.info(x, type(x))
                 with open(self.Base+'Plotting_Info.txt', "a") as f:
                     f.write(f"\nSignature, '{0}', not in metadata.\n".format(x))
         ax.set_xlabel('Time (ps)')

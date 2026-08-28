@@ -15,6 +15,9 @@ from Sapphire.CNA import FrameSignature, Utilities
 
 #General purpose utility functions for parsing and tidying
 from Sapphire.Utilities import Initial, System_Clean, Pattern_Clean
+from Sapphire.Utilities.log import get_logger
+
+log = get_logger('Sapphire.Process')
 
 class Process(object):
 
@@ -105,9 +108,11 @@ class Process(object):
     """
     
     def __init__(self, System=None, Quantities=None,
-                 Pattern_Input=None):
+                 Pattern_Input=None, strict=False):
         
         self.tick = time.time()
+        # strict=True re-raises any exception instead of only logging it to Sapphire_Errors.log.
+        self.strict = strict
 
         self.System = System
         self.Quantities = Quantities
@@ -143,6 +148,33 @@ class Process(object):
         self.Initialising()
         #self.run_pdf()
         self.run_core()
+
+    def _report(self, exc, message):
+        """Record a caught exception in Sapphire_Errors.log; re-raise when strict."""
+        text = message % exc if '%s' in message else message
+        with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
+            f.write(text if text.startswith('\n') else '\n' + text)
+        log.warning(text.strip().replace('\n', ' '))
+        if self.strict:
+            raise exc
+
+    def reader(self):
+        """A :class:`Sapphire.IO.Reader.Reader` over this run's output directory."""
+        from Sapphire.IO.Reader import Reader
+        return Reader(self.Base)
+
+    def load_metadata(self, keys=None):
+        """Populate ``self.metadata`` from the files written during ``run_core``.
+
+        Results are written to disk frame by frame; this reads them back so the
+        statistical tools, ``write_meta`` and the extended-xyz writer can use them.
+        """
+        r = self.reader()
+        available = r.available()
+        for k in (available if keys is None else [k for k in keys if k in available]):
+            self.metadata[k] = r.load(k)
+        self.metadata['masterkey'] = r.masterkey()
+        return self.metadata
 
     def ensure_dir(self, base_dir='', file_path=''):
         
@@ -390,8 +422,7 @@ class Process(object):
                                                                 Ele = None, Type = 'Full', Space = None, 
                                                                 System = self.System, Frame = i).ReturnRCut()
             except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing Full PDF: \n%s' % e)
+                self._report(e, '\nException raised while computing Full PDF: \n%s')
         if self.System['Hetero']:
             if 'hepdf' in self.Quantities['Hetero']:
                 
@@ -416,9 +447,7 @@ class Process(object):
                                               Type='Homo', Space = None, 
                                               System = self.System, Frame = i).ReturnRCut()
                     except Exception as e:
-                        with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                            f.write(
-                                '\nException raised while computing Homo rcut: \n%s' % e)
+                        self._report(e, '\nException raised while computing Homo rcut: \n%s')
 
 
         if 'moi' in self.Quantities['Full']:
@@ -445,8 +474,7 @@ class Process(object):
                     Positions = self.result_cache['pos'], Type = 'Full', Frame = i)
                 
             except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing Full RDF was: \n%s' % e)
+                self._report(e, '\nException raised while computing Full RDF was: \n%s')
                     
                 if self.System['Homo'] and 'hordf' in self.Quantities['Homo']:
                     try:
@@ -456,8 +484,7 @@ class Process(object):
                                                   Type = 'Homo', Species = x, Frame = i, System = self.System)
                             
                     except Exception as e:
-                        with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                            f.write('\nException raised while computing Homo RDF: \n%s' % e)
+                        self._report(e, '\nException raised while computing Homo RDF: \n%s')
                             
             if self.System['Hetero']:
                 if self.System['Hetero'] and 'herdf' in self.Quantities['Hetero']:
@@ -465,8 +492,7 @@ class Process(object):
                         DistFuncs.RDF(self.result_cache['pos'], Type = 'Hetero', System = self.System,
                                               Species=self.Species, Elements=self.result_cache['syms'], Frame = i)
                     except Exception as e:
-                        with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                            f.write('\nException raised while computing Hetero RDF: \n%s' % e)
+                        self._report(e, '\nException raised while computing Hetero RDF: \n%s')
 
 
 ##############################################################################
@@ -485,8 +511,7 @@ class Process(object):
                                                        Type = 'Full', Frame = i, System = self.System)
 
             except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing Full CoM Distances was: \n%s' % e)
+                self._report(e, '\nException raised while computing Full CoM Distances was: \n%s')
 
         try:
             if self.System['Homo'] and 'hocom' in self.Quantities['Homo']:
@@ -495,9 +520,7 @@ class Process(object):
                                                        CoM = self.result_cache['com'], Type = 'Homo',
                                                        Specie = x, Elements = self.result_cache['syms'], Frame = i) #W.r.t sub-system
         except Exception as e:
-            with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                f.write(
-                    '\nException raised while computing in the Homo CoM Distances block was: \n%s' % e)
+            self._report(e, '\nException raised while computing in the Homo CoM Distances block was: \n%s')
 
 
 ##############################################################################
@@ -512,8 +535,7 @@ class Process(object):
                     DistFuncs.Pair_Dist(Positions = self.result_cache['pos'], 
                                              Type = 'Full', Frame = i, System = self.System)
                 except Exception as e:
-                    with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                        f.write('\nException raised while computing pair distances: \n%s' % e)
+                    self._report(e, '\nException raised while computing pair distances: \n%s')
 
 
         if 'hopair_distance' in self.Quantities['Homo']:
@@ -523,9 +545,7 @@ class Process(object):
                         Positions = self.result_cache['pos'], Type = 'Homo', 
                         Specie=x, Elements=self.result_cache['syms'], Frame = i)
                 except Exception as e:
-                    with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                        f.write(
-                            '\nException raised while computing homo pair distances: \n%s' % e)
+                    self._report(e, '\nException raised while computing homo pair distances: \n%s')
 
         try:
             if self.System['Hetero']:
@@ -566,8 +586,7 @@ class Process(object):
                     ).ReturnAdj()
 
             except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing adjacency properties: \n%s' % e)
+                self._report(e, '\nException raised while computing adjacency properties: \n%s')
 
 
         #The following block computes homo-type adjacency properties
@@ -589,9 +608,8 @@ class Process(object):
                         Elements = self.result_cache['syms']
                         ).ReturnAdj()
                 except Exception as e:
-                    with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                        f.write('\nException raised while computing HoAdj%s properties: \n%s' %(x,e))
-                    
+                    self._report(e, '\nException raised while computing HoAdj%s properties: \n%s' %(x,e))
+
         #This next block computes adjacency properties for hetero-type interactions
         if self.System['Hetero']:
             if 'headj' in self.Quantities['Hetero']:
@@ -603,13 +621,12 @@ class Process(object):
                         Positions = self.result_cache['pos'],
                         Distances = self.result_cache['euc'],
                         R_Cut = self.result_cache['FullCut'],
-                        Type = 'Hetero', Frame = i, 
-                        Metals = self.Species, 
+                        Type = 'Hetero', Frame = i,
+                        Metals = self.Species,
                         Elements = self.result_cache['syms']
-                        ).ReturnAdj() 
+                        ).ReturnAdj()
                 except Exception as e:
-                    with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                        f.write('\nException raised while computing HeAdj properties: \n%s' % e)
+                    self._report(e, '\nException raised while computing HeAdj properties: \n%s')
         # This next section computes the mixing parameter
 
 ##############################################################################
@@ -627,8 +644,7 @@ class Process(object):
                                          Type = 'Full', Frame = i).calculate()
                 
             except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing CNA properties: \n%s' % e)
+                self._report(e, '\nException raised while computing CNA properties: \n%s')
 
 ##############################################################################
 
@@ -644,8 +660,7 @@ class Process(object):
                     Type = 'Full', Metal = None, Elements = None, 
                     Masses=self.All_Atoms.get_masses(), Frame = i)
             except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing Gyration properties: \n%s' % e)
+                self._report(e, '\nException raised while computing Gyration properties: \n%s')
 
 
         if 'hogyration' in self.Quantities['Homo']:
@@ -655,16 +670,13 @@ class Process(object):
                         System = self.System, Positions = self.result_cache['pos'], 
                         Type = 'Homo', Metal = Metal, Elements = self.result_cache['syms'], Frame = i)
                 except Exception as e:
-                    with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                        f.write('\nException raised while computing HomoGyration%s properties: \n%s' %(Metal,e))
-
+                    self._report(e, '\nException raised while computing HomoGyration%s properties: \n%s' %(Metal,e))
 
         if 'stat_radius' in self.Quantities['Full']:
             try:
                 Radii.Stat_Radius(self.System, self.result_cache['pos'], Frame = i)
             except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing Stat Radius properties: \n%s' % e)
+                self._report(e, '\nException raised while computing Stat Radius properties: \n%s')
 
 ##############################################################################
 
@@ -681,8 +693,7 @@ class Process(object):
                                                 HeteroBonds = None, Mix = None,
                                                 Metal = None, Species = None)
                 except Exception as e:
-                    with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                        f.write('\nException raised while computing Gyration properties: \n%s' % e)
+                    self._report(e, '\nException raised while computing Gyration properties: \n%s')
 
 ##############################################################################
 
@@ -699,7 +710,7 @@ class Process(object):
                 f.write("\nThis is approximately %.3fms for each atom.\n" % (
                     1000*(time.time() - self.timer)/self.NAtoms[int(i/self.Step)]))
         except Exception as e:
-            print(e)
+            log.info(e)
             
             
     def run_core(self):
@@ -735,6 +746,10 @@ class Process(object):
         :type startHnd: int, optional
         """
 
+        self.load_metadata()
+        if 'adj' in self.metadata and ('collect' in self.Quantities['Full'] or 'concert' in self.Quantities['Full']):
+            self.metadata.setdefault('collect', np.zeros(len(self.metadata['adj'])))
+            self.metadata.setdefault('concert', np.zeros(len(self.metadata['adj'])))
         for i in range(1, int((self.End - self.Start)/self.Step)):
 
             # This  block calculates the concertedness and collectivity of atom rearrangements
@@ -749,8 +764,7 @@ class Process(object):
                             self.metadata['concert'][i-2] = Adjacent.Concertedness(self.metadata['collect'][i-1],
                                                                                    self.metadata['collect'][i-3])
             except Exception as e:
-                with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                    f.write('\nException raised while computing collecivity and concertednes:\n%s' % e)
+                self._report(e, '\nException raised while computing collecivity and concertednes:\n%s')
 
         try:
             from Sapphire.CNA.Utilities import Pattern_Key as PK
@@ -771,8 +785,7 @@ class Process(object):
                         outfile.write(str(i) + ')\t' + str(thing)+'\n')
 
         except Exception as e:
-            with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                f.write('\nException raised while cleaning cna patterns: \n%s' % e)
+            self._report(e, '\nException raised while cleaning cna patterns: \n%s')
         """
         This next block creates a dictionary whose keys are the analysis tools to be implemented.
         The first entry is the function to be called.
@@ -783,7 +796,7 @@ class Process(object):
             self.functions_list = [o for o in getmembers(
                 Stats.Dist_Stats) if isfunction(o[1])]
             self.Stat_Keys = self.Stat_Tools.keys()
-            self.Meta_Keys = self.metadata.keys()
+            self.Meta_Keys = list(self.metadata.keys())
             self.Calc_Dict = {}
             for obj in self.Stat_Keys:
                 for item in self.functions_list:
@@ -811,29 +824,23 @@ class Process(object):
             """
 
             for A_Key in self.Stat_Keys:
+                func = self.Calc_Dict[A_Key][0]
                 for obj in self.Calc_Dict[A_Key][1:]:
                     try:
-                        self.metadata[A_Key +
-                                      obj] = np.empty((len(self.metadata[obj]),), dtype=object)
-                        # This is the initial distribution to which we shall make comparrisons
-                        Init = self.metadata[obj][0][1]
-                        for frame in range(len(self.metadata[obj])):
-                            try:
-                                # This is the y-axis of the distribution under consideration
-                                Temp = self.metadata[obj][frame][1]
-                                self.metadata[A_Key +
-                                              obj][frame] = self.Calc_Dict[A_Key][0](Init, Temp)
-                            except TypeError:
-                                continue
-                    except TypeError:
-                        with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-                            f.write("Type error raised by %s when performing statistical analysis of %s."
-                                    % (obj, A_Key))
+                        dist = np.asarray(self.metadata[obj], dtype=float)
+                        if dist.ndim != 2:
+                            raise TypeError('%s is not a per-frame distribution' % obj)
+                        Init = dist[0]  # reference distribution: the first frame
+                        self.metadata[A_Key + obj] = np.array([func(Init, frame) for frame in dist])
+                    except Exception as e:
+                        self._report(e, "\nError raised when performing %s analysis of %s: %%s" % (A_Key, obj))
             del(self.result_cache)
 
 
         if self.System['extend_xyz'] is not None:
             from Sapphire.Utilities import ExtendXYZ
+            if set(self.metadata) <= {'masterkey'}:
+                self.load_metadata()
             ExtendXYZ.Extend(
                 Traj=self.Dataset,
                 System=self.System,
@@ -841,8 +848,12 @@ class Process(object):
                 Names=self.System['extend_xyz']
             )
 
-    def write_meta(self):
-        
-        from Sapphire.IO import OutputInfoExec
-        for o in getmembers(OutputInfoExec):
-            self.metadata[o] = self.o 
+    def write_meta(self, filename='Metadata.pkl'):
+        """Pickle everything the run wrote (read back via :class:`Sapphire.IO.Reader.Reader`)."""
+        import pickle
+        if set(self.metadata) <= {'masterkey'}:
+            self.load_metadata()
+        path = self.Base + filename
+        with open(path, 'wb') as f:
+            pickle.dump(self.metadata, f, protocol=pickle.HIGHEST_PROTOCOL)
+        return path

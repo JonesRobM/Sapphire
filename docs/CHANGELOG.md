@@ -42,3 +42,12 @@
 ### Follow-up (2026-08-28, after first push)
 - CI was failing at the `ruff` step (24 residual findings, exit code 1) before `pytest` ran. All cleared: unused result bindings in `Process.calculate`, unused `as e`, dead `freq`/`fig`/`ax`/`Plot`/`f` locals, and `for self.x in …` in `IO/Output.py`.
 - `Mass_Activity` — nanoparticle mass is now Σ over atoms of the species' relative atomic mass (`ase Atoms.get_masses()`), converted to mg via `AMU_MG`. Replaces the single-species `mass_cu` constant.
+
+## Phase 6 — file-backed metadata, strict mode, logging (2026-08-28)
+- **`Sapphire.IO.Reader`** — reads a run directory (`Time_Dependent/`, `CNA/`, `Adjacency/`, `Exec/`) back into arrays keyed by the metadata names (`nn`, `pdf`, `cna_sigs`, `hocomAu`, `adj`, …). Tolerant of absent quantities. Any external code that writes `<frame> <values…>` under `Time_Dependent/` is readable the same way.
+- `Process.load_metadata()` / `Process.reader()`; `analyse()`, `write_meta()` (now `Metadata.pkl`) and the extended-xyz writer run on the Reader output instead of an empty dict.
+- `Process(strict=True)` re-raises instead of log-and-continue; 17 copy-pasted `except` blocks collapsed into `Process._report()`, which also emits a `logging` warning.
+- `Sapphire.Utilities.log` — 31 `print()` calls now go through the `Sapphire` logger.
+- `Stats.Dist_Stats.Kullback/JSD` returned the divergence *object*, never a value; now return the number. `JSD_Dist` no longer mutates its inputs.
+- `Utilities/ExtendXYZ.py` — `Names.pop(name)` (TypeError) fixed; writes a valid multi-frame xyz (`N`, comment, atoms per frame) rather than a trailing-count layout.
+- Tests: `test_reader.py` (parsing, shapes, adjacency ↔ NN consistency, analyse/JSD, write_meta, strict, extend_xyz), `test_graphing.py`.

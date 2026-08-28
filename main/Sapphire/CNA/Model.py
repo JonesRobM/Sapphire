@@ -11,6 +11,9 @@ from sklearn import svm
 import joblib
 
 from Sapphire.CNA import Utilities
+from Sapphire.Utilities.log import get_logger
+
+log = get_logger('Sapphire.CNA.Model')
 
 class Model_Maker():
     """
@@ -144,13 +147,13 @@ class Model_Maker():
         if [((4,2,1),6),((4,2,2),6)] in list(self.Pattern_Dict['masterkey']):
             self.twinning_planes=list(self.Pattern_Dict['masterkey']).index([((4,2,1),6),((4,2,2),6)])
             with open('Training_Info.txt', 'a')as f:
-                print('HCP planes:\t %s'  %self.twinning_planes)
+                log.info('HCP planes:\t %s'  %self.twinning_planes)
                 f.close()
             self.Bulk_Pattern_Rows.append(self.twinning_planes)
             
         if [((4,2,1),12)] in list(self.Pattern_Dict['masterkey']):
             self.FCC=list(self.Pattern_Dict['masterkey']).index([((4,2,1),12)])
-            print('FCC:\t\t %s' %self.FCC)
+            log.info('FCC:\t\t %s' %self.FCC)
             self.Bulk_Pattern_Rows.append(self.FCC)
             
         with open('Training_Info.txt', 'a')as f:

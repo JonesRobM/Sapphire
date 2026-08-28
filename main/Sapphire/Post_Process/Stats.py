@@ -46,8 +46,9 @@ class JSD_Dist():
 
         K=0
         Epsilon=0.000001
-        self.Q+=Epsilon
-        self.P+=Epsilon
+        # copies: never mutate the caller's distributions in place
+        self.Q = np.asarray(self.Q, dtype=float) + Epsilon
+        self.P = np.asarray(self.P, dtype=float) + Epsilon
         
         """
         * Change this to list comprehension for added efficiency 12/05/22
@@ -144,7 +145,7 @@ class Dist_Stats():
             
             """
             
-        KL = (KB_Dist(Ref_Dist,Test_Dist))
+        KL = KB_Dist(Ref_Dist, Test_Dist).calculate()
         #if frame+1 == len(Dist):
             #print(wikiquote.quotes(wikiquote.random_titles(max_titles=1)[0]))
         return KL
@@ -169,7 +170,7 @@ class Dist_Stats():
             
             """
         
-        J = (JSD_Dist(Ref_Dist,Test_Dist))
+        J = JSD_Dist(Ref_Dist, Test_Dist).calculate()
         return J
 
 class autocorr():
