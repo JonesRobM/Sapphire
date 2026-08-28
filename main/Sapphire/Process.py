@@ -41,7 +41,7 @@ class Process(object):
     information fed into the Quantities and System arguments.
     Each of the sub-modules may be indivudually interrogated.
    
-    An example of a given input scheme may be found in the IO/input.py file
+    An example of a given input scheme may be found in examples/run_analysis.py
    
     System = {
         'base_dir': '/path/to/directory/',
@@ -127,6 +127,9 @@ class Process(object):
 
 
         self.result_cache = {}
+        # Legacy in-memory store. Since the 1.0 refactor results are written to
+        # <base_dir>/Time_Dependent/<Quantity>; this stays so analyse()/write_meta() degrade gracefully.
+        self.metadata = {}
         """
         This list contains unique strings which are liable
         to require smaller storage objects in the metadata
@@ -200,6 +203,14 @@ class Process(object):
         """
 
         self.Calc_Quants = {}
+
+        # Absent quantity groups mean "nothing requested", not a crash.
+
+        self.Quantities = dict(self.Quantities or {})
+
+        for group in ('Full', 'Homo', 'Hetero'):
+
+            self.Quantities.setdefault(group, {})
         # This next sub-block instantiates the system object.
         # It parses the user input into a clean-up module to sanitise arguments.
         self.System = System_Clean._Clean_System(self.System).System
@@ -310,9 +321,9 @@ class Process(object):
 
 ##############################################################################
 
-            self.All_Times = list(range(
-                self.Start, self.End,self.Step))
-            self.Band = self.System['Band']
+        # Needed for mono- and bi-metallic runs alike (was only set in the bimetallic branch).
+        self.All_Times = list(range(self.Start, self.End, self.Step))
+        self.Band = self.System['Band']
 
 ##############################################################################
 
@@ -742,10 +753,10 @@ class Process(object):
                     f.write('\nException raised while computing collecivity and concertednes:\n%s' % e)
 
         try:
-            from CNA.Utilities import Pattern_Key as PK
+            from Sapphire.CNA.Utilities import Pattern_Key as PK
             self.pattern_key = list(PK().Key().keys())
 
-            if 'cna_patterns' in self.Quantities['Full']:
+            if 'cna_patterns' in self.Quantities['Full'] and 'cna_patterns' in self.metadata:
                 self.metadata['pattern_indices'] = np.empty(
                     (len(self.metadata['cna_patterns']),), dtype=object)
                 for j, t in enumerate(self.metadata['cna_patterns']):
@@ -822,7 +833,7 @@ class Process(object):
 
 
         if self.System['extend_xyz'] is not None:
-            from Sapphire.IO import ExtendXYZ
+            from Sapphire.Utilities import ExtendXYZ
             ExtendXYZ.Extend(
                 Traj=self.Dataset,
                 System=self.System,

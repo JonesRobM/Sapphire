@@ -1,19 +1,16 @@
 # Import standard Python and NumPy modules.
-import sys
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 #import glob and os
-import glob
 import os
 import datetime
 
 #import svc from sklearn
 from sklearn import svm
-from sklearn.externals import joblib
+import joblib
 
-from CNA import Utilities
+from Sapphire.CNA import Utilities
 
 class Model_Maker():
     """
@@ -187,7 +184,7 @@ class Model_Maker():
         self.Unknown_NAtom = []
         self.folder_path = self.System['Training_Data']
 
-        for filename in Pattern_Dict.files:
+        for filename in self.Pattern_Dict.files:
             if(filename == 'masterkey'):
                 continue
         
@@ -233,7 +230,7 @@ class Model_Maker():
         for i in range(3):
             self.X[:,i+1] /= np.asarray(self.Known_NAtom)
         
-        self.scaling = np.maximum(np.max(self.X, axis=0))
+        self.scaling = np.max(self.X, axis=0)
         
         self.X /= self.scaling
         self.y = self.Structure_List
@@ -244,17 +241,16 @@ class Model_Maker():
         
         with open('Training_Info.txt', 'a')as f:
             f.write('Coordination Number of each file:\n')
-            f.write(Coordination_Number)
+            f.write(str(self.Coordination_Number))
             
             f.write('\nNumber of Unrecognized Atoms in each file:\n')
-            f.writelines(Known_NAtom-np.sum(Known_Pattern_Arrays,axis=1))
+            f.write(str(np.asarray(self.Known_NAtom)-np.sum(self.Known_Pattern_Arrays,axis=1)))
         
             f.write('\nProcessed Known Data:\n')
             for i in range(len(self.X)):
                 f.write('%s \t %s \n' %(self.X[i,:], self.y[i]))
             f.write('Processed Unknown Data:\n')
-            f.write(self.prediction)
-            f.close()
+            f.write(str(getattr(self, 'prediction', 'n/a')))
         
         self.clf = svm.SVC()
         self.clf.fit(self.X, self.y)
@@ -266,8 +262,8 @@ class Model_Maker():
         
         with open('Training_Info.txt', 'a')as f:
             f.write('Support vectors:\n')
-            f.write(clf.support_vectors_)
+            f.write(str(self.clf.support_vectors_))
             f.write('\nIndices of support vectors:\n')
-            f.write(clf.support_)
+            f.write(str(self.clf.support_))
             f.write('\nNumber of support vectors for each class:\n')
-            f.write(clf.n_support_)
+            f.write(str(self.clf.n_support_))

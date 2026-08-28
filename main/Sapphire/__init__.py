@@ -1,4 +1,3 @@
-#Your face here
 """
 
 This is the main Sapphire library hub.
@@ -14,13 +13,15 @@ Post_Process contains the primary set of analysis tools
 
 Potentials contains a range of classical inter-atomic potentials
 
+Light computes optical spectra (optional pyGDM2 dependency).
+
 Tutorials contains example on how to run various types of Sapphire codes.
 
 Utilities contains useful features and main module docstrings.
 
 """
 
-from os.path import dirname, basename, isfile, join
-import glob
-modules = glob.glob(join(dirname(__file__), "*.py"))
-__all__ = [ basename(f)[:-3] for f in modules if isfile(f) and not f.endswith('__init__.py')]
+__version__ = "1.1.0.dev0"
+
+__all__ = ['CNA', 'Graphing', 'IO', 'Light', 'Post_Process', 'Potentials',
+           'Process', 'Tutorials', 'Utilities']

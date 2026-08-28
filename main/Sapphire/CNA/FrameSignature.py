@@ -50,7 +50,9 @@ class CNA(object):
         self.Frame = Frame
         if Adj is not None:
             try:
-                self.Adj = Adj.todense()
+                # np.asarray: .todense() gives np.matrix, whose 2-D column slices break scalar
+                # conversion under numpy>=2 (and were O(N) per lookup anyway).
+                self.Adj = np.asarray(Adj.todense())
             except Exception as e:
                 print(e)
         else:
@@ -140,10 +142,7 @@ class CNA(object):
 
         """
         
-        self.neigh = []
-        for i, atoms in enumerate(self.Adj[:,atom]):
-            if int(atoms) == 1:
-                self.neigh.append(i)
+        self.neigh = np.flatnonzero(self.Adj[:, atom] == 1).tolist()
         return self.neigh
         
     
@@ -165,11 +164,7 @@ class CNA(object):
 
         """
         
-        self.bonds = []
-        for i, x in enumerate(self.Adj[:,atom]):
-            if int(x) == 1:
-                if self.Adj[:,friend][i] == 1:
-                    self.bonds.append(i)
+        self.bonds = np.flatnonzero((self.Adj[:, atom] == 1) & (self.Adj[:, friend] == 1)).tolist()
         self.r = len(self.bonds)
         return self.r
                     
@@ -179,7 +174,7 @@ class CNA(object):
         self.perm = []
         for i, b in enumerate(self.bonds):
             for j, c in enumerate(self.bonds[i:]):
-                a = int(self.Adj[:,b][c])
+                a = int(self.Adj[c, b])
                 if a == 1:
                     self.s += a
                     self.perm.append((b,c))

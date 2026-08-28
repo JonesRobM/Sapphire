@@ -4,7 +4,7 @@ import numpy as np
 import os
 import time
 
-from CNA import Utilities
+from Sapphire.CNA import Utilities
 
 sys.path.append("../../")
 
