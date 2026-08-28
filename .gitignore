@@ -123,3 +123,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Sapphire-specific
+Logs/~$*
+*.traj
+main/Sapphire/Tutorials/Data/*.tar.gz
+__pycache/
+.ruff_cache/
