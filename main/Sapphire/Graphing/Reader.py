@@ -1,18 +1,9 @@
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from scipy.stats import norm
-import multiprocessing as mp
-from functools import partial
 import os
-import linecache
 import sys
-import traceback 
-from inspect import getmembers, isfunction
 
-from Graphing import Plot_Funcs
-from CNA.Utilities import Logo
+from Sapphire.CNA.Utilities import Logo
 
 """
 Supported=[
@@ -58,7 +49,7 @@ def Get_Heights_Ovito(CNAs, Masterkey, Norm = False):
         filename: The string name of your input xyz file
             Normally something like 'movie.xyz'
         
-        Metadata: The dictionary containng the time ordered CNA signatures 
+        CNAs: The dictionary containng the time ordered CNA signatures 
         and the number of observed occurances.
         
         
@@ -81,17 +72,17 @@ def Get_Heights_Ovito(CNAs, Masterkey, Norm = False):
     """
     
 
-    Heights=np.zeros((len(Metadata),len(Masterkey)))
+    Heights=np.zeros((len(CNAs),len(Masterkey)))
     
 
-    for frame in range(len(Metadata)):
-        Temp = Metadata[frame].keys()
+    for frame in range(len(CNAs)):
+        Temp = CNAs[frame].keys()
         for x in Masterkey:
             if x not in Temp:
         
-                Metadata[frame][x] = 0
+                CNAs[frame][x] = 0
 
-            Heights[frame][Masterkey.index(x)] = Metadata[frame][x]
+            Heights[frame][Masterkey.index(x)] = CNAs[frame][x]
             
             if Norm == True:
                 Heights[frame] = Heights[frame]/sum(Heights[frame])
@@ -485,7 +476,7 @@ class Read_Meta():
         return Val, Err
 
     def Add_Quant_Tuple(self, Quant, Range = None):
-        if Quant.lower is 'masterkey':
+        if Quant.lower() == 'masterkey':
             return None
         with open(self.Base+'Plotting_Info.txt', "a") as f:
             f.write("\nCurrently adding %s to the metadata.\n"%Quant)

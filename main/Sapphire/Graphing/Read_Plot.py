@@ -10,6 +10,9 @@ the output data can be
 import pickle
 from ase.io import read
 import numpy as np
+# numpy >= 2.0 renamed trapz -> trapezoid; support both.
+_trapz = getattr(np, 'trapezoid', None) or np.trapz  # noqa: NPY201
+
 import matplotlib.pyplot as plt
 
 def distance(a, b):
@@ -445,9 +448,9 @@ class Plot():
         for t in range(len(self.Time)):
             s = np.flatnonzero(self.System['comdistAu'][t] > 0)
             imax.append(s[-1])
-            v1 = np.trapz(self.System['comdistAu'][t][:s[-1]], 
+            v1 = _trapz(self.System['comdistAu'][t][:s[-1]], 
                          self.System['comspace'][:s[-1]], dx = 0.05) 
-            v2 = np.trapz(self.System['comdistAu'][t][:imax[0]], 
+            v2 = _trapz(self.System['comdistAu'][t][:imax[0]], 
                      self.System['comspace'][:imax[0]], dx = 0.05)
             Vol.append(abs(v1-v2))
         fig,ax = plt.subplots()

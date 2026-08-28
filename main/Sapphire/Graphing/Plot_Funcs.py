@@ -1,14 +1,12 @@
-import pickle
 import numpy as np
+# numpy >= 2.0 renamed trapz -> trapezoid; support both.
+_trapz = getattr(np, 'trapezoid', None) or np.trapz  # noqa: NPY201
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import norm
-import multiprocessing as mp
-from functools import partial
 import os
-import linecache
 import sys
-import traceback 
 from inspect import getmembers, isfunction
 import inspect
 
@@ -37,7 +35,7 @@ def Gauss(Data,Band, mon=False, Space = None):
         for i in range(len(Data)):
             A.append(norm.pdf(Space, Data[i],Band))
         Density = np.asarray(np.sum(A, axis=0))
-        Density = Density/np.trapz(Density, Space) #For normalisation purposes
+        Density = Density/_trapz(Density, Space) #For normalisation purposes
         if mon == False:
             Min = (np.diff(np.sign(np.diff(Density))) > 0).nonzero()[0] + 1 # local min
             R_Cut = Space[Min][np.where(Space[Min]>3)][0]
@@ -168,7 +166,7 @@ class Plot_Funcs():
                 f.write("\nData not found in metadata\n")
             return None
         
-    def autolabel(self, rects):
+    def autolabel(self, ax, rects):
         """Attach a text label above each bar in *rects*, displaying its height."""
         for rect in rects:
             height = rect.get_height()
@@ -402,9 +400,9 @@ class Plot_Funcs():
                 ax1Ticks = ax.get_xticks()
                 ax3Ticks = ax1Ticks
                 
-                ax3.set_xticks(ax2Ticks)
+                ax3.set_xticks(ax3Ticks)
                 ax3.set_xbound(ax.get_xbound())
-                ax3.set_xticklabels(tick_function(ax2Ticks))
+                ax3.set_xticklabels(self.tick_function(ax3Ticks))
                 ax3.set_xlabel('Temperature (K)')
     
             plt.savefig(self.Base + self.Images + '/' + str(Stat) + '.png' , dpi = 100, bbox_inches='tight')
@@ -431,9 +429,9 @@ class Plot_Funcs():
         elif type(Dists) is list:
             for Dist in Dists:
                                         
-                if Dist is "MidCoMDist":
+                if Dist == "MidCoMDist":
                     D = "Cluster Centre"
-                elif Dist is "CoMDist":
+                elif Dist == "CoMDist":
                     D = "Sub-cluster Centre"
                 else:
                     raise KeyError("Invalid distribution.\n")
@@ -551,7 +549,7 @@ class Plot_Funcs():
         fig,ax = plt.subplots()
         fig.set_size_inches(9,3)
         for Frame in Frames:
-            Int = [ np.trapz(self.Meta['CoMDist'][Frame][:x], self.Meta['CoMSpace'][:x]) for x in range(100) ]
+            Int = [ _trapz(self.Meta['CoMDist'][Frame][:x], self.Meta['CoMSpace'][:x]) for x in range(100) ]
             try:
                 ax.plot(self.Meta['CoMSpace'], Int, label = '%sps' %(self.Meta['SimTime'][Frame]))
             except KeyError:
