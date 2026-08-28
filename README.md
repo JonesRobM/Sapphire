@@ -6,60 +6,49 @@ Sapphire is a multi-faceted platform engineered to facilitate the design, charac
 
 Please, also be aware that Sapphire is still in a perpetual state of development. Should you recover any strange results, contact one of the authors of this document with any information you are able to provide about the problem and a hot-fix will be implemented if necessary. Otherwise, feedback on ease of use is always appreciated.
 
-Installation instructions:
+## Installation
 
-1: Create a python virtual environment
+Sapphire supports Python 3.10+.
 
-$ python3 -m pyvenv < MyEnv >
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[plot,changepoint]"      # core + plotting + change-point analysis
+# other extras: ml (SVM pattern classifier), light (pyGDM2 optics), quote, notebooks, dev, all
+```
 
-2: Source the environment
+Verify:
 
-$ source /path/to/< MyEnv >
+```bash
+python -c "import Sapphire; print(Sapphire.__version__)"
+pytest            # needs the dev extra
+```
 
-3: Link your jupyter notebook to this new environment
+## Quick start
 
-$ pip install --user ipykernel
+```python
+from Sapphire import Process
 
-$ python -m ipykernel install --user --name=myenv
+System = {"base_dir": "./run/", "movie_file_name": "movie.xyz", "extend_xyz": None,
+          "Homo": None, "Hetero": False,
+          "Start": 0, "End": 100, "Step": 1, "Skip": 1, "UniformPDF": False, "Band": 0.05}
+Quantities = {"Full": {"pdf": None, "adj": None, "nn": None, "agcn": None, "cna_sigs": None}}
 
-Check the file /home/user/.local/share/jupyter/kernels/< MyEnv >/kernel.json
+Process.Process(System=System, Quantities=Quantities)
+# results: ./run/Time_Dependent/<Quantity>  (one line per frame)
+```
 
-It should look like this
+Complete templates live in `examples/`; worked notebooks in `main/Sapphire/Tutorials/`.
+Tutorial MD data is fetched on demand — see `main/Sapphire/Tutorials/Data/ReadMe.md`.
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+## Repository layout
 
-{
- "argv": [
-  "/path/to/< MyEnv >",
-  "-m",
-  "ipykernel_launcher",
-  "-f",
-  "{connection_file}"
- ],
- "display_name": "< MyEnv >",
- "language": "python"
-}
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-
-4: Build Sapphire - its dependencies should be installed for you
-Do this from the base directory of Sapphire where you will find the setup.py file
-
-$ python -m pip install --upgrade .
-
-5: Sapphire should now appear in your site packages and will be useable via
-
-$ python
-
->>import Sapphire
-
->>from Sapphire.Post_Process import * 
-
-etc...
-
-
-To get started, visit the Tutorials folder which will guide you through various different utilities of Sapphire 
+| Path | Contents |
+|---|---|
+| `main/Sapphire/` | the package (`Process`, `Post_Process`, `CNA`, `IO`, `Graphing`, `Potentials`, `Light`, `Utilities`, `Tutorials`) |
+| `examples/` | driver-script templates |
+| `tests/` | pytest suite (import sweep, numerics, end-to-end smoke run on Au561) |
+| `docs/` | restoration plan, changelog, dependency notes, history-rewrite runbook |
+| `legacy/` | quarantined code kept for reference; not installed |
 
 Please check out our group page to learn more about the exciting work we do at the nanoscale! 
 
