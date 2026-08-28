@@ -9,7 +9,7 @@ Robert:
     
     It will be used in the following format during production runs...
     
-    import OutputInfo as OI
+    from Sapphire.IO import OutputInfo as OI
     
     for x in Metadata.keys():
     try:

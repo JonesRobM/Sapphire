@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.sparse as spa
 import os
 
 class LAE():
@@ -224,4 +223,4 @@ class Ele_NN():
         
     def write(self):
 
-        from Sapphire.IO import OutputInfoHetero as Out  # Case 3
+        pass  # Case 3

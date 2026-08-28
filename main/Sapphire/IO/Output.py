@@ -1,10 +1,7 @@
 import os
-import sys
-import warnings
 from inspect import getmembers, isfunction
 import inspect
 import numpy as np
-from ase.io import read
 import scipy.sparse as sp
 
 from Sapphire.Utilities import Initial
@@ -292,13 +289,13 @@ class Writer():
 
         """
         if Output_Type == 'Full':
-            from Utilities import OutputInfoFull as Out  # Case 1
+            from Sapphire.IO import OutputInfoFull as Out  # Case 1
 
         elif Output_Type == 'Homo':
-            from Utilities import OutputInfoHomo as Out  # Case 2
+            from Sapphire.IO import OutputInfoHomo as Out  # Case 2
 
         elif Output_Type == 'Hetero':
-            from Utilities import OutputInfoHetero as Out  # Case 3
+            from Sapphire.IO import OutputInfoHetero as Out  # Case 3
 
         self.Write_List = []
 
@@ -353,7 +350,7 @@ class Writer():
                 with open(self.output_error_file, 'a') as error:
                     error.write(AttrErr.format(str(self.x), str(e)))
         try:
-            from CNA.Utilities import Pattern_Key as PK
+            from Sapphire.CNA.Utilities import Pattern_Key as PK
             self.pattern_key = PK().Key()
             with open(self.System['base_dir'] + 'RecognisedPatterns.txt', 'w') as outfile:
                 for i, thing in enumerate(self.pattern_key.keys()):

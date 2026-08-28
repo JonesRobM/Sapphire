@@ -53,8 +53,8 @@ class JSD_Dist():
         * Change this to list comprehension for added efficiency 12/05/22
         """
         
-        for x in range(len(Q)):
-            K-=0.5*(P[x]*np.log(2*Q[x]/(Q[x]+P[x])) + Q[x]*np.log(2*P[x]/(P[x]+Q[x])))
+        P = np.asarray(self.P, dtype=float); Q = np.asarray(self.Q, dtype=float)
+        K -= 0.5*np.sum(P*np.log(2*Q/(Q+P)) + Q*np.log(2*P/(P+Q)))
         return np.sqrt(K)
 
 

@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import Epsilon_ExpClass as Epsilon
+from Sapphire.Light import Epsilon_ExpClass as Epsilon
 
 from pyGDM2 import structures
 from pyGDM2 import fields

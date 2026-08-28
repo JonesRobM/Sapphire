@@ -1,8 +1,12 @@
-#Your face here
-from .ClassSpec import Spectrum
-import Epsilon_DFT as dft
-import Epsilon_ExpClass as exp
-from os.path import dirname, basename, isfile, join
-import glob
-modules = glob.glob(join(dirname(__file__), "*.py"))
-__all__ = [ basename(f)[:-3] for f in modules if isfile(f) and not f.endswith('__init__.py')]
+"""Optical response: dielectric functions and pyGDM2-based spectra (requires the `light` extra)."""
+
+from . import Epsilon_DFT as dft
+from . import Epsilon_ExpClass as exp
+
+__all__ = ['ClassSpec', 'Epsilon_DFT', 'Epsilon_ExpClass', 'dft', 'exp']
+
+try:  # pyGDM2 is optional
+    from .ClassSpec import Spectrum  # noqa: F401
+    __all__.append('Spectrum')
+except ImportError:  # pragma: no cover
+    pass

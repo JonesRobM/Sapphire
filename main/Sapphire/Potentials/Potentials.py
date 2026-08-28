@@ -1,4 +1,3 @@
-from Utilities import GuptaParameters
 
 class Potential():
     

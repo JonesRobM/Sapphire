@@ -1,4 +1,7 @@
 import numpy as np
+# numpy >= 2.0 renamed trapz -> trapezoid; support both.
+_trapz = getattr(np, 'trapezoid', None) or np.trapz  # noqa: NPY201
+
 from scipy.stats import norm
 import os
 
@@ -101,7 +104,7 @@ class Gauss():
         for i in range(len(self.Data)):
             A.append(norm.pdf(self.Space, self.Data[i], self.Band))
         self.Density = np.asarray(np.sum(A, axis=0))
-        self.Density = self.Density / np.trapz( self.Density, self.Space) #For normalisation purposes
+        self.Density = self.Density / _trapz( self.Density, self.Space) #For normalisation purposes
         self.Density[np.where(self.Density < 0.01)] = 0 #This smooths near zero elements into zeroes so that minima may be found - change at your own peril
 
         Min = (np.diff(np.sign(np.diff(self.Density))) > 0).nonzero()[0] + 1 # local min
@@ -414,7 +417,7 @@ class Epan():
     def calculate(self):
 
         self.Density = np.array( [0.75*sum([max( 1 - ((i - j)/self.Band)**2, 0) for i in self.Data ]) for j in self.Space] )
-        self.Density /= np.trapz(self.Density, self.Space)
+        self.Density /= _trapz(self.Density, self.Space)
     
         Min = (np.diff(np.sign(np.diff(self.Density))) > 0).nonzero()[0] + 1 # local min
         try:

@@ -1,16 +1,8 @@
-from ase import Atoms
 from ase.io import read
 import numpy as np
 from matplotlib import pyplot as plt
-import time
-from scipy.interpolate import interp1d
 import seaborn as sns
-import pickle
-import numpy as np
-from itertools import groupby
-from collections import namedtuple
 from scipy.ndimage import gaussian_filter1d
-import math
 
 """CONSTANTS TO BE UPDATED AND INSERTED MANUALLY BY THE USER !!!"""
 
@@ -67,6 +59,7 @@ def catalytic_analysis (filename, agcn):
                 spec=spec+sitecurrent
             site[h]=spec
         current.append(site)
+        mass_NP = len(traj[j]) * mass_cu  # nanoparticle mass from atom count (was undefined)
         mass_activity.append(-site[int(1299-applied_V*1000)]*surf_area/mass_NP)
             
     """Plotting the current density at different applied potentials for different

@@ -6,7 +6,7 @@ Robert:
     It is likely that these shall soon be seperated for ease of implementation.
     It will be used in the following format during production runs...
     
-    import OutputInfo as OI
+    from Sapphire.IO import OutputInfo as OI
     
     for x in Metadata.keys():
     try:
