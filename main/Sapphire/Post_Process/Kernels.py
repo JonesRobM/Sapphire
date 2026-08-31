@@ -1,6 +1,25 @@
 import numpy as np
+from Sapphire.Utilities import errors
 # numpy >= 2.0 renamed trapz -> trapezoid; support both.
 _trapz = getattr(np, 'trapezoid', None) or np.trapz  # noqa: NPY201
+
+_CHUNK = 20000  # data points per broadcast block (memory ~ CHUNK x len(Space) floats)
+
+
+def _gaussian_sum(data, space, band):
+    """sum_i N(space; data_i, band) without a Python loop over the data."""
+    out = np.zeros_like(space, dtype=float)
+    for k in range(0, len(data), _CHUNK):
+        out += norm.pdf(space[None, :], data[k:k + _CHUNK, None], band).sum(axis=0)
+    return out
+
+
+def _epanechnikov_sum(data, space, band):
+    out = np.zeros_like(space, dtype=float)
+    for k in range(0, len(data), _CHUNK):
+        u = (data[k:k + _CHUNK, None] - space[None, :]) / band
+        out += 0.75 * np.maximum(1.0 - u**2, 0.0).sum(axis=0)
+    return out
 
 from scipy.stats import norm
 import os
@@ -46,7 +65,8 @@ class Gauss():
             self.Space = np.linspace(0, 6.0, 200)
 
         self.Data=np.array(self.Data)
-        self.Data = np.array([a for a in Data if a < (self.Space[-1] + 4*self.Band)])
+        Data = np.asarray(Data, dtype=float).ravel()
+        self.Data = Data[Data < (self.Space[-1] + 4*self.Band)]
         self.calculate()
         self.write()
             
@@ -99,11 +119,7 @@ class Gauss():
         Gaussian distributed about the position on the grid under consideration.
         """
 
-        A=[] 
- 
-        for i in range(len(self.Data)):
-            A.append(norm.pdf(self.Space, self.Data[i], self.Band))
-        self.Density = np.asarray(np.sum(A, axis=0))
+        self.Density = _gaussian_sum(self.Data, self.Space, self.Band)
         self.Density = self.Density / _trapz( self.Density, self.Space) #For normalisation purposes
         self.Density[np.where(self.Density < 0.01)] = 0 #This smooths near zero elements into zeroes so that minima may be found - change at your own peril
 
@@ -111,7 +127,8 @@ class Gauss():
         try:
             self.R_Cut = self.Space[Min][np.where(self.Space[Min]>3)][0] #We expect a minimum in this region
             
-        except Exception:
+        except Exception as e:
+            errors.report(e, 'Kernel density estimate failed: %s', base_dir=self.System['base_dir'] if self.System else None)
             return None
         
     def ReturnRCut(self):
@@ -238,7 +255,8 @@ class Uniform():
             self.Space = np.linspace(0, 6.0, 200)
 
         self.Data=np.array(self.Data)
-        self.Data = np.array([a for a in Data if a < (self.Space[-1] + 4*self.Band)])
+        Data = np.asarray(Data, dtype=float).ravel()
+        self.Data = Data[Data < (self.Space[-1] + 4*self.Band)]
         self.calculate()
         self.write()
             
@@ -265,23 +283,19 @@ class Uniform():
                 out.close()
         else:
             pass
-    def minifunc(self, i):
-        X = self.Data - i
-        A1 = -0.5*self.Band <= X
-        A2 = X <= 0.5*self.Band
-        Temp = np.multiply(A1, A2)
-        Temp = Temp/self.Band
-        return np.sum(Temp)/(len(self.Data))
-      
     def calculate(self):
-
-        self.Density = np.array([ self.minifunc(i) for i in self.Space])
+        # count of data within +-Band/2 of each grid point, via a sorted search
+        d = np.sort(self.Data)
+        lo = np.searchsorted(d, self.Space - 0.5 * self.Band, side='left')
+        hi = np.searchsorted(d, self.Space + 0.5 * self.Band, side='right')
+        self.Density = (hi - lo) / self.Band / max(len(d), 1)
         Min = (np.diff(np.sign(np.diff(self.Density))) > 0).nonzero()[0] + 1 # local min
     
         try:
             self.R_Cut = self.Space[Min][np.where(self.Space[Min]>3)][0] #We expect a minimum in this region
             
-        except Exception:
+        except Exception as e:
+            errors.report(e, 'Kernel density estimate failed: %s', base_dir=self.System['base_dir'] if self.System else None)
             return None
         
     def ReturnRCut(self):
@@ -386,7 +400,8 @@ class Epan():
             self.Space = np.linspace(0, 6.0, 200)
 
         self.Data=np.array(self.Data)
-        self.Data = np.array([a for a in Data if a < (self.Space[-1] + 4*self.Band)])
+        Data = np.asarray(Data, dtype=float).ravel()
+        self.Data = Data[Data < (self.Space[-1] + 4*self.Band)]
         self.calculate()
         self.write()
             
@@ -416,14 +431,15 @@ class Epan():
         
     def calculate(self):
 
-        self.Density = np.array( [0.75*sum([max( 1 - ((i - j)/self.Band)**2, 0) for i in self.Data ]) for j in self.Space] )
+        self.Density = _epanechnikov_sum(self.Data, self.Space, self.Band)
         self.Density /= _trapz(self.Density, self.Space)
     
         Min = (np.diff(np.sign(np.diff(self.Density))) > 0).nonzero()[0] + 1 # local min
         try:
             self.R_Cut = self.Space[Min][np.where(self.Space[Min]>3)][0] #We expect a minimum in this region
             
-        except Exception:
+        except Exception as e:
+            errors.report(e, 'Kernel density estimate failed: %s', base_dir=self.System['base_dir'] if self.System else None)
             return None
         
     def ReturnRCut(self):

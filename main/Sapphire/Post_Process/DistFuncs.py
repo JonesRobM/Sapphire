@@ -1,7 +1,7 @@
 import numpy as np
+from scipy.spatial.distance import cdist, pdist
+from Sapphire.Utilities import errors
 import os
-import operator
-import functools
 from Sapphire.Utilities.log import get_logger
 
 log = get_logger('Sapphire.Post_Process.DistFuncs')
@@ -27,7 +27,8 @@ def CoMDist(positions, CoM = None, homo = False, specie = None, elements = None)
         return [distance(x, CoM) for x in Temp]
         
 def get_CoM(positions):
-    return (np.average(positions))
+    """Geometric centre (unweighted) of an (N, 3) array."""
+    return np.average(np.asarray(positions, dtype=float), axis=0)
 
 def get_subspecieslist(specie, elements, positions):
     Temp = np.column_stack((elements,positions))
@@ -35,75 +36,33 @@ def get_subspecieslist(specie, elements, positions):
     return np.array(np.delete(Temp,0,1), dtype = np.float64)
 
 def Euc_Dist(positions, homo = False, specie = None, elements = None):
-    
-    if homo == False:
-        Distances=[]
-        for i in range(len(positions)-1):
-            for j in range(i+1,len(positions)):
-                Euc = distance(positions[i],positions[j])
+    """All pair distances |r_i - r_j| for i < j (row-major order), as a 1-D array.
 
-                Distances.append(Euc)
-        return Distances
-    
-    elif homo:
-        Distances = []
-        Temp = get_subspecieslist(specie, elements, positions)
-        if (len(Temp)>1) is False:
-            return None
-        else:
-            for i in range(len(Temp)-1):
-                for j in range(i+1,len(Temp)):
-                    Euc = distance(Temp[i],Temp[j])
-
-                    Distances.append(Euc)
-            return Distances
-    else:
-        log.info("Variables used were:\n%s\n%s\n%s\n" %(homo, specie, (elements[0], elements[1])))
-        raise TypeError("Euc_Dist function has encountered an error.\n")
-        
-        
-def Hetero(positions, species, elements):
-        
-    """ Robert
-    
-    Note that no species need to be defined for this function as it is understood that LoDiS
-    only has provision for mono/bimetallic systems (for the time being) although this
-    function could be further generalised (albeit it a potential cost to computation time).
+    With ``homo=True`` only atoms of ``specie`` are considered; returns None if fewer than two.
+    Equivalent to the original double loop but via ``scipy.spatial.distance.pdist``.
     """
-    
+    if homo:
+        Temp = get_subspecieslist(specie, elements, positions)
+        if len(Temp) < 2:
+            return None
+        return pdist(np.asarray(Temp, dtype=float))
+    return pdist(np.asarray(positions, dtype=float))
+
+def Hetero(positions, species, elements):
+    """Distances between every atom of species[0] and every atom of species[1]: (N_A, N_B) array."""
     TempA = get_subspecieslist(species[0], elements, positions)
     TempB = get_subspecieslist(species[1], elements, positions)
-    try:
-        np.shape(TempA)[1]
-        try:
-            np.shape(TempB)[1]
-            Dist=[]
-            for a in TempA:
-                Temp = [ distance(a,b) for b in TempB]
-                Dist.append(Temp)
-            return Dist
-        except IndexError:
-            Dist=[]
-            for x in TempA:
-                Dist.append( [distance(x, TempB) ])
-            return np.asarray(functools.reduce(operator.iconcat, Dist, []))
-            log.info("You have only one of a specific atom type in your simulation. I hope that this is correct.", "\n")
-    except IndexError:
-        try:
-            np.shape(TempB)[1]           
-            return [ distance(TempA, b) for b in TempB ]
-            log.info("You have only one of a specific atom type in your simulation. I hope that this is correct.", "\n")
-        except IndexError:
-            log.info("You only have two atoms.\nIs this correct?", "\n")
-            return None
-        
+    return cdist(np.atleast_2d(TempA), np.atleast_2d(TempB))
+
 
 class CoM_Dist():
     
     def __init__(self, System, Positions, CoM = None, Type = False, Specie = None, Elements = None, Frame = None):
         self.System = System
         self.Positions = Positions
-        self.CoM =Positions
+        # Reference point: the caller's CoM if given, else the geometric centre.
+        # (Previously this was set to Positions itself, so every 'CoMDist' was a 3-vector, not a distance.)
+        self.CoM = get_CoM(Positions) if CoM is None else np.asarray(CoM, dtype=float)
         self.Type = Type
         self.Specie= Specie
         self.Elements = Elements
@@ -141,8 +100,8 @@ class CoM_Dist():
             self.Dist = np.array([distance(x, self.CoM) for x in self.Positions])
         elif self.Type == 'Homo':
             Temp = get_subspecieslist(self.Specie, self.Elements, self.Positions)
+            self.CoM = get_CoM(Temp)  # sub-species centre first, then distances to it
             self.Dist = np.array([distance(x, self.CoM) for x in Temp])
-            self.CoM = get_CoM(Temp)
             self.MidDist = np.array([distance(x, self.CoM) for x in Temp])
         
     def write(self):
@@ -269,45 +228,23 @@ class RDF():
             pass
         
     def calculate(self):
-        
-        if not self.Type == 'Hetero':
-            for i, atom1 in enumerate(self.Positions):
-                for j in range(self.Res):
-                    r1 = j * self.dr #Inner radius for the spherical shell
-                    r2 = r1 + self.dr #Outer radius increased by increment dr
-                    v1 = 4.0 / 3.0 * np.pi * r1**3
-                    v2 = 4.0 / 3.0 * np.pi * r2**3
-                    self.Volumes[j] += v2 - v1 #Volume to consider when evaluating distribution
-            
-                for atom2 in self.Positions[i:]:
-                    self.Distance = distance(atom1, atom2)
-                    index = int(self.Distance / self.dr)
-                    if 0 < index < self.Res:
-                        self.G[index] += 2 #Identifies when there is an atom at this distance
-                        
-            for i, value in enumerate(self.G):
-                self.G[i] = value / self.Volumes[i] #Rescaling the distribution with respect to enclosing volume
-        elif self.Type == 'Hetero':
-            TempA = get_subspecieslist(self.Species[0], self.Elements, self.Positions)
-            TempB = get_subspecieslist(self.Species[1], self.Elements, self.Positions)
-            for i, atom1 in enumerate(TempA):
-                for j in range(self.Res):
-                    r1 = j * self.dr #Inner radius for the spherical shell
-                    r2 = r1 + self.dr #Outer radius increased by increment dr
-                    v1 = 4.0 / 3.0 * np.pi * r1**3
-                    v2 = 4.0 / 3.0 * np.pi * r2**3
-                    self.Volumes[j] += v2 - v1 #Volume to consider when evaluating distribution
-    
-                for atom2 in TempB:
-                    self.Distance = distance(atom1, atom2)
-                    index = int(self.Distance / self.dr)
-                    if 0 < index < self.Res:
-                        self.G[index] += 2 #Identifies when there is an atom at this distance
-            
-        
-            for i, value in enumerate(self.G):
-                self.G[i] = value / self.Volumes[i] #Rescaling the distribution with respect to enclosing volume
-                
+        """Shell-count RDF: G[j] = 2 x (pairs with j*dr <= r < (j+1)*dr) / (N_ref x shell volume)."""
+        if self.Type == 'Hetero':
+            A = get_subspecieslist(self.Species[0], self.Elements, self.Positions)
+            B = get_subspecieslist(self.Species[1], self.Elements, self.Positions)
+            r = cdist(np.atleast_2d(A), np.atleast_2d(B)).ravel()
+            n_ref = len(np.atleast_2d(A))
+        else:
+            P = np.asarray(self.Positions, dtype=float)
+            r = pdist(P)
+            n_ref = len(P)
+        idx = (r / self.dr).astype(int)
+        idx = idx[(idx > 0) & (idx < self.Res)]
+        self.G = 2.0 * np.bincount(idx, minlength=self.Res).astype(float)
+        j = np.arange(self.Res)
+        self.Volumes = n_ref * (4.0 / 3.0) * np.pi * (((j + 1) * self.dr) ** 3 - (j * self.dr) ** 3)
+        self.G = self.G / self.Volumes
+
     def write(self):
         
         if self.Type == 'Full':
@@ -406,13 +343,13 @@ class Pair_Dist():
             try:
                 self.distances = Euc_Dist(self.Positions, True, self.Specie, self.Elements)
                 #(positions, homo = False, specie = None, elements = None)
-            except Exception:
-                pass
+            except Exception as e:
+                errors.report(e, 'Pair-distance histogram failed: %s', base_dir=self.System['base_dir'] if self.System else None)
         elif self.Type == 'Hetero':
             try:
                 self.distances = Hetero(self.Positions, self.Specie, self.Elements)
-            except Exception:
-                pass
+            except Exception as e:
+                errors.report(e, 'Pair-distance histogram failed: %s', base_dir=self.System['base_dir'] if self.System else None)
         else:
             self.distances = Euc_Dist(self.Positions)
         

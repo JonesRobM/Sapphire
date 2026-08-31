@@ -1,85 +1,113 @@
-from ase.io import read
+"""Oxygen-reduction mass activity from the atop generalised coordination number (aGCN).
+
+Model: Rossi, Asara & Baletto, *ChemPhysChem* **20**, 3037 (2019), doi:10.1002/cphc.201900564,
+building on Rück, Bandarenka, Calle-Vallejo & Gagliardi, *J. Phys. Chem. Lett.* **9**, 4463 (2018).
+
+* Eq. 5  GCN(j) = Σ_{i ∈ neighbours of j} CN(i) / CN_max,  CN_max = 12 (fcc atop site).
+  Sapphire computes exactly this per atom as ``agcn`` (``Adjacent.agcn_generator``).
+* Eq. 6  relative activity of a site with GCN = α (volcano, apex at α = 8.33, unity ≈ Pt(111) at 7.5)::
+
+      A_l(α) = exp( 3.14 α − 23.40)   α ≤ 8.33
+      A_r(α) = exp(−4.96 α + 42.18)   α > 8.33
+
+  Only sites with GCN above a threshold count (paper: > 6; a stricter variant uses > 7.5).
+* j̃_NP = Σ_sites A(α_i)  — current relative to one Pt(111) site.
+* Eq. 7  MA_NP = j_flat / ρ_sites · j̃_NP / M_NP.  With j_flat = 2 mA cm⁻² and
+  ρ_sites = 1.503·10¹⁵ cm⁻² this is 4.107 A mg⁻¹ · j̃_NP / N_NP for pure Pt. Here the mass is
+  Σ_atoms m_i (species-weighted, from ASE), so the same expression covers alloys.
+
+The volcano parameters are for Pt; for other metals pass your own ``branches``.
+"""
+from __future__ import annotations
+
 import numpy as np
-from matplotlib import pyplot as plt
-import seaborn as sns
-from scipy.ndimage import gaussian_filter1d
+from ase.data import atomic_masses, atomic_numbers
 
-"""CONSTANTS TO BE UPDATED AND INSERTED MANUALLY BY THE USER !!!"""
-
-def beta(T):
-    return 1/((8.6173303E-5)*(T))
-
-sigma=2 #how much you want to smoothen out your functions?
-applied_V=1.1 
-
-U_bins = 1299 #binning of the voltages (v)
- 
-#Change the temperature at whihc you want the catalytic activities to be performed at.
-r=1.28*10**(-9) #atomic radius of your atoms (in cm)?
-AMU_MG = 1.66053906660e-21  # 1 atomic mass unit in mg; masses come from ase Atoms.get_masses()
-C = 12.56 # constant in equation, to be calculated from initial conditions
-
-def heatmap(agcn):
-    occ_long=[]
-    for i in range(len(agcn)):
-        (n, bins, patches)=plt.hist(agcn[i], bins=90, density=True)
-        occ_long.append(n)
-    occ_long=np.asarray(occ_long)
-    corrected_occ=np.zeros((90, len(agcn)))
-    for i in range(90):
-        corrected_occ[-i-1]=np.asarray(occ_long[:, i])
-    sns.heatmap(corrected_occ, vmax=1, xticklabels=False, yticklabels=False, cbar=False)
-    #plt.savefig(str(folder)+’occurrency.png’, bbox_inches=’tight’, dpi=400)
-    #plt.show()
-    #plt.close()
-    return corrected_occ
+J_FLAT_A_PER_CM2 = 2.0e-3          # Pt(111) reference current density, A cm^-2
+SITE_DENSITY_PER_CM2 = 1.503e15    # atop sites on Pt(111), cm^-2
+AMU_MG = 1.66053906660e-21         # 1 u in mg
+PT_BRANCHES = ((3.14, -23.40), (-4.96, 42.18))   # (slope, intercept) of ln A: left, right
 
 
+def branch_intersection(branches=PT_BRANCHES):
+    """GCN at which the two printed branches are equal (continuous volcano)."""
+    (ml, cl), (mr, cr) = branches
+    return (cr - cl) / (ml - mr)
 
-def catalytic_analysis (filename, agcn):
-    corrected_occ = heatmap(agcn)
-    traj = read(filename, index = ':')
-    current=[]; mass_activity=[]; y=[]
-    for j in range(0, len(agcn)):
-        surf_area=0
-        for i in range(len(agcn[j])):
-            once = 4*np.pi*r**2*(1-agcn[j][i]/12)
-            surf_area = surf_area + once
-        y.append(surf_area)
-        site=np.zeros((U_bins))
-        for h in range(U_bins):
-            spec=0
-            for m in range(len(corrected_occ)):
-                if m<31:
-                    sitecurrent = C*np.exp(((0.162 * m/10 - 1.11)-(h*0.001))*beta)*m/10*corrected_occ[m][j]/len(agcn[j])
-                elif 31<=m<81:
-                    sitecurrent = C*np.exp(((-0.067 * m/10 - 0.416)-(h*0.001))*beta)*m/10*corrected_occ[m][j]/len(agcn[j])
-                else:
-                    sitecurrent = C*np.exp(((-0.222 * m/10 + 0.849)-(h*0.001))*beta)*m/10*corrected_occ[m][j]/len(agcn[j])
-                spec=spec+sitecurrent
-            site[h]=spec
-        current.append(site)
-        # Nanoparticle mass: sum over species of (count x relative atomic mass), in mg.
-        mass_NP = float(np.sum(traj[j].get_masses())) * AMU_MG
-        mass_activity.append(-site[int(1299-applied_V*1000)]*surf_area/mass_NP)
-            
-    """Plotting the current density at different applied potentials for different
-    time steps."""
-    potentials = np.linspace(-1.299, 0, U_bins)
-    plt.plot(potentials, current[int(len(traj)-1)], color='orange',lw=3, label='final')
-    plt.plot(potentials, current[int(len(traj)/2)-1], color='purple', label='middle')
-    plt.plot(potentials, current[0], color='r', label='initial')
-    
-    plt.xlabel('V vs RHE')
-    plt.ylabel('j (mA/cm^2)')
-    plt.savefig('current densities.png', bbox_inches='tight', dpi=200)
-    plt.show()
-    plt.close()
-    """Mass activity plots at desired applied_V."""
-    plt.xlabel('Time (ns)')
-    plt.ylabel('MA (mA/mg)')
-    plt.plot(mass_activity, linestyle='dashed', color='k')
-    plt.plot(gaussian_filter1d(mass_activity, sigma), linestyle='solid', color='k')
-    plt.savefig('mass_activity.png', bbox_inches='tight', dpi=200)
-    plt.show()
-    plt.close()
+
+# DECISION (R. M. Jones, 2026-08-29): the paper states the apex is at GCN = 8.33, but the printed
+# coefficients intersect at 8.096 (A = 6.9); at 8.33 they give 15.7 (left) vs 2.4 (right). Sapphire
+# switches branches where they meet, so A(α) is continuous. Pass apex=8.33 for the literal reading.
+# Recorded in docs/CHANGELOG.md and docs/RESTORATION_PLAN.md.
+GCN_APEX = branch_intersection()
+
+
+def site_activity(gcn, branches=PT_BRANCHES, apex=None, gcn_min=6.0):
+    """Relative ORR activity of each site (Eq. 6). Sites with GCN <= gcn_min contribute 0."""
+    g = np.asarray(gcn, dtype=float)
+    (ml, cl), (mr, cr) = branches
+    if apex is None:
+        apex = branch_intersection(branches)
+    a = np.where(g <= apex, np.exp(ml * g + cl), np.exp(mr * g + cr))
+    return np.where(g > gcn_min, a, 0.0)
+
+
+def relative_current(gcn, **kw):
+    """j̃_NP: summed relative activity of one frame's sites."""
+    return float(site_activity(gcn, **kw).sum())
+
+
+def prefactor_A_per_mg(masses_u):
+    """j_flat / ρ_sites / M_NP  in A mg⁻¹ for a particle whose atoms have masses ``masses_u`` (u).
+    For N Pt atoms this equals 4.107 / N."""
+    m_mg = float(np.sum(masses_u)) * AMU_MG
+    return J_FLAT_A_PER_CM2 / SITE_DENSITY_PER_CM2 / m_mg
+
+
+def masses_from_symbols(symbols):
+    return np.array([atomic_masses[atomic_numbers[s]] for s in symbols])
+
+
+def mass_activity(gcn, symbols=None, masses_u=None, **kw):
+    """Mass activity (A mg⁻¹) of one frame from per-atom aGCN and composition (Eq. 7)."""
+    if masses_u is None:
+        if symbols is None:
+            raise ValueError("give either symbols or masses_u")
+        masses_u = masses_from_symbols(symbols)
+    return prefactor_A_per_mg(masses_u) * relative_current(gcn, **kw)
+
+
+def mass_activity_series(agcn_frames, symbols, **kw):
+    """Per-frame mass activity for a trajectory: ``agcn_frames`` is (frames, atoms)."""
+    masses = masses_from_symbols(symbols)
+    return np.array([prefactor_A_per_mg(masses) * relative_current(f, **kw) for f in agcn_frames])
+
+
+def gcn_histogram(agcn_frames, bins=np.arange(0, 12.25, 0.25)):
+    """Site-count histogram per frame on a fixed GCN grid -> (frames, bins). For heat maps."""
+    return np.array([np.histogram(f, bins=bins)[0] for f in agcn_frames]), bins
+
+
+def from_run(base_dir, gcn_min=6.0, write=True):
+    """Compute the mass-activity series from a Sapphire run directory (needs ``agcn``).
+
+    Reads ``Time_Dependent/AGCN`` and the trajectory's symbols via the run's ``Exec``/movie,
+    writes ``Time_Dependent/Stats/MassActivity`` and returns (frames, MA in A/mg).
+    """
+    import os
+    from ase.io import read
+    from Sapphire.IO.Reader import Reader
+    r = Reader(base_dir)
+    agcn = np.asarray(r.load("agcn"), dtype=float)
+    frames = r.frames("agcn")
+    movie = next((f for f in os.listdir(base_dir) if f.endswith((".xyz", ".traj"))), None)
+    if movie is None:
+        raise FileNotFoundError("no trajectory file next to the run output to read symbols from")
+    symbols = read(os.path.join(base_dir, movie), index=0).get_chemical_symbols()
+    ma = mass_activity_series(agcn, symbols, gcn_min=gcn_min)
+    if write:
+        os.makedirs(os.path.join(base_dir, "Time_Dependent", "Stats"), exist_ok=True)
+        with open(os.path.join(base_dir, "Time_Dependent", "Stats", "MassActivity"), "w") as f:
+            for fr, v in zip(frames, ma):
+                f.write(f"{fr} {v}\n")
+    return frames, ma

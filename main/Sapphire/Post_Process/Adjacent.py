@@ -1,11 +1,11 @@
 import numpy as np
 import scipy.sparse as spa
+from scipy.spatial.distance import squareform
 import os
-import functools
-import operator
 from ase.data import covalent_radii, atomic_numbers
 from Sapphire.Post_Process import DistFuncs
 from Sapphire.Utilities.log import get_logger
+from Sapphire.Utilities import errors
 
 log = get_logger('Sapphire.Post_Process.Adjacent')
 
@@ -102,7 +102,7 @@ class Adjacency_Matrix():
         self.Positions = Positions
         self.Distances = Distances
         self.R_Cut = R_Cut
-        self.Type = Type
+        self.Type = Type or 'Full'   # standalone callers rarely pass Type
         self.Frame = Frame
         self.Metals = Metals #Species present
         self.Elements = Elements #List of atomic elements in 1:1 correspondance with coordinates
@@ -114,11 +114,10 @@ class Adjacency_Matrix():
         self.Surf_Area = Surf_Area #Self explanatory
         self.Surf_Atoms = Surf_Atoms #Number of surface atoms
         self.calculate_adj() #Calculates adjacency matrix, nothing can happen without this
-        
-        #Call the write objects to handle everything else
-        #Note that subsequent quantities are computed via cascading if statements
-        #It's inellegent but keeps everything related under one roof
-        self.write()
+        # Derived quantities + files are handled by write(); without a System (standalone use)
+        # there is nowhere to write, so only the matrix is produced.
+        if self.System is not None:
+            self.write()
 
     def ensure_dir(self, base_dir='', file_path=''):
         """
@@ -145,61 +144,33 @@ class Adjacency_Matrix():
             pass
 
     def calculate_adj(self):
+        """Build the 0/1 adjacency (scipy CSC) from pair distances and ``R_Cut``.
+
+        Full: all atoms; Homo: atoms of ``Metals[0]`` only (both symmetric, zero diagonal);
+        Hetero: the rectangular (N_A, N_B) matrix between the two species.
+        """
         try:
             if self.Type == 'Homo':
-                self.Distances = DistFuncs.Euc_Dist(self.Positions, homo=True,
-                                                    specie=self.Metals[0], elements=self.Elements)
                 self.Positions = DistFuncs.get_subspecieslist(self.Metals[0], self.Elements, self.Positions)
-                
-                self.NumAdj = np.zeros((len(self.Positions), len(self.Positions)), dtype=np.float64) #Instantiate the 'dense' matrix
-                
-                Tick = 0
-                for i in range(1,len(self.Positions)):
-                    self.Adjacent.append(self.Distances[Tick:Tick+len(self.Positions)-i])
-                    Tick += (len(self.Positions)-i)
-                for i in range(len(self.Positions)):
-                    for j in range(len(self.Positions)-(i+1)):
-                        self.NumAdj[i][j+i+1] = self.Adjacent[i][j]
-                        self.NumAdj[j+i+1][i] = self.Adjacent[i][j]
-                self.Adjacent=(self.NumAdj<self.R_Cut).astype(int) #Evaluate if a pair are within R_Cut of eachother
-                np.fill_diagonal(self.Adjacent,0)
-                    
-                self.Adjacent = spa.csc_matrix(self.Adjacent)   
-            elif self.Type == 'Hetero':
-                
-                self.Positions = DistFuncs.Hetero(self.Positions, self.Metals, self.Elements)
-                self.Distances = np.asarray(functools.reduce(operator.iconcat, self.Positions, []))
-                self.Adjacent = self.Distances.reshape(np.shape(self.Positions))
-                self.Adjacent=(self.Adjacent<self.R_Cut).astype(int)
-                self.Adjacent = spa.csc_matrix(self.Adjacent)
-            
-            elif self.Type == 'Full':
-                self.NumAdj = np.zeros((len(self.Positions), len(self.Positions)), dtype=np.float64)
-                
-                Tick = 0
-                for i in range(1,len(self.Positions)):
-                    self.Adjacent.append(self.Distances[Tick:Tick+len(self.Positions)-i])
-                    Tick += (len(self.Positions)-i)
-                for i in range(len(self.Positions)):
-                    for j in range(len(self.Positions)-(i+1)):
-                        self.NumAdj[i][j+i+1] = self.Adjacent[i][j]
-                        self.NumAdj[j+i+1][i] = self.Adjacent[i][j]
-            
-                self.Adjacent=(self.NumAdj<self.R_Cut).astype(int) #Evaluate if a pair are within R_Cut of eachother
-                np.fill_diagonal(self.Adjacent,0)
-                    
-                self.Adjacent = spa.csc_matrix(self.Adjacent)
+                self.Distances = DistFuncs.Euc_Dist(self.Positions)
+            if self.Type == 'Hetero':
+                d = np.asarray(DistFuncs.Hetero(self.Positions, self.Metals, self.Elements), dtype=float)
+                self.Adjacent = spa.csc_matrix((d < self.R_Cut).astype(int))
+            else:
+                if self.Distances is None:
+                    self.Distances = DistFuncs.Euc_Dist(self.Positions)
+                dense = (squareform(np.asarray(self.Distances, dtype=float)) < self.R_Cut).astype(int)
+                np.fill_diagonal(dense, 0)
+                self.Adjacent = spa.csc_matrix(dense)
         except Exception as e:
-            with open(self.System['base_dir'] + 'Sapphire_Errors.log', 'a') as f:
-                f.write("Exception raised whilst computing the Adjacency Matrix:\n%s"%e)
+            errors.report(e, "Exception raised whilst computing the Adjacency Matrix:\n%s", base_dir=self.System['base_dir'] if self.System else None)
 
     def get_coordination(self):
         try:
             Temp = spa.csr_matrix.todense(self.Adjacent)
             self.NN = np.array([ Temp[i].sum() for i in range(len(Temp)) ])
         except Exception as e:
-            with open(self.System['base_dir'] + 'Sapphire_Errors.log', 'a') as f:
-                f.write("Exception raised whilst computing the Coordination:\n%s"%e)
+            errors.report(e, "Exception raised whilst computing the Coordination:\n%s", base_dir=self.System['base_dir'] if self.System else None)
 
     def get_coordination_hetero(self):
         try:
@@ -207,7 +178,7 @@ class Adjacency_Matrix():
             self.CoordA = [ self.Adjacent[i].sum() for i in range(len(self.Adjacent)) ]
             self.CoordB = [ self.Adjacent[:,j].sum() for j in range(len(self.Adjacent[0])) ]
         except Exception as e:
-            log.info("Exception raised whilst computing the Hetero Coordination:\n%s"%e)
+            errors.report(e, "Exception raised whilst computing the Hetero Coordination:\n%s", base_dir=self.System['base_dir'] if self.System else None)
 
     def ReturnAdj(self):
         """
@@ -247,24 +218,11 @@ class Adjacency_Matrix():
             
         """
         try:
-            Matrix = self.Adjacent.sum(axis=1).getA1() #This is an ordered list of number of NN each atom has
-            I_Row,_,_  = spa.find(self.Adjacent)       #Indices of rows and columns with none-zero adjacency
-            
-            agcn=[]
-            Tick=0                          #Allows us to run along the length of the bonds found in I_Row
-            
-            #In principle, the following routine is equivalent to that written by Elena
-        
-            for i in range(len(Matrix)):
-                Temp_List=[];cc=Matrix[i];
-                for j in range(cc):
-                    Temp = I_Row[Tick:(Tick+Matrix[i])]
-                    Temp_List.append(Matrix[Temp[j]])
-                agcn.append("%.3f" % (sum(Temp_List)/12.0))
-                Tick+=Matrix[i]
-                self.AGCN = np.array(agcn, dtype=float)
+            cn = np.asarray(self.Adjacent.sum(axis=1)).ravel()
+            # aGCN_i = sum_{j in N(i)} CN_j / 12, rounded to 3 dp as the original string formatting did
+            self.AGCN = np.round(np.asarray(self.Adjacent @ cn).ravel() / 12.0, 3)
         except Exception as e:
-            log.info("Exception raised whilst computing the agcn:\n%s"%e)
+            errors.report(e, "Exception raised whilst computing the agcn:\n%s", base_dir=self.System['base_dir'] if self.System else None)
 
     def Surface_Area(self):
         
@@ -297,7 +255,7 @@ class Adjacency_Matrix():
                         T2.append( (Radii[1][1]**2)*x )  
                 self.Area = (1/3) * np.pi * (sum(T1) + sum(T2))
         except Exception as e:
-            log.info("Exception raised whilst computing the Surfce Area:\n%s"%e)
+            errors.report(e, "Exception raised whilst computing the Surfce Area:\n%s", base_dir=self.System['base_dir'] if self.System else None)
 
     def Surface_Atoms(self):
         try:
@@ -316,7 +274,7 @@ class Adjacency_Matrix():
                 Mask = Temp < 9.1
                 self.Surf_At = Mask.astype(int)
         except Exception as e:
-            log.info("Exception raised whilst computing the Surfce Atoms:\n%s"%e)
+            errors.report(e, "Exception raised whilst computing the Surfce Atoms:\n%s", base_dir=self.System['base_dir'] if self.System else None)
 
     def write(self):
     

@@ -1,226 +1,124 @@
-import numpy as np
+"""Chemical-ordering descriptors for bimetallic clusters.
+
+All three calculators take the adjacency matrices produced by
+:class:`Sapphire.Post_Process.Adjacent.Adjacency_Matrix` for one frame:
+
+* ``HoAdj[X]`` — (N_X, N_X) homo adjacency of species X,
+* ``HeAdj``    — (N_A, N_B) hetero adjacency between species A (rows) and B (columns),
+* ``Adj``      — (N, N) full adjacency, ``Elements`` the matching symbol list.
+
+Outputs go to ``<base_dir>/Time_Dependent/`` one line per frame, following the
+``IO/OutputInfo*`` tables, and are read back by :class:`Sapphire.IO.Reader.Reader`.
+
+Definitions
+-----------
+Mixing parameter (Baletto & Ferrando style)::
+
+    mix = (N_AA + N_BB - N_AB) / (N_AA + N_BB + N_AB)
+
++1: fully segregated (no hetero bonds), -1: perfectly alternating.
+
+LAE (local atomic environment): for each species, the histogram over 0..12 of how
+many *hetero* neighbours each atom has. Two rows per frame (one per species).
+
+Ele_NN: for every atom (full ordering), the number of neighbours of species X.
+"""
 import os
 
-class LAE():
+import numpy as np
 
-    def __init__(self, System = None, Frame = None, HeAdj = None, Metal = None, Species = None):
-        
-        """
-        Robert:
-            This class function faacilitates the computation of heterogeneous 
-            atomic quantities which requires adjacenency information to be fed in
-            from the Sapphire.Post_Process.Adjacent module.
-            
-            Args:
-                System : Type - Dict
-                    Description - Base system information regarding directories.
-                    Not necessary for separate use outside of Sapphire core, 
-                    but writing output is not possible without reference directories.
-                    
-        """
-        
-        self.System = System
-        self.Frame = Frame
-        self.HeAdj = HeAdj.todense()
-        self.Species = Species
+from Sapphire.Utilities.log import get_logger
+
+log = get_logger('Sapphire.Post_Process.AtomicEnvironment')
+
+
+def _dense(m):
+    return np.asarray(m.todense() if hasattr(m, "todense") else m)
+
+
+def _append(system, attributes, frame, values, suffix=""):
+    """Append ``frame v1 v2 ...`` to the file described by an OutputInfo entry."""
+    directory = system['base_dir'] + attributes['Dir']
+    os.makedirs(directory, exist_ok=True)
+    path = directory + attributes['File'] + suffix
+    with open(path, 'a') as f:
+        f.write(str(frame) + ' ' + ' '.join(str(v) for v in np.atleast_1d(values)) + '\n')
+
+
+class Mix:
+    """Mixing parameter plus homo / hetero bond counts for one frame."""
+
+    def __init__(self, System=None, Frame=None, HoAdj=None, HeAdj=None,
+                 HomoBonds=False, HeteroBonds=False):
+        self.System, self.Frame = System, Frame
+        self.HoAdj = {k: _dense(v) for k, v in (HoAdj or {}).items()}
+        self.HeAdj = _dense(HeAdj)
+        self.HomoBonds, self.HeteroBonds = HomoBonds, HeteroBonds
         self.calculate()
-        self.write()
-        
-    def ensure_dir(self, base_dir='', file_path=''):
-        directory = base_dir + file_path
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-    def MakeFile(self, Attributes):
-        self.out = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
-        if not os.path.isfile(self.out):
-            with open(self.System['base_dir'] + Attributes['Dir'] + Attributes['File'], 'w') as out:
-                out.close()
-        else:
-            pass
-        
-    def LAE(self):
-        
-        a = np.shape(self.HeAdj)
-        self.MatA = np.zeros(13) #Initialise w.r.t total time
-        for i in range(a[0]):
-            T = sum(self.HeAdj[i])
-            try:
-                self.MatA[T] += 1
-            except IndexError:
-                pass
-            
-        self.MatB = np.zeros(13) #Initialise w.r.t total time
-        for i in range(a[1]):
-            T = sum(self.HeAdj[:,i])
-            try:
-                self.MatB[T] += 1
-            except IndexError:
-                pass
-        
-    def write(self):
+        if System is not None:
+            self.write()
 
-        from Sapphire.IO import OutputInfoHetero as Out  # Case 3
-        #Write object for the homo CoM distances
-        Attributes = getattr(Out, str('lae')) #Loads in the write information for the object                  
-        OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File'] + self.Species[0]
-        self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir']) + self.Species[0]
-        self.MakeFile(Attributes)
-        with open(OutFile, 'a') as outfile:
-            outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.MatA) +'\n') 
-
-        OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File'] + self.Species[1]
-        self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir']) + self.Species[1]
-        self.MakeFile(Attributes)
-        with open(OutFile, 'a') as outfile:
-            outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.MatB) +'\n') 
-                
-class Mix():
-
-    def __init__(self, System = None, Frame = None, Adj1 = None, Adj2 = None, HeAdj = None, 
-                 EleNN = None, lae = None, HomoBonds = None, HeteroBonds = None, Mix = None,
-                 Metal = None, Species = None):
-        
-        """
-        Robert:
-            This class function faacilitates the computation of heterogeneous 
-            atomic quantities which requires adjacenency information to be fed in
-            from the Sapphire.Post_Process.Adjacent module.
-            
-            Args:
-                System : Type - Dict
-                    Description - Base system information regarding directories.
-                    Not necessary for separate use outside of Sapphire core, 
-                    but writing output is not possible without reference directories.
-
-        
-        """
-        
-        self.System = System
-        self.Frame = Frame
-        self.Adj1 = Adj1
-        self.Adj2 = Adj2
-        self.HeAdj = HeAdj
-        self.HeteroBonds = HeteroBonds
-        self.Species = Species
-        self.Mix = Mix
-        self.calculate()
-        self.write()
-        
-    def ensure_dir(self, base_dir='', file_path=''):
-
-        directory = base_dir + file_path
-        if not os.path.exists(directory):
-
-            os.makedirs(directory)
-
-    def MakeFile(self, Attributes):
-        self.out = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
-
-        if not os.path.isfile(self.out):
-            with open(self.System['base_dir'] + Attributes['Dir'] + Attributes['File'], 'w') as out:
-                out.close()
-        else:
-            pass
-        
     def calculate(self):
-        self.HoBonds = sum(self.Adj1)/2 + sum(self.Adj2)/2
-        self.HeBonds = sum(self.HeAdj[0])
-        self.Mix_Param =  (self.HoBonds - self.HeBonds) / (self.HoBonds + self.HeBonds)
+        self.HoBonds = {k: int(a.sum() // 2) for k, a in self.HoAdj.items()}  # symmetric -> /2
+        self.HeBonds = int(self.HeAdj.sum())
+        n_ho = sum(self.HoBonds.values())
+        total = n_ho + self.HeBonds
+        self.Mix_Param = (n_ho - self.HeBonds) / total if total else np.nan
+        return self.Mix_Param
 
     def write(self):
-
-        from Sapphire.IO import OutputInfoHetero as Out  # Case 3
-        #Write object for the CoM
-        Attributes = getattr(Out, str('mix')) #Loads in the write information for the object 
-        OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
-        self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
-        self.MakeFile(Attributes)
-        with open(OutFile, 'a') as outfile:
-            outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.Mix_Param) +'\n')
-
+        from Sapphire.IO import OutputInfoHetero as He
+        _append(self.System, He.mix, self.Frame, self.Mix_Param)
         if self.HeteroBonds:
-            #Write object for the homo CoM distances
-            Attributes = getattr(Out, str('hetero_bonds')) #Loads in the write information for the object                  
-            OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
-            self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
-            self.MakeFile(Attributes)
-            with open(OutFile, 'a') as outfile:
-                outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.HeBonds) +'\n')
-                
+            _append(self.System, He.hetero_bonds, self.Frame, self.HeBonds)
         if self.HomoBonds:
-            from Sapphire.IO import OutputInfoHomo as Out
-            #Write object for the CoMDistances
-            Attributes = getattr(Out, str('homo_bonds')) #Loads in the write information for the object                
-            OutFile = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
-            self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
-            self.MakeFile(Attributes)
-            with open(OutFile, 'a') as outfile:
-                outfile.write(str(self.Frame) + ' ' +  ' '.join(str(item) for item in self.HoBonds) +'\n')
-        
-class Ele_NN():
+            from Sapphire.IO import OutputInfoHomo as Ho
+            for specie, n in self.HoBonds.items():
+                _append(self.System, Ho.homo_bonds, self.Frame, n, suffix=specie)
 
-    def __init__(self, System = None, Frame = None, Adj1 = None, Adj2 = None, HeAdj = None, 
-                 EleNN = None, lae = None, HomoBonds = None, HeteroBonds = None, Mix = None,
-                 Metal = None, Species = None):
-        
-        """
-        Robert:
-            This class function faacilitates the computation of heterogeneous 
-            atomic quantities which requires adjacenency information to be fed in
-            from the Sapphire.Post_Process.Adjacent module.
-            
-            System : Type - Dict
-            Description - Full Sapphire calculation information regarding base directories and file composition.
-        
-        
-        """
-        
-        self.System = System
-        self.Frame = Frame
-        self.Adj1 = Adj1
-        self.Adj2 = Adj2
-        self.HeAdj = HeAdj
-        self.EleNN = EleNN
-        self.lae = lae
-        self.HomoBonds = HomoBonds
-        self.HeteroBonds = HeteroBonds
-        self.Species = Species        
-        self.Metal = Metal
-        self.Mix = Mix
-        self.Metal_Index = self.Species.index(self.Metal)
+
+class LAE:
+    """Histogram (0..12) of hetero-neighbour counts, per species."""
+
+    def __init__(self, System=None, Frame=None, HeAdj=None, Species=None, MaxCN=12):
+        self.System, self.Frame, self.Species = System, Frame, list(Species)
+        self.HeAdj = _dense(HeAdj)
+        self.MaxCN = MaxCN
         self.calculate()
-        self.write()
-        
-    def ensure_dir(self, base_dir='', file_path=''):
-        """
+        if System is not None:
+            self.write()
 
-        Robert:
+    def calculate(self):
+        bins = np.arange(self.MaxCN + 2)
+        self.Hist = {
+            self.Species[0]: np.histogram(self.HeAdj.sum(axis=1), bins=bins)[0],  # A atoms' B-neighbours
+            self.Species[1]: np.histogram(self.HeAdj.sum(axis=0), bins=bins)[0],  # B atoms' A-neighbours
+        }
+        return self.Hist
 
-            A simple script to verify the existence of a directory
-            given the path to it. If it does not exist, will create it.
-
-        """
-
-        directory = base_dir + file_path
-        if not os.path.exists(directory):
-
-            os.makedirs(directory)
-
-    def MakeFile(self, Attributes):
-        self.out = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
-
-        if not os.path.isfile(self.out):
-            with open(self.System['base_dir'] + Attributes['Dir'] + Attributes['File'], 'w') as out:
-                out.close()
-        else:
-            pass
-        
-    def ele_nn(self):
-        if self.Metal_Index == 0:
-            self.EleNN = self.Adj1 + self.HeAdj[self.Metal_Index]
-        elif self.Metal_Index == 1:
-            self.EleNN = self.Adj2 + self.HeAdj[self.Metal_Index]
-        
     def write(self):
+        from Sapphire.IO import OutputInfoHetero as He
+        for specie, h in self.Hist.items():
+            _append(self.System, He.lae, self.Frame, h, suffix=specie)
 
-        pass  # Case 3
+
+class Ele_NN:
+    """For every atom, how many neighbours of each species it has."""
+
+    def __init__(self, System=None, Frame=None, Adj=None, Elements=None, Species=None):
+        self.System, self.Frame = System, Frame
+        self.Adj = _dense(Adj)
+        self.Elements = np.asarray(Elements)
+        self.Species = list(Species)
+        self.calculate()
+        if System is not None:
+            self.write()
+
+    def calculate(self):
+        self.EleNN = {x: self.Adj[:, self.Elements == x].sum(axis=1).astype(int) for x in self.Species}
+        return self.EleNN
+
+    def write(self):
+        from Sapphire.IO import OutputInfoHetero as He
+        for specie, counts in self.EleNN.items():
+            _append(self.System, He.ele_nn, self.Frame, counts, suffix=specie)

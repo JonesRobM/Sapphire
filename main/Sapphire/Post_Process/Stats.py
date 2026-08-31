@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.stats import ks_2samp
 import ruptures as rpt
-import scipy.sparse as spa
 
 class KB_Dist():
 
@@ -32,7 +31,10 @@ class KB_Dist():
         
     def calculate(self):
         
-        return np.sum(np.where(self.P != 0, self.P * np.log(self.P / self.Q), 0))
+        P = np.asarray(self.P, dtype=float); Q = np.asarray(self.Q, dtype=float)
+        mask = (P > 0) & (Q > 0)          # terms with P = 0 contribute 0; Q = 0 where P > 0 is +inf in theory
+        with np.errstate(divide='ignore', invalid='ignore'):
+            return float(np.sum(P[mask] * np.log(P[mask] / Q[mask])))
 
 class JSD_Dist():
     
@@ -258,13 +260,19 @@ class Mobility():
         return None
 
     def R(AdjT, AdjDeltaT):
-        TempT = spa.csr_matrix.todense(AdjT)
-        TempDeltaT = spa.csr_matrix.todense(AdjDeltaT)
-        Temp = TempT-TempDeltaT
-        return [ bool(x) for x in Temp.sum(1) ]
-    
+        """Per-atom flag: did atom i's neighbour list change between the two frames?
+
+        Accepts dense arrays or scipy sparse matrices. (The original summed the signed
+        difference, so losing one neighbour and gaining another cancelled to 'unchanged'.)
+        """
+        a = np.asarray(AdjT.todense() if hasattr(AdjT, 'todense') else AdjT)
+        b = np.asarray(AdjDeltaT.todense() if hasattr(AdjDeltaT, 'todense') else AdjDeltaT)
+        return (a != b).any(axis=1)
+
     def Collectivity(R):
-        return float(sum(R)/len(R))
+        """Fraction of atoms whose neighbourhood changed: 0 = frozen, 1 = every atom rearranged."""
+        R = np.asarray(R)
+        return float(R.sum() / len(R)) if len(R) else 0.0
     
     def Concertedness(H1, H2):
         return abs(H2-H1)

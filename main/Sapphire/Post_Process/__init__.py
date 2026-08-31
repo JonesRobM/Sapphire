@@ -6,6 +6,7 @@ __all__ = [
     'DistFuncs',
     'Kernels',
     'Mass_Activity',
+    'Morphology',
     'Radii',
     'Stats',
 ]
