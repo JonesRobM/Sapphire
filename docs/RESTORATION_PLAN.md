@@ -135,5 +135,53 @@ tools read them back. Goal: make Sapphire usable on output from general-purpose 
 * `Emerald/` and `CNA/main.py` intent — Rob doesn't recall; parked in `legacy/`.
 * Whether `mir-flare` / `tensorflow` / `ray` still belong in the roadmap.
 * `Logs/DocStrings.xlsx` — likely a docstring audit sheet; keep or convert to md?
-* `Graphing.Read_Meta`/`Plot_Funcs` port to `IO.Reader` (only `Get_Heights_Ovito` is tested so far).
+* `IO/Output.py` (legacy writer, 22 broad excepts) — not imported anywhere; candidate for `legacy/`.
+* ~~`Mass_Activity` branch-switch GCN~~ — decided 2026-08-29: intersection (8.096).
 * Remaining broad `except:` blocks outside `Process` (Adjacent, Kernels, DistFuncs) could route via a shared reporter.
+
+---
+
+## Phase 7 — make it usable by others  ☑ completed 2026-08-29 (7.3a apex and 7.7 ML potentials decided 2026-08-29)
+
+Brief from Rob (2026-08-28): notebooks fixed *and* pedagogical; Graphing ported to `Reader` with
+exemplar figures logged to a local `assets/`; `Mass_Activity` and `CNA/Model` are live but need
+physics + engineering verification; error handling/logging package-wide; generality for external
+MNP codes; repurpose `legacy/Emerald` and `legacy/CNA/main.py`; `tensorflow`/`mir-flare`/`ray`
+intent = learning atomistic potentials for inference (4–5 years stale — update or scrap).
+
+### Findings that shape the plan
+* Of 8 notebooks only **CNA** is real. `Changepoints`, `Kullback`, `MoI`, `RCut`,
+  `Temperature_Average` are byte-identical copies of it (placeholders never written).
+  `Ensemble_Average` is a stub with a stale import. `Emerald` is the Italian morphology script
+  pasted into cells. → This is authorship, not repair.
+* `legacy/Emerald` = morphology toolkit (CN/GCN, surface–core partition, shell peeling, surface
+  area, volume, shell thickness, faceting ratio, solid angle, surface/bulk PDDFs). Unique parts:
+  peeling, volume, thickness, faceting. → `Post_Process/Morphology.py`, vectorised.
+* `legacy/CNA/main.py` = batch CNA-pattern classifier pipeline (dir of reference xyz → signatures
+  → pattern dictionary → SVC). → `CNA/Classify.py` built on `FrameSignature` (no OVITO), feeding a
+  cleaned `CNA/Model.py`.
+* `Mass_Activity.py` cannot have run: `beta` (a function) is multiplied as a scalar (TypeError);
+  histogram bins are data-ranged so `m/10 ≠ GCN`; `corrected_occ` flips the GCN axis; `r=1.28e-9 cm`
+  is 0.128 Å; `density=True` then `/len(agcn)` double-normalises. Needs re-derivation with Rob.
+
+### Work items
+| # | Item | Status |
+|---|---|---|
+| 7.1 | `Graphing.Read_Meta` → `IO.Reader`; `Plot_Funcs` rendered from the AuPt fixture; exemplar PNGs → `assets/` (gitignored, `assets/LOG.md` records what/when). Also: first bimetallic run → 9 Homo/Hetero bugs fixed, `AtomicEnvironment` completed | ☑ 2026-08-28 |
+| 7.2 | Notebooks: rewrite the set as a graded course (Build → PDDF & cutoff → Adjacency/CN/aGCN → CNA signatures → CNA patterns → Trajectory analysis with `Process` → Statistics/changepoints → Morphology) executed headlessly in CI | ☑ 2026-08-29 — 8 notebooks, executed in CI |
+| 7.3 | `Mass_Activity` re-derivation (GCN–activity volcano; Calle-Vallejo-style) with tests; `CNA/Classify.py` + cleaned `Model.py` with a synthetic 4-class test | ☑ 2026-08-28 (apex note for Rob) |
+| 7.4 | Shared error reporter honouring `strict` in `Adjacent`, `Kernels`, `DistFuncs`, `Radii`, `IO/Output`, `Graphing` | ☑ 2026-08-28 (IO/Output.py's 22 excepts untouched — module appears unused, see open items) |
+| 7.5 | `Post_Process/Morphology.py` from Emerald; retire `legacy/Emerald` | ☑ 2026-08-28 |
+| 7.6 | Generality: document the `Time_Dependent/` contract; example ingesting a LAMMPS dump via ASE | ☑ 2026-08-28 |
+| 7.7 | ML potentials roadmap note (`docs/ML_POTENTIALS.md`): what FLARE/TF were for, what the 2026 equivalents are (MACE/NequIP/ACE), decision: update or scrap | ☑ brief written 2026-08-28 — Rob to decide |
+
+---
+
+## Phase 8 — polish for others (2026-08-29)
+| # | Item | Status |
+|---|---|---|
+| 8.1 | Documentation site (mkdocs + mkdocstrings + rendered tutorials, GitHub Pages) | ☑ 2026-08-29 |
+| 8.2 | Legacy corners: `IO/Output`, `Read_Plot`, `Plotter` → legacy; Gupta potential implemented + tested; Light tables robust + tested; docstrings; DocStrings.xlsx → `docs/DOCSTRING_AUDIT.md` | ☑ 2026-08-29 |
+| 8.3 | Performance: 10× on the bimetallic benchmark, bit-identical outputs; **aGCN definition bug fixed** | ☑ 2026-08-29 |
+| 8.4 | `Sapphire.api` (`Config` + `run`), TOML configs | ☑ 2026-08-29 |
+| 8.5 | Release: version 1.1.0, CITATION.cff, tag, PyPI | ☐ Rob, instructions on request |
