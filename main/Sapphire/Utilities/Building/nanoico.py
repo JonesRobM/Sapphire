@@ -123,7 +123,7 @@ class Nanoalloy:
     
         d : float ::class:'np.array'
               An array with the z positions
-        output: 'string'
+        output_file: 'string'
               Name of the corresponding file where atoms are printed in .xyz format         
 
         Returns
@@ -159,7 +159,7 @@ class Nanoalloy:
                  The value of an estimated lattice constant of the corresponding structure    
 
 
-        output: 'string'
+        output_file: 'string'
                  Name of the corresponding file where atoms are printed in .xyz format  
 
 

@@ -1,6 +1,9 @@
 import os
 import sys
-import warnings
+import warnings  # noqa: F401
+from Sapphire.Utilities.log import get_logger
+
+log = get_logger(__name__)
 from inspect import getmembers, isfunction
 from ase.io import read
 
@@ -80,7 +83,7 @@ class _Clean_System(object):
             if type(self.System['movie_file_name']) is not str:
                 self.System['movie_file_name'] = self.Default['movie_file_name']
                 _exit()
-                warnings.warn(none_template % ('movie_file_name', self.Default['movie_file_name']))
+                log.debug(none_template % ('movie_file_name', self.Default['movie_file_name']))
                 with open(self.System['movie_file_name']+self.file, 'a') as warn:
                     warn.write(none_template % ('movie_file_name', self.Default['movie_file_name']))
                 _exit()
@@ -88,14 +91,14 @@ class _Clean_System(object):
             else:
                 if not os.path.isfile(self.System['base_dir']+self.System['movie_file_name']):
                     self.System['movie_file_name'] = self.Default['movie_file_name']
-                    warnings.warn(none_template % ('movie_file_name', self.Default['movie_file_name']))
+                    log.debug(none_template % ('movie_file_name', self.Default['movie_file_name']))
                     with open(self.System['base_dir']+self.file, 'a') as warn:
                         warn.write(none_template % ('movie_file_name', self.Default['movie_file_name']))
                     _exit()
 
         except Exception:
             self.System['movie_file_name'] = self.Default['movie_file_name']
-            warnings.warn(none_template % ('movie_file_name', self.Default['movie_file_name']))
+            log.debug(none_template % ('movie_file_name', self.Default['movie_file_name']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
                 warn.write(
                     none_template % (
@@ -126,7 +129,7 @@ class _Clean_System(object):
         try:
             if type(self.System['energy_file_name']) is not str:
                 self.System['energy_file_name'] = self.Default['energy_file_name']
-                warnings.warn(none_template % ('energy_file_name', self.Default['energy_file_name']))
+                log.debug(none_template % ('energy_file_name', self.Default['energy_file_name']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
                     warn.write(none_template % ('energy_file_name', self.Default['energy_file_name']))
                 _no_file()
@@ -145,7 +148,7 @@ class _Clean_System(object):
             if type(self.System['extend_xyz']) is not list:
 
                 self.System['extend_xyz'] = self.Default['extend_xyz']
-                warnings.warn(none_template % ('extend_xyz', self.Default['extend_xyz']))
+                log.debug(none_template % ('extend_xyz', self.Default['extend_xyz']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
                     warn.write(none_template % ('extend_xyz', self.Default['extend_xyz']))
             else:
@@ -158,7 +161,7 @@ class _Clean_System(object):
         except KeyError:
 
             self.System['extend_xyz'] = self.Default['extend_xyz']
-            warnings.warn(none_template % ('extend_xyz', self.Default['extend_xyz']))
+            log.debug(none_template % ('extend_xyz', self.Default['extend_xyz']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
                 warn.write(none_template % ('extend_xyz', self.Default['extend_xyz']))
 
@@ -222,7 +225,7 @@ class _Clean_System(object):
             self.System['Start']
             if type(self.System['Start']) is not int or self.System['Start'] < 0:
                 self.System['Start'] = 0
-                warnings.warn(none_template % ('Start', self.Default['Start']))
+                log.debug(none_template % ('Start', self.Default['Start']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
                     warn.write(none_template % ('Start', self.Default['Start']))
 
@@ -232,7 +235,7 @@ class _Clean_System(object):
 
         except KeyError:
             self.System['Start'] = 0
-            warnings.warn(none_template % ('Start', self.Default['Start']))
+            log.debug(none_template % ('Start', self.Default['Start']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
                 warn.write(none_template % ('Start', self.Default['Start']))
 
@@ -243,7 +246,7 @@ class _Clean_System(object):
                 self.Default['End'] = len(Temp)
                 self.System['End'] = len(Temp)
                 del(Temp)
-                warnings.warn(none_template % ('End', self.Default['End']))
+                log.debug(none_template % ('End', self.Default['End']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
                     warn.write(none_template % (self.System['End'], self.Default['End']))
 
@@ -252,7 +255,7 @@ class _Clean_System(object):
                 self.Default['End'] = len(Temp)
                 self.System['End'] = len(Temp)
                 del(Temp)
-                warnings.warn(none_template % ('End', self.Default['End']))
+                log.debug(none_template % ('End', self.Default['End']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
                     warn.write(none_template % ('End', self.Default['End']))
 
@@ -265,7 +268,7 @@ class _Clean_System(object):
             self.Default['End'] = len(Temp)
             self.System['End'] = len(Temp)
             del(Temp)
-            warnings.warn(none_template % ('End', self.Default['End']))
+            log.debug(none_template % ('End', self.Default['End']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
                 warn.write(none_template % ('End', self.Default['End']))
 
@@ -274,13 +277,13 @@ class _Clean_System(object):
         try:
             if not type(self.System['Step']) is int or self.System['Step'] < 1:
                 self.System['Step'] = self.Default['Step']
-                warnings.warn(none_template % ('Step', self.Default['Step']))
+                log.debug(none_template % ('Step', self.Default['Step']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
                     warn.write(none_template % ('Step', self.Default['Step']))
 
         except KeyError:
             self.System['Step'] = self.Default['Step']
-            warnings.warn(none_template % ('Step', self.Default['Step']))
+            log.debug(none_template % ('Step', self.Default['Step']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
                 warn.write(none_template % ('Step', self.Default['Step']))
 
@@ -291,7 +294,7 @@ class _Clean_System(object):
                 self.Default['Skip'] = int(self.System['End']-self.System['Start']/25.0)
                 if self.Default['Skip'] < 1:
                     self.Default['Skip'] = 1
-                warnings.warn(none_template % ('Skip', self.Default['Skip']))
+                log.debug(none_template % ('Skip', self.Default['Skip']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
                     warn.write(none_template % ('Skip', self.Default['Skip']))
                 self.System['Skip'] = self.Default['Skip']
@@ -300,7 +303,7 @@ class _Clean_System(object):
             self.Default['Skip'] = int(self.System['End']-self.System['Start']/25.0)
             if self.Default['Skip'] < 1:
                 self.Default['Skip'] = 1
-            warnings.warn(none_template % ('Step', self.Default['Step']))
+            log.debug(none_template % ('Step', self.Default['Step']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
                 warn.write(none_template % ('Step', self.Default['Step']))
             self.System['Skip'] = self.Default['Skip']
@@ -309,13 +312,13 @@ class _Clean_System(object):
 
         try:
             if type(self.System['UniformPDF']) is not bool:
-                warnings.warn(none_template % ('UniformPDF', self.Default['UniformPDF']))
+                log.debug(none_template % ('UniformPDF', self.Default['UniformPDF']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
                     warn.write(none_template % ('UniformPDF', self.Default['UniformPDF']))
                 self.System['UniformPDF'] = self.Default['UniformPDF']
 
         except KeyError:
-            warnings.warn(none_template % ('UniformPDF', self.Default['UniformPDF']))
+            log.debug(none_template % ('UniformPDF', self.Default['UniformPDF']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
                 warn.write(none_template % ('UniformPDF', self.Default['UniformPDF']))
             self.System['UniformPDF'] = self.Default['UniformPDF']
@@ -325,13 +328,13 @@ class _Clean_System(object):
         try:
             if type(self.System['Band']) is not float:
                 self.Default['Band'] = self.Default['Band']
-                warnings.warn(none_template % ('Band', self.Default['Band']))
+                log.debug(none_template % ('Band', self.Default['Band']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
                     warn.write(none_template % ('Band', self.Default['Band']))
                 self.System['Band'] = self.Default['Band']
 
         except KeyError:
-            warnings.warn(none_template % ('Band', self.Default['Band']))
+            log.debug(none_template % ('Band', self.Default['Band']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
                 warn.write(none_template % ('Band', self.Default['Band']))
             self.System['Band'] = self.Default['Band']

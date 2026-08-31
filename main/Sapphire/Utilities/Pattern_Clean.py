@@ -1,5 +1,8 @@
 import os
-import warnings
+import warnings  # noqa: F401
+from Sapphire.Utilities.log import get_logger
+
+log = get_logger(__name__)
 from inspect import getmembers, isfunction
 
 none_template = '\nSystem property "%s" is bad. Typically, this is because the ' \
@@ -121,7 +124,7 @@ class _Clean_Pattern(object):
 
         try:
             if type(self.Pattern_Input['APPEND_DICTIONARY']) is not bool:
-                warnings.warn(none_template % ('APPEND_DICTIONARY', self.Default['APPEND_DICTIONARY']))
+                log.debug(none_template % ('APPEND_DICTIONARY', self.Default['APPEND_DICTIONARY']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
                     warn.write(none_template % ('APPEND_DICTIONARY', self.Default['APPEND_DICTIONARY']))
                     
@@ -142,7 +145,7 @@ class _Clean_Pattern(object):
             if type(self.Pattern_Input['FROM_MEMORY']) is not bool:
 
                 self.Pattern_Input['FROM_MEMORY'] = self.Default['FROM_MEMORY']
-                warnings.warn(none_template % ('FROM_MEMORY', self.Default['FROM_MEMORY']))
+                log.debug(none_template % ('FROM_MEMORY', self.Default['FROM_MEMORY']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
                     warn.write(none_template % ('FROM_MEMORY', self.Default['FROM_MEMORY']))
             else:
@@ -154,7 +157,7 @@ class _Clean_Pattern(object):
         except Exception:
 
             self.Pattern_Input['FROM_MEMORY'] = self.Default['FROM_MEMORY']
-            warnings.warn(none_template % ('FROM_MEMORY', self.Default['FROM_MEMORY']))
+            log.debug(none_template % ('FROM_MEMORY', self.Default['FROM_MEMORY']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
                 warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" %(self.Pattern_Input['FROM_MEMORY']))
 
@@ -171,7 +174,7 @@ class _Clean_Pattern(object):
             if type(self.System['BULK_MASTERKEY']) is not bool:
 
                 self.System['BULK_MASTERKEY'] = self.Default['BULK_MASTERKEY']
-                warnings.warn(none_template % ('BULK_MASTERKEY', self.Default['BULK_MASTERKEY']))
+                log.debug(none_template % ('BULK_MASTERKEY', self.Default['BULK_MASTERKEY']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
                     warn.write(none_template % ('BULK_MASTERKEY', self.Default['BULK_MASTERKEY']))
             else:
@@ -183,7 +186,7 @@ class _Clean_Pattern(object):
         except Exception:
 
             self.System['BULK_MASTERKEY'] = self.Default['BULK_MASTERKEY']
-            warnings.warn(none_template % ('BULK_MASTERKEY', self.Default['BULK_MASTERKEY']))
+            log.debug(none_template % ('BULK_MASTERKEY', self.Default['BULK_MASTERKEY']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
                 warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" %(self.Pattern_Input['BULK_MASTERKEY']))
 
@@ -201,7 +204,7 @@ class _Clean_Pattern(object):
             if type(self.System['PRINTING_PATTERNS']) is not bool:
 
                 self.System['PRINTING_PATTERNS'] = self.Default['PRINTING_PATTERNS']
-                warnings.warn(none_template % ('PRINTING_PATTERNS', self.Default['PRINTING_PATTERNS']))
+                log.debug(none_template % ('PRINTING_PATTERNS', self.Default['PRINTING_PATTERNS']))
                 with open(self.System['base_dir']+self.file, 'a') as warn:
                     warn.write(none_template % ('PRINTING_PATTERNS', self.Default['PRINTING_PATTERNS']))
             else:
@@ -213,6 +216,6 @@ class _Clean_Pattern(object):
         except Exception:
 
             self.System['PRINTING_PATTERNS'] = self.Default['PRINTING_PATTERNS']
-            warnings.warn(none_template % ('PRINTING_PATTERNS', self.Default['PRINTING_PATTERNS']))
+            log.debug(none_template % ('PRINTING_PATTERNS', self.Default['PRINTING_PATTERNS']))
             with open(self.System['base_dir']+self.file, 'a') as warn:
                 warn.write("Argument for reading a known pattern dictionary has been set to ' %s '.\n" %(self.Pattern_Input['PRINTING_PATTERNS']))
