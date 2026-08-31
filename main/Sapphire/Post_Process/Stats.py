@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.stats import ks_2samp
-import ruptures as rpt
 
 class KB_Dist():
 
@@ -249,6 +248,7 @@ class ChangePoints():
         return None
 
     def calculates(self):
+        import ruptures as rpt  # optional: the 'changepoint' extra
         algo = rpt.Pelt(model=self.model).fit(self.Data)
         result = algo.predict(pen=self.lag)
         return result

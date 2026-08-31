@@ -3,8 +3,8 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "Sapphire"
-version = "1.1.0.dev0"
+name = "sapphire-nano"
+version = "1.1.0"
 description = "A pythonic post-processing environment for the analysis of metallic nanoalloys"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -40,7 +40,7 @@ mlpot       = ["mace-torch>=0.3"]          # machine-learned potentials (MACE fo
 notebooks   = ["jupyter", "ipykernel"]
 dev         = ["pytest>=7", "ruff>=0.4", "pre-commit"]
 docs        = ["mkdocs>=1.6,<2", "mkdocs-material>=9", "mkdocstrings[python]>=0.25", "mkdocs-jupyter>=0.24"]
-all         = ["Sapphire[plot,changepoint,ml,light,quote,notebooks]"]
+all         = ["sapphire-nano[plot,changepoint,ml,light,quote,notebooks]"]
 
 [project.urls]
 Homepage = "https://github.com/JonesRobM/Sapphire"
@@ -55,7 +55,7 @@ include = ["Sapphire*"]
 
 [tool.setuptools.package-data]
 "Sapphire.Potentials" = ["*.eam.alloy", "*.eam.fs", "*.eam", "*.set", "*.adp.txt"]
-"Sapphire.Tutorials"  = ["**/*.ipynb", "**/*.xyz", "**/*.md"]
+"Sapphire.Tutorials"  = ["**/*.ipynb", "**/*.xyz", "**/*.xyz.gz", "**/*.md"]
 
 [tool.ruff]
 line-length = 110

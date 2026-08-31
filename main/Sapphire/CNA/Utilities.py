@@ -85,7 +85,7 @@ class Logo():
         return None
     
     def Logo(self):
-        self.Sapphire = """
+        self.Sapphire = r"""
 
       _____         _____  _____  _    _ _____ _____  ______
      / ____|  /\   |  __ \|  __ \| |  | |_   _|  __ \|  ____|     ____

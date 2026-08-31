@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.0 — released 2026-08-31
+Everything below (the 2026 restoration, Phases 1–8) constitutes release 1.1.0.
+
 ## 1.1.0.dev0 — restoration (2026-08-28)
 
 ### Repository
@@ -105,3 +108,9 @@
 
 ### API (Task 5)
 - `Sapphire.api.Config` (dataclass, validated against `Utilities.Supported`, TOML round-trip) and `api.run(trajectory, out_dir, ...)` → `Reader`; bimetallic Homo/Hetero defaults inferred from the species; every run writes `sapphire_config.toml` for reproducibility.
+
+### 1.1.0 packaging (2026-08-31)
+- PyPI distribution name **`sapphire-nano`** (`sapphire` was taken in 2018); the import stays `import Sapphire`.
+- Wheel/sdist verified: bundled tutorial samples and potentials included (`*.xyz.gz` added to package data); a **bare** `pip install sapphire-nano` imports and runs (`ruptures` import in `Stats` made lazy — it is the `changepoint` extra).
+- `CITATION.cff` (preferred citation: Jones et al., Faraday Discuss. 2023, 242, 326); `release.yml` builds on tag `v*`, publishes to PyPI via trusted publishing and attaches the dist to a GitHub release.
+- ASCII-logo strings made raw (SyntaxWarning on import gone).

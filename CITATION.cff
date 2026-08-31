@@ -1,0 +1,51 @@
+cff-version: 1.2.0
+message: >-
+  If you use Sapphire in your research, please cite the software and the
+  method paper below (preferred-citation).
+type: software
+title: Sapphire
+version: 1.1.0
+date-released: "2026-08-31"
+repository-code: "https://github.com/JonesRobM/Sapphire"
+url: "https://jonesrobm.github.io/Sapphire/"
+license: GPL-3.0
+authors:
+  - family-names: Jones
+    given-names: Robert M.
+    email: Robert.M.Jones@kcl.ac.uk
+    affiliation: "King's College London"
+  - family-names: Baletto
+    given-names: Francesca
+    affiliation: "King's College London / Università degli Studi di Milano"
+keywords:
+  - nanoparticles
+  - nanoalloys
+  - molecular dynamics
+  - common neighbour analysis
+  - generalised coordination number
+preferred-citation:
+  type: article
+  title: >-
+    Structural characterisation of nanoalloys for (photo)catalytic
+    applications with the Sapphire library
+  authors:
+    - family-names: Jones
+      given-names: Robert M.
+    - family-names: Rossi
+      given-names: Kevin
+    - family-names: Zeni
+      given-names: Claudio
+    - family-names: Vanzan
+      given-names: Mirko
+    - family-names: Vasiljevic
+      given-names: Igor
+    - family-names: Santana-Bonilla
+      given-names: Alejandro
+    - family-names: Baletto
+      given-names: Francesca
+  journal: Faraday Discussions
+  year: 2023
+  volume: 242
+  start: 326
+  end: 352
+  doi: 10.1039/D2FD00097K
