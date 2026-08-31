@@ -175,3 +175,13 @@ pair_distancespace = {
             'Dir' : 'Time_Dependent/', 'File' : 'PairDistancesSpace', 'Iterate' : True, 'Bool' : False,
             'xyz' : False, 'array' : True, 'Exec' : False
             }
+
+collect = {
+            'Dir' : 'Time_Dependent/', 'File' : 'Collectivity', 'Iterate' : True, 'Bool' : False,
+            'xyz' : False, 'array' : False, 'Exec' : False
+            }
+
+concert = {
+            'Dir' : 'Time_Dependent/', 'File' : 'Concertedness', 'Iterate' : True, 'Bool' : False,
+            'xyz' : False, 'array' : False, 'Exec' : False
+            }

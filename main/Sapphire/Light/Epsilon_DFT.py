@@ -6,6 +6,9 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import numpy as np
+from Sapphire.Utilities.log import get_logger
+
+log = get_logger(__name__)
 
 #==============================================================================
 # Internal definitions
@@ -142,6 +145,12 @@ class Ag(object):
                                 1.3234, 1.3282, 2.0570, 2.6785, 3.2689, 3.9130,
                                 4.6754, 5.6373, 6.9326, 8.8198, 11.8880, 17.8631])
         
+        m = min(len(self.wl), len(self.n_real), len(self.n_imag))
+        if not (len(self.wl) == len(self.n_real) == len(self.n_imag)):
+            # Known: the Au table has 150 n but 149 k values (source omission); use the common range.
+            log.warning("%s: optical table lengths differ (wl %d, n %d, k %d); truncating to %d points",
+                        type(self).__name__, len(self.wl), len(self.n_real), len(self.n_imag), m)
+        self.wl, self.n_real, self.n_imag = self.wl[:m], self.n_real[:m], self.n_imag[:m]
         self.n_cplx = self.n_real + 1.0j*self.n_imag
         
         self.interpolate_order = interpolate_order
@@ -267,6 +276,12 @@ class Au(object):
                                 1.5521, 1.6873, 1.8399, 1.9514, 2.0094, 2.0676, 
                                 2.0938, 2.1072, 2.1932, 2.2562, 2.7124, 3.6965,
                                 4.8406, 6.2609, 8.2091, 11.2635, 17.1066,])
+        m = min(len(self.wl), len(self.n_real), len(self.n_imag))
+        if not (len(self.wl) == len(self.n_real) == len(self.n_imag)):
+            # Known: the Au table has 150 n but 149 k values (source omission); use the common range.
+            log.warning("%s: optical table lengths differ (wl %d, n %d, k %d); truncating to %d points",
+                        type(self).__name__, len(self.wl), len(self.n_real), len(self.n_imag), m)
+        self.wl, self.n_real, self.n_imag = self.wl[:m], self.n_real[:m], self.n_imag[:m]
         self.n_cplx = self.n_real + 1.0j*self.n_imag
         
         self.interpolate_order = interpolate_order
@@ -391,6 +406,12 @@ class Cu(object):
                                 2.2933, 2.4387, 2.5808, 2.8166, 3.1036, 3.3892, 
                                 3.7838, 4.8766, 6.3943, 8.3756, 11.4688, 17.3882, ])
         
+        m = min(len(self.wl), len(self.n_real), len(self.n_imag))
+        if not (len(self.wl) == len(self.n_real) == len(self.n_imag)):
+            # Known: the Au table has 150 n but 149 k values (source omission); use the common range.
+            log.warning("%s: optical table lengths differ (wl %d, n %d, k %d); truncating to %d points",
+                        type(self).__name__, len(self.wl), len(self.n_real), len(self.n_imag), m)
+        self.wl, self.n_real, self.n_imag = self.wl[:m], self.n_real[:m], self.n_imag[:m]
         self.n_cplx = self.n_real + 1.0j*self.n_imag
         
         self.interpolate_order = interpolate_order
@@ -517,6 +538,12 @@ class Ni(object):
                                 4.6066, 5.0874, 5.8264, 6.9165, 8.4249, 12.9552,
                                 ])
 
+        m = min(len(self.wl), len(self.n_real), len(self.n_imag))
+        if not (len(self.wl) == len(self.n_real) == len(self.n_imag)):
+            # Known: the Au table has 150 n but 149 k values (source omission); use the common range.
+            log.warning("%s: optical table lengths differ (wl %d, n %d, k %d); truncating to %d points",
+                        type(self).__name__, len(self.wl), len(self.n_real), len(self.n_imag), m)
+        self.wl, self.n_real, self.n_imag = self.wl[:m], self.n_real[:m], self.n_imag[:m]
         self.n_cplx = self.n_real + 1.0j*self.n_imag
         
         self.interpolate_order = interpolate_order
@@ -572,6 +599,12 @@ class Pd(object):
                                 2.74, 2.83, 2.93, 3.03, 3.14, 3.26, 3.39, 3.54, 3.68, 3.84, 4.02, 4.21, 4.42,
                                 4.65, 4.89, 5.19, 5.50, 5.89, 6.33, 6.90, 7.65, 8.59, 9.89, ])
 
+        m = min(len(self.wl), len(self.n_real), len(self.n_imag))
+        if not (len(self.wl) == len(self.n_real) == len(self.n_imag)):
+            # Known: the Au table has 150 n but 149 k values (source omission); use the common range.
+            log.warning("%s: optical table lengths differ (wl %d, n %d, k %d); truncating to %d points",
+                        type(self).__name__, len(self.wl), len(self.n_real), len(self.n_imag), m)
+        self.wl, self.n_real, self.n_imag = self.wl[:m], self.n_real[:m], self.n_imag[:m]
         self.n_cplx = self.n_real + 1.0j*self.n_imag
 
         self.interpolate_order = interpolate_order
@@ -680,6 +713,12 @@ class Pt(object):
                             3.7605,  4.3965,  5.121 ,  5.9757,  7.0273,  8.3824, 10.2266,
                             12.9215, 17.2802, 25.5617])
 
+        m = min(len(self.wl), len(self.n_real), len(self.n_imag))
+        if not (len(self.wl) == len(self.n_real) == len(self.n_imag)):
+            # Known: the Au table has 150 n but 149 k values (source omission); use the common range.
+            log.warning("%s: optical table lengths differ (wl %d, n %d, k %d); truncating to %d points",
+                        type(self).__name__, len(self.wl), len(self.n_real), len(self.n_imag), m)
+        self.wl, self.n_real, self.n_imag = self.wl[:m], self.n_real[:m], self.n_imag[:m]
         self.n_cplx = self.n_real + 1.0j*self.n_imag
 
         self.interpolate_order = interpolate_order

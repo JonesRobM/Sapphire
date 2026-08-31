@@ -55,7 +55,7 @@ class Plot_Funcs():
         if System == None:
              self.System = None
              self.Base = ''
-             self.Images = ''
+             self.Images = '.'
              self.single_file = True
              
         else:
@@ -65,14 +65,12 @@ class Plot_Funcs():
             except KeyError:
                 self.Base = ''
                 
-            try:
-                self.Images = System['plot_dir']
-                self.ensure_dir(self.Base + self.Images)
-            except KeyError:
-                self.Images = ''
+            # Figures go to base_dir/plot_dir (an absolute plot_dir is honoured as-is).
+            self.Images = os.path.join(self.Base, System.get('plot_dir', 'Images/')).rstrip('/')
+            os.makedirs(self.Images, exist_ok=True)
                 
         if MetaData is None:
-            sys.exit("\nNo metadata provided for analysis.\nNow exiting.\n")
+            raise ValueError("No metadata provided for plotting.")
         else:
             self.Meta = MetaData
             
@@ -85,7 +83,7 @@ class Plot_Funcs():
             self.Errors = True
         
         if Quantities is None:
-            sys.exit("\nNo quantities requested.\nNow exiting.\n")
+            raise ValueError("No plotting quantities requested.")
         else:
             self.Quantities = Quantities
         
@@ -140,7 +138,7 @@ class Plot_Funcs():
                         ArgsList.append(self.Quantities[x][y])
                     except KeyError:
                         ArgsList.append(
-                            inspect.getargspec(self.Plot_Dict[x][0])[-1][self.Functions[x].index(y)]
+                            inspect.getfullargspec(self.Plot_Dict[x][0]).defaults[self.Functions[x].index(y)]
                             )
                     
                 with open(self.Base+'Plotting_Info.txt', "a") as f:
@@ -180,34 +178,31 @@ class Plot_Funcs():
                         ha='center', va='bottom', fontsize = 18)
             
     def agcn_heat(self, Name = 'agcn_Heat.png'):
-        Bins = np.linspace(3,12,41)
-        Heat = []
+        """Heat map of the atop generalised coordination number distribution against time."""
+        Bins = np.linspace(3, 12, 41)
         try:
-            for frame in range( len(self.Meta['agcn']) ):
-                a,b = np.histogram( self.Meta['agcn'][frame], bins = Bins )
-                Heat.append(a)
-                
-            YTicks = np.array( [ "{:.1f}".format(x) for x in np.linspace(3,12,20) ] )
-            try:
-                XTicks = np.array( [ "{:.0f}".format(t) for t in np.linspace( self.Meta['SimTime'][0], self.Meta['SimTime'][-1] ,25) ], dtype = int )
-            except KeyError:
-                XTicks = np.array( [ "{:.0f}".format(t) for t in np.linspace( self.Meta['Start'], self.Meta['End'] ,25) ], dtype = int )
-            Heat = ( np.asanyarray(Heat) ).transpose()
-            
-            
-            ax = sns.heatmap(Heat, cmap = 'hot')
-            ax.set_xlabel("Frame", fontsize = 14)
-            ax.set_ylabel("AGCN", fontsize =14)
-            ax.set_xticklabels(XTicks)
-            ax.set_yticklabels(YTicks)
-            plt.savefig(self.Base+self.Images+'/'+Name, dpi = 100, bbox_inches='tight')
-            plt.close()
+            agcn = self.Meta['agcn']
         except KeyError:
-            log.info("\nThis quantity does not exist in the metadata.\n")
-            return None           
-    
+            log.info("agcn does not exist in the metadata; skipping agcn_heat.")
+            return None
+        Heat = np.array([np.histogram(frame, bins=Bins)[0] for frame in agcn]).T   # (bins, frames)
+        n_frames = Heat.shape[1]
+        time = np.asarray(self.Meta.get('SimTime', np.arange(n_frames)))
+        fig, ax = plt.subplots(figsize=(9, 4))
+        sns.heatmap(Heat, cmap='hot', ax=ax, cbar_kws={'label': 'atoms'})
+        # At most ~12 labelled ticks on each axis, positions and labels always matched.
+        xi = np.unique(np.linspace(0, n_frames - 1, min(12, n_frames)).astype(int))
+        ax.set_xticks(xi + 0.5)
+        ax.set_xticklabels(["{:.0f}".format(time[i]) for i in xi], rotation=0)
+        yi = np.arange(0, len(Bins) - 1, 5)
+        ax.set_yticks(yi + 0.5)
+        ax.set_yticklabels(["{:.1f}".format(Bins[i]) for i in yi], rotation=0)
+        ax.invert_yaxis()
+        ax.set_xlabel("Time (ps)" if 'SimTime' in self.Meta else "Frame", fontsize=14)
+        ax.set_ylabel("aGCN", fontsize=14)
+        plt.savefig(self.Images + '/' + Name, dpi=100, bbox_inches='tight')
+        plt.close()
 
-            
     def prdf_plot(self, Names = None, Frames = [], He = False, Ho = None, Errors = False):
         
         Frames = list(Frames)
@@ -280,6 +275,9 @@ class Plot_Funcs():
                     pass
                 elif type(Ho) is list:
                     for ele in Ho:
+                        if 'Ho'+Name.upper()+ele not in self.Meta:
+                            log.info("%s not in metadata; skipping.", 'Ho'+Name.upper()+ele)
+                            continue
                         ax.plot(self.Meta['Ho'+Name.upper()+ele][Frames.index(frame)][0], 
                                 self.Meta['Ho'+Name.upper()+ele][Frames.index(frame)][1],
                                 linestyle = 'dashdot', linewidth = 4, 
@@ -312,23 +310,23 @@ class Plot_Funcs():
                 
                 if He is False:
                     if Ho is None:
-                        plt.savefig(self.Base + self.Images + '/' + Name.upper() + str(frame)+'.png', 
+                        plt.savefig(self.Images + '/' + Name.upper() + str(frame)+'.png', 
                                     dpi = 100, bbox_inches='tight')
                     elif type(Ho) is list:
-                        plt.savefig(self.Base + self.Images + '/' + Name.upper() + '_Ho_' + ''.join(map(str, Ho)) +'_' + str(frame)+'.png', 
+                        plt.savefig(self.Images + '/' + Name.upper() + '_Ho_' + ''.join(map(str, Ho)) +'_' + str(frame)+'.png', 
                                     dpi = 100, bbox_inches='tight')
                     else:
-                        plt.savefig(self.Base + self.Images + '/' + Name.upper() + str(frame)+'.png', 
+                        plt.savefig(self.Images + '/' + Name.upper() + str(frame)+'.png', 
                                     dpi = 100, bbox_inches='tight')
                 else:
                     if Ho is None:
-                        plt.savefig(self.Base + self.Images + '/' + Name.upper() +'_He_' + str(frame)+'.png', 
+                        plt.savefig(self.Images + '/' + Name.upper() +'_He_' + str(frame)+'.png', 
                                     dpi = 100, bbox_inches='tight')
                     elif type(Ho) is list:
-                        plt.savefig(self.Base + self.Images + '/' + Name.upper() +'_He_' + '_Ho_' + ''.join(map(str, Ho)) +'_' + str(frame)+'.png', 
+                        plt.savefig(self.Images + '/' + Name.upper() +'_He_' + '_Ho_' + ''.join(map(str, Ho)) +'_' + str(frame)+'.png', 
                                     dpi = 100, bbox_inches='tight')
                     else:
-                        plt.savefig(self.Base + self.Images + '/' + Name.upper() +'_He_' + str(frame)+'.png', 
+                        plt.savefig(self.Images + '/' + Name.upper() +'_He_' + str(frame)+'.png', 
                                     dpi = 100, bbox_inches='tight')
                 plt.close()
                         
@@ -338,15 +336,8 @@ class Plot_Funcs():
         if self.Errors is True:
             Errors =  True
 
-        if Frames is None:       
-            try:
-                TimeAxis = range(int(self.Meta['Start']), 
-                                 int(self.Meta['SimTime'][-1]), 
-                                 int(int(self.Meta['Skip']) * int(self.Meta['SimTime'][-1]) / int(self.Meta['End'])))
-            except KeyError:
-                TimeAxis = range(int(self.Meta['Start']), 
-                                 int(self.Meta['End']), 
-                                 int(self.Meta['Step']))
+        if Frames is None:
+            TimeAxis = np.asarray(self.Meta['SimTime']) if 'SimTime' in self.Meta else None
         else:
             TimeAxis = Frames
 
@@ -354,7 +345,9 @@ class Plot_Funcs():
             fig,ax = plt.subplots()
             fig.set_size_inches((9,3))
             for Quant in Quants:
-                try:                
+                try:
+                    if TimeAxis is None:
+                        TimeAxis = np.arange(len(self.Meta[Stat+Quant.lower()]))
                     ax.plot(TimeAxis, 
                             self.Meta[Stat+Quant.lower()], 
                             label = Quant.lower())
@@ -408,7 +401,7 @@ class Plot_Funcs():
                 ax3.set_xticklabels(self.tick_function(ax3Ticks))
                 ax3.set_xlabel('Temperature (K)')
     
-            plt.savefig(self.Base + self.Images + '/' + str(Stat) + '.png' , dpi = 100, bbox_inches='tight')
+            plt.savefig(self.Images + '/' + str(Stat) + '.png' , dpi = 100, bbox_inches='tight')
             plt.close()
     
     
@@ -468,7 +461,7 @@ class Plot_Funcs():
                                 except KeyError:
                                     pass
                                 
-                                plt.savefig(self.Base + self.Images + '/' + Dist+Specie+str(frame) + '.png', 
+                                plt.savefig(self.Images + '/' + Dist+Specie+str(frame) + '.png', 
                                             dpi = 100, bbox_inches='tight')
                                 plt.close()
                                 
@@ -493,12 +486,12 @@ class Plot_Funcs():
                 plt.ylabel("Probability", fontsize = 14)
                 plt.xticks(rotation=90,fontsize = 14)
                 try:
-                    plt.text( X_CNA[-7], 0.8*np.amax(self.Meta['cna_sigs'][Frame]), 
+                    plt.text( X_CNA[max(0, len(X_CNA) - 7)], 0.8*np.amax(self.Meta['cna_sigs'][Frame]), 
                             'Time: %sps\nTemp: %sK' %(self.Meta["SimTime"][Frame], 
                                                       "{:.1f}".format(self.Meta['Temp'][Frame])), fontsize = 14 )
                 except KeyError:
                     pass
-                plt.savefig(self.Base+self.Images+'/'+Name+str(Frame)+'.png', dpi = 100, bbox_inches = 'tight')
+                plt.savefig(self.Images + '/'+Name+str(Frame)+'.png', dpi = 100, bbox_inches = 'tight')
                 plt.close()
             except KeyError:
                 with open(self.Base+'Plotting_Info.txt', "a") as f:
@@ -516,9 +509,9 @@ class Plot_Funcs():
             ax.bar(bincenters, y, color='r')
             try:
                 ax.text(bincenters[4], 0.7*np.amax(y), "Time : %sps\nTemp : %sK"%(self.Meta['SimTime'][Frame], "{:.1f}".format(self.Meta['Temp'][Frame])) )
-                plt.savefig(self.Base + self.Images + '/'+ 'AGCNDist'+str(self.Meta['SimTime'][Frame])+'.png', dpi = 100, bbox_inches='tight')
+                plt.savefig(self.Images + '/'+ 'AGCNDist'+str(self.Meta['SimTime'][Frame])+'.png', dpi = 100, bbox_inches='tight')
             except KeyError:
-                plt.savefig(self.Base + self.Images + '/'+ 'AGCNDist.png', dpi = 100, bbox_inches='tight')
+                plt.savefig(self.Images + '/'+ 'AGCNDist.png', dpi = 100, bbox_inches='tight')
             plt.close()
     
     def com_full_plot(self, Frames = [], Errors =  False):
@@ -538,10 +531,10 @@ class Plot_Funcs():
             ax.set_ylabel('RDF')
             try:
                 ax.text(self.Meta['CoMSpace'][5], 0.65*max(self.Meta['CoMDist'][Frame]), "Full System\nTime: %sps\nTemp: %sK" %(self.Meta['SimTime'][Frame], "{:.1f}".format(self.Meta['Temp'][Frame])))
-                plt.savefig(self.Base + self.Images + '/'+ 'FullCoM'+str(self.Meta['SimTime'][Frame])+'.png', 
+                plt.savefig(self.Images + '/'+ 'FullCoM'+str(self.Meta['SimTime'][Frame])+'.png', 
                             dpi = 100, bbox_inches='tight')
             except KeyError:
-                plt.savefig(self.Base + self.Images + '/'+ 'FullCoM.png', dpi = 100, bbox_inches='tight')
+                plt.savefig(self.Images + '/'+ 'FullCoM.png', dpi = 100, bbox_inches='tight')
             plt.close()
         
         
@@ -563,10 +556,10 @@ class Plot_Funcs():
         fig.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='lower left',
                    ncol=3, mode="expand", borderaxespad=0. ,fontsize = 12)
         try:
-            plt.savefig(self.Base + self.Images + '/'+ 'Cum_CoM'+str(self.Meta['SimTime'][Frame])+'.png', 
+            plt.savefig(self.Images + '/'+ 'Cum_CoM'+str(self.Meta['SimTime'][Frame])+'.png', 
                             dpi = 100, bbox_inches='tight')
         except KeyError:
-            plt.savefig(self.Base + self.Images + '/'+ 'Cum_CoM.png', 
+            plt.savefig(self.Images + '/'+ 'Cum_CoM.png', 
                             dpi = 100, bbox_inches='tight')            
         plt.close()
         
@@ -581,21 +574,19 @@ class Plot_Funcs():
         fig.set_size_inches(9,3)
         for x in Sigs:
             try:
-                ax.plot(Time, self.Collect_CNA(x), label = x)
+                ax.plot(Time, self.Collect_CNA(x), label = str(x))
                 if Errors is True:
                     ax.fill_between(Time, 
                                     np.asarray(self.Collect_CNA(x)) + np.asarray(self.Collect_CNA_error(x)),
                                     np.asarray(self.Collect_CNA(x)) - np.asarray(self.Collect_CNA_error(x)),
                                     alpha = 0.25)
-            except ValueError:
-                log.info(x, type(x))
-                with open(self.Base+'Plotting_Info.txt', "a") as f:
-                    f.write(f"\nSignature, '{0}', not in metadata.\n".format(x))
+            except (ValueError, TypeError):
+                log.info("signature %s not in metadata; skipping.", x)
         ax.set_xlabel('Time (ps)')
         ax.set_ylabel('Probability')
         fig.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='lower left',
                    ncol=3, mode="expand", borderaxespad=0. ,fontsize = 12)   
-        plt.savefig(self.Base + self.Images + '/'+ 'CNA_Traj'+'.png', 
+        plt.savefig(self.Images + '/'+ 'CNA_Traj'+'.png', 
                         dpi = 100, bbox_inches='tight')
         plt.close()
        
@@ -604,12 +595,15 @@ class Plot_Funcs():
         if self.Errors is True:
             Errors = True
             
-        Time = self.Meta['SimTime']
+        if 'h' not in self.Meta or 'c' not in self.Meta:
+            log.info("collectivity/concertedness not in metadata; skipping h_c.")
+            return None
+        Time = np.asarray(self.Meta.get('SimTime', np.arange(len(self.Meta['h']) + 1)))
+        h, c = np.asarray(self.Meta['h']), np.asarray(self.Meta['c'])
         fig,ax = plt.subplots()
         fig.set_size_inches(9,3)
-
-        ax.plot(Time, self.Meta['h'], label = 'Collectivity')
-        ax.plot(Time, self.Meta['c'], label = 'Concertedness')
+        ax.plot(Time[len(Time) - len(h):], h, label = 'Collectivity (frame pairs)')
+        ax.plot(Time[len(Time) - len(c):], c, label = 'Concertedness')
         if Errors is True:
             ax.fill_between(Time[1:], 
                             self.Meta['h']+self.Err['h'],
@@ -623,7 +617,7 @@ class Plot_Funcs():
         ax.set_ylabel(' H / C')
         fig.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='lower left',
                    ncol=3, mode="expand", borderaxespad=0. ,fontsize = 12)   
-        plt.savefig(self.Base + self.Images + '/'+ 'HC_Stats'+'.png', 
+        plt.savefig(self.Images + '/'+ 'HC_Stats'+'.png', 
                         dpi = 100, bbox_inches='tight')
         plt.close()
      

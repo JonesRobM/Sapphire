@@ -4,8 +4,6 @@ import time
 from inspect import getmembers, isfunction
 from ase.io import read
 import os
-import functools
-import operator
 
 #Objects written specificaly for processing data
 from Sapphire.Post_Process import Adjacent, Kernels, DistFuncs, Stats, Radii, AtomicEnvironment
@@ -15,6 +13,7 @@ from Sapphire.CNA import FrameSignature, Utilities
 
 #General purpose utility functions for parsing and tidying
 from Sapphire.Utilities import Initial, System_Clean, Pattern_Clean
+from Sapphire.Utilities import errors
 from Sapphire.Utilities.log import get_logger
 
 log = get_logger('Sapphire.Process')
@@ -108,11 +107,14 @@ class Process(object):
     """
     
     def __init__(self, System=None, Quantities=None,
-                 Pattern_Input=None, strict=False):
+                 Pattern_Input=None, strict=False, overwrite=True):
         
         self.tick = time.time()
         # strict=True re-raises any exception instead of only logging it to Sapphire_Errors.log.
         self.strict = strict
+        errors.set_strict(strict)
+        # Output files are appended to frame by frame; a fresh run must not inherit an old one's.
+        self.overwrite = overwrite
 
         self.System = System
         self.Quantities = Quantities
@@ -151,12 +153,34 @@ class Process(object):
 
     def _report(self, exc, message):
         """Record a caught exception in Sapphire_Errors.log; re-raise when strict."""
-        text = message % exc if '%s' in message else message
-        with open(self.Base + 'Sapphire_Errors.log', 'a') as f:
-            f.write(text if text.startswith('\n') else '\n' + text)
-        log.warning(text.strip().replace('\n', ' '))
-        if self.strict:
-            raise exc
+        errors.report(exc, message, base_dir=self.Base, strict=self.strict)
+
+    OUTPUT_DIRS = ('Time_Dependent/', 'Time_Dependent/Stats/', 'Adjacency/', 'CNA/', 'Exec/')
+
+    def _clear_outputs(self):
+        """Remove previous result files (file by file) from the Sapphire-owned output folders."""
+        removed = 0
+        for d in self.OUTPUT_DIRS:
+            folder = self.Base + d
+            if not os.path.isdir(folder):
+                continue
+            for name in os.listdir(folder):
+                path = os.path.join(folder, name)
+                if os.path.isfile(path):
+                    os.remove(path); removed += 1
+        for name in ('Sapphire_Errors.log', 'Extended.xyz', 'Metadata.pkl'):
+            if os.path.isfile(self.Base + name):
+                os.remove(self.Base + name); removed += 1
+        if removed:
+            with open(self.Base + 'Sapphire_Info.txt', 'a') as f:
+                f.write('Cleared %d result files from a previous run (overwrite=True).\n' % removed)
+
+    def _write_series(self, name, values, subdir='Time_Dependent/Stats/'):
+        """Persist a per-frame series so Reader / Graphing can find it (frame value per line)."""
+        self.ensure_dir(self.Base, subdir)
+        with open(self.Base + subdir + name, 'w') as f:
+            for frame, val in zip(self.All_Times, np.atleast_1d(values)):
+                f.write('%d %s\n' % (frame, val))
 
     def reader(self):
         """A :class:`Sapphire.IO.Reader.Reader` over this run's output directory."""
@@ -178,20 +202,7 @@ class Process(object):
 
     def ensure_dir(self, base_dir='', file_path=''):
         
-        """Returns a list containing :class:`bluepy.btle.Characteristic`
-        objects for the peripheral. If no arguments are given, will return all
-        characteristics. If startHnd and/or endHnd are given, the list is
-        restricted to characteristics whose handles are within the given range.
-
-        :param startHnd: Start index, defaults to 1
-        :type startHnd: int, optional
-        :param endHnd: End index, defaults to 0xFFFF
-        :type endHnd: int, optional
-        :param uuids: a list of UUID strings, defaults to None
-        :type uuids: list, optional
-        :return: List of returned :class:`bluepy.btle.Characteristic` objects
-        :rtype: list
-        """
+        """Create ``base_dir + file_path`` if it does not exist."""
 
         directory = base_dir + file_path
         if not os.path.exists(directory):
@@ -200,20 +211,7 @@ class Process(object):
 
     def MakeFile(self, Attributes):
         
-        """Returns a list containing :class:`bluepy.btle.Characteristic`
-        objects for the peripheral. If no arguments are given, will return all
-        characteristics. If startHnd and/or endHnd are given, the list is
-        restricted to characteristics whose handles are within the given range.
-        
-        :param startHnd: Start index, defaults to 1
-        :type startHnd: int, optional
-        :param endHnd: End index, defaults to 0xFFFF
-        :type endHnd: int, optional
-        :param uuids: a list of UUID strings, defaults to None
-        :type uuids: list, optional
-        :return: List of returned :class:`bluepy.btle.Characteristic` objects
-        :rtype: list
-        """
+        """Create the (empty) output file described by an ``OutputInfo`` entry if absent."""
         
         self.out = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']
 
@@ -228,10 +226,11 @@ class Process(object):
     def Initialising(self):
 
 
-        """Returns a list containing :class:`bluepy.btle.Characteristic`
-        objects for the peripheral. If no arguments are given, will return all
-        characteristics. If startHnd and/or endHnd are given, the list is
-        restricted to characteristics whose handles are within the given range.
+        """Sanitise the user input, load the trajectory and derive per-run constants.
+
+        Runs the ``System_Clean`` / ``Pattern_Clean`` validators, reads every frame with ASE,
+        records species, atom counts and the CNA masterkey, and clears previous output files
+        when ``overwrite`` is set.
         """
 
         self.Calc_Quants = {}
@@ -266,6 +265,8 @@ class Process(object):
         self.End = self.System['End']
         self.Start = self.System['Start']
         self.Base = self.System['base_dir']
+        if self.overwrite:
+            self._clear_outputs()
 
 ##############################################################################
 
@@ -360,48 +361,12 @@ class Process(object):
 ##############################################################################
 
     def calculate(self, i):
-        """Returns a list containing :class:`bluepy.btle.Characteristic`
-        objects for the peripheral. If no arguments are given, will return all
-        characteristics. If startHnd and/or endHnd are given, the list is
-        restricted to characteristics whose handles are within the given range.
-        
-        :param startHnd: Start index, defaults to 1
-        :type startHnd: int, optional
-        :param endHnd: End index, defaults to 0xFFFF
-        :type endHnd: int, optional
-        :param uuids: a list of UUID strings, defaults to None
-        :type uuids: list, optional
-        :return: List of returned :class:`bluepy.btle.Characteristic` objects
-        :rtype: list
+        """Analyse frame ``i``: compute every requested quantity and write it to disk.
 
-
-        Robert:
-
-            And we finally get to the meat and potatoes of the calculator.
-
-            This is simply broken down into a series of small blocks.
-
-            Each frame is instantiated by loading in the particular frame of the trajectory.
-            While this is time intensive, it saves a lot on memory by not storing an entire trajectory
-            in the memory for the entire duration.
-
-            The positions of the atoms are stored in an array and analysis may begin from there.
-
-            Each block is laid out in the following fashion:
-
-                Are each of the required quantities calculated and is this wanted?
-                    Y: Calculate and save to metadata by calling a calculator from an external module
-
-                    N: Pass and continue.
-
-            The premise being that the programme will be able to notice that you have not calculated a dependency for a given quantity
-            E.g., no Homo quantities in a bimetallic situation
-            And will not perform any future calculations which depend on this.
-
-            These quantities are organised by their names as keys which are stored in frame wise metadata dictionaries.
-
-            At the end of the calculation, these frame wise dictionaries are unloaded into a global dictionary and emptied for the next frame.
-
+        Quantities are evaluated in dependency order (pair distances → PDDF and cutoff →
+        adjacency → coordination / aGCN / CNA → chemical ordering → radii and shape). Each
+        block is guarded: a failure is recorded via :meth:`_report` and the remaining blocks
+        still run, unless ``strict=True``.
         """
 
         self.timer = time.time()
@@ -429,7 +394,7 @@ class Process(object):
                 TempPos = DistFuncs.Hetero(self.result_cache['pos'], self.Species,
                                                                   self.result_cache['syms'])
                 
-                self.result_cache['heteropos'] = np.asarray(functools.reduce(operator.iconcat, TempPos, []))     
+                self.result_cache['heteropos'] = np.asarray(TempPos, dtype=float).ravel()     
                 
                 self.result_cache['HeCut'] = Kernels.Gauss(Data = self.result_cache['heteropos'], Band = self.Band, 
                                                           Ele = None, Type='Hetero', Space = None, 
@@ -476,20 +441,20 @@ class Process(object):
             except Exception as e:
                 self._report(e, '\nException raised while computing Full RDF was: \n%s')
                     
-                if self.System['Homo'] and 'hordf' in self.Quantities['Homo']:
-                    try:
-                        for x in self.System['Homo']:
-                            self.result_cache['homopos'+x] = DistFuncs.get_subspecieslist(x, self.result_cache['syms'], self.result_cache['pos'])
-                            DistFuncs.RDF(self.result_cache['homopos'+x], 
-                                                  Type = 'Homo', Species = x, Frame = i, System = self.System)
-                            
-                    except Exception as e:
-                        self._report(e, '\nException raised while computing Homo RDF: \n%s')
-                            
+            if self.System['Homo'] and 'hordf' in self.Quantities['Homo']:
+                try:
+                    for x in self.System['Homo']:
+                        self.result_cache['homopos'+x] = DistFuncs.get_subspecieslist(x, self.result_cache['syms'], self.result_cache['pos'])
+                        DistFuncs.RDF(System = self.System, Positions = self.result_cache['homopos'+x],
+                                      Type = 'Homo', Species = x, Frame = i)
+                        
+                except Exception as e:
+                    self._report(e, '\nException raised while computing Homo RDF: \n%s')
+                        
             if self.System['Hetero']:
                 if self.System['Hetero'] and 'herdf' in self.Quantities['Hetero']:
                     try:
-                        DistFuncs.RDF(self.result_cache['pos'], Type = 'Hetero', System = self.System,
+                        DistFuncs.RDF(System = self.System, Positions = self.result_cache['pos'], Type = 'Hetero',
                                               Species=self.Species, Elements=self.result_cache['syms'], Frame = i)
                     except Exception as e:
                         self._report(e, '\nException raised while computing Hetero RDF: \n%s')
@@ -638,10 +603,11 @@ class Process(object):
 
         if 'cna_sigs' in self.Quantities['Full']:
             try:
-                FrameSignature.CNA(self.System, self.result_cache['Adj'], 
-                                         self.Masterkey, 
-                                         'cna_patterns' in self.Quantities['Full'] , 
-                                         Type = 'Full', Frame = i).calculate()
+                cna = FrameSignature.CNA(self.System, self.result_cache['Adj'], self.Masterkey,
+                                         'cna_patterns' in self.Quantities['Full'], Type = 'Full', Frame = i)
+                cna.calculate()
+                # carry every signature seen so far forward: later frames' columns then extend, never reorder
+                self.Masterkey = tuple(cna.Sigs.keys())
                 
             except Exception as e:
                 self._report(e, '\nException raised while computing CNA properties: \n%s')
@@ -684,16 +650,28 @@ class Process(object):
         # mixing parameter, LAE, and homo / hetero "bond" analyses.
 
 ##############################################################################
-        if self.System['Hetero']:
-            if 'lae' in self.Quantities['Hetero']:
+        if self.System['Hetero'] and self.NSpecies == 2:
+            HeQ, HoQ = self.Quantities['Hetero'], self.Quantities['Homo']
+            hoadj = {x: self.result_cache[k] for x in self.System['Homo'] if (k := 'HoAdj' + x) in self.result_cache}
+            if 'mix' in HeQ or 'heterobonds' in HeQ or 'homobonds' in HoQ:
                 try:
-                    AtomicEnvironment.LAE(System = None, Frame = None, 
-                                                Adj1 = None, Adj2 = None, HeAdj = None, 
-                                                EleNN = None, lae = None, HomoBonds = None, 
-                                                HeteroBonds = None, Mix = None,
-                                                Metal = None, Species = None)
+                    AtomicEnvironment.Mix(System=self.System, Frame=i, HoAdj=hoadj,
+                                          HeAdj=self.result_cache['HeAdj'],
+                                          HomoBonds='homobonds' in HoQ, HeteroBonds='heterobonds' in HeQ)
                 except Exception as e:
-                    self._report(e, '\nException raised while computing Gyration properties: \n%s')
+                    self._report(e, '\nException raised while computing the mixing parameter / bond counts: \n%s')
+            if 'lae' in HeQ:
+                try:
+                    AtomicEnvironment.LAE(System=self.System, Frame=i, HeAdj=self.result_cache['HeAdj'],
+                                          Species=self.Species)
+                except Exception as e:
+                    self._report(e, '\nException raised while computing the LAE: \n%s')
+            if 'ele_nn' in HeQ:
+                try:
+                    AtomicEnvironment.Ele_NN(System=self.System, Frame=i, Adj=self.result_cache['Adj'],
+                                             Elements=self.result_cache['syms'], Species=self.Species)
+                except Exception as e:
+                    self._report(e, '\nException raised while computing per-species neighbour counts: \n%s')
 
 ##############################################################################
 
@@ -714,11 +692,7 @@ class Process(object):
             
             
     def run_core(self):
-        """Returns a list containing :class:`bluepy.btle.Characteristic`
-        objects for the peripheral. If no arguments are given, will return all
-        characteristics. If startHnd and/or endHnd are given, the list is
-        restricted to characteristics whose handles are within the given range.
-        """
+        """Loop :meth:`calculate` over the requested frames, logging timing to ``Sapphire_Info.txt``."""
         
         for i in self.All_Times:
             self.calculate(i)
@@ -748,24 +722,35 @@ class Process(object):
 
         self.load_metadata()
         if 'adj' in self.metadata and ('collect' in self.Quantities['Full'] or 'concert' in self.Quantities['Full']):
-            self.metadata.setdefault('collect', np.zeros(len(self.metadata['adj'])))
-            self.metadata.setdefault('concert', np.zeros(len(self.metadata['adj'])))
-        for i in range(1, int((self.End - self.Start)/self.Step)):
+            n = len(self.metadata['adj'])
+            self.metadata.setdefault('collect', np.zeros(max(n - 1, 0)))   # one value per consecutive pair
+            self.metadata.setdefault('concert', np.zeros(max(n - 2, 0)))   # needs two pairs
+        # one comparison per consecutive pair of analysed frames
+        for i in range(1, len(self.metadata.get('adj', []))):
 
             # This  block calculates the concertedness and collectivity of atom rearrangements
             try:
-                if self.Quantities['Full']['collect']:
-                    self.result_cache['r'] = Adjacent.R(
+                if 'collect' in self.Quantities['Full']:
+                    self.result_cache['r'] = Stats.Mobility.R(
                         self.metadata['adj'][i], self.metadata['adj'][i-1])
                     self.metadata['collect'][i -
-                                             1] = Adjacent.Collectivity(self.result_cache['r'])
+                                             1] = Stats.Mobility.Collectivity(self.result_cache['r'])
                     if not(i < 3):
-                        if self.Quantities['Full']['concert']:
-                            self.metadata['concert'][i-2] = Adjacent.Concertedness(self.metadata['collect'][i-1],
+                        if 'concert' in self.Quantities['Full']:
+                            self.metadata['concert'][i-2] = Stats.Mobility.Concertedness(self.metadata['collect'][i-1],
                                                                                    self.metadata['collect'][i-3])
             except Exception as e:
                 self._report(e, '\nException raised while computing collecivity and concertednes:\n%s')
 
+        for key, attr in (('collect', 'collect'), ('concert', 'concert')):
+            if key in self.metadata and key in self.Quantities['Full']:
+                from Sapphire.IO import OutputInfoFull as Out
+                A = getattr(Out, attr)
+                self.ensure_dir(self.Base, A['Dir'])
+                offset = len(self.All_Times) - len(self.metadata[key])   # series are shorter than the frame list
+                with open(self.Base + A['Dir'] + A['File'], 'w') as f:
+                    for frame, val in zip(self.All_Times[offset:], self.metadata[key]):
+                        f.write('%d %s\n' % (frame, val))
         try:
             from Sapphire.CNA.Utilities import Pattern_Key as PK
             self.pattern_key = list(PK().Key().keys())
@@ -806,11 +791,11 @@ class Process(object):
             for A_Key in self.Stat_Keys:
                 for M_Key in self.Meta_Keys:
                     for obj in self.Stat_Tools[A_Key]:
-                        if obj.lower() in M_Key.lower():
-                            if M_Key.lower() == 'pdftype':
-                                pass
-                            else:
-                                self.Calc_Dict[A_Key].append(M_Key)
+                        # 'pdf' -> pdf, hopdfAu, hepdf ... but never the *space grids or pdftype
+                        k = M_Key.lower()
+                        derived = k.startswith(tuple(s.lower() for s in self.Stat_Keys))  # e.g. an earlier run's JSDpdf
+                        if obj.lower() in k and 'space' not in k and k != 'pdftype' and not derived:
+                            self.Calc_Dict[A_Key].append(M_Key)
                 try:
                     self.Calc_Dict[A_Key].remove('pdftype')
                 except ValueError:
@@ -832,6 +817,7 @@ class Process(object):
                             raise TypeError('%s is not a per-frame distribution' % obj)
                         Init = dist[0]  # reference distribution: the first frame
                         self.metadata[A_Key + obj] = np.array([func(Init, frame) for frame in dist])
+                        self._write_series(A_Key + obj, self.metadata[A_Key + obj])
                     except Exception as e:
                         self._report(e, "\nError raised when performing %s analysis of %s: %%s" % (A_Key, obj))
             del(self.result_cache)

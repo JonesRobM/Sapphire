@@ -32,6 +32,7 @@ import numpy as np
 from Sapphire.IO import OutputInfoExec, OutputInfoFull, OutputInfoHetero, OutputInfoHomo
 
 _VEC = re.compile(r"\[([^\]]*)\]")
+_FRAME = re.compile(r"([A-Z][a-z]*)?File(\d+)")  # optional species prefix + per-frame index
 
 
 def _table() -> dict[str, tuple[str, str]]:
@@ -93,40 +94,61 @@ class Reader:
         self._table = _table()
 
     # ------------------------------------------------------------------ discovery
-    def available(self) -> dict[str, pathlib.Path]:
-        found: dict[str, pathlib.Path] = {}
+    def available(self) -> dict[str, pathlib.Path | list[pathlib.Path]]:
+        """Map metadata key -> file (or list of per-frame files for matrix quantities).
+
+        Species-suffixed homo files (``HomoCoMAu``) become ``hocomAu``; per-frame matrix
+        sets (``Adjacency/File0``, ``Time_Dependent/HeAdjFile7``, ``Adjacency/HomoAdjPtFile0``)
+        collapse to one key (``adj``, ``headj``, ``hoadjPt``) holding the ordered file list.
+        """
+        found: dict = {}
+        claimed: set = set()
         # Longest File names first so 'HomoCoMDist' is not claimed by 'HomoCoM'.
         for key, (d, f) in sorted(self._table.items(), key=lambda kv: -len(kv[1][1])):
             directory = self.base / d
             if not directory.is_dir():
                 continue
-            for p in directory.iterdir():
-                if not p.is_file() or p.stat().st_size == 0 or p in found.values():
+            for p in sorted(directory.iterdir()):
+                if not p.is_file() or p in claimed or not p.name.startswith(f):
                     continue
-                if p.name == f:
-                    found[key] = p
-                elif p.name.startswith(f) and d.startswith("Time_Dependent"):
-                    found[key + p.name[len(f):]] = p  # species-suffixed homo file, e.g. hocomAu
+                suffix = p.name[len(f):]
+                m = _FRAME.fullmatch(suffix)
+                if m:  # per-frame matrix file
+                    k = key + (m.group(1) or "")
+                    found.setdefault(k, []).append(p); claimed.add(p)
+                elif p.stat().st_size > 0 and (suffix == "" or d.startswith("Time_Dependent")):
+                    found[key + suffix] = p; claimed.add(p)
+        stats = self.base / "Time_Dependent" / "Stats"
+        if stats.is_dir():  # analyse() output: one series per file, key = file name (e.g. JSDpdf)
+            for p in sorted(stats.iterdir()):
+                if p.is_file() and p.stat().st_size > 0 and p not in claimed:
+                    found[p.name] = p
         adj = self.base / "Adjacency"
-        if adj.is_dir() and any(adj.glob("File*")):
-            found["adj"] = adj
+        if adj.is_dir():
+            files = sorted(adj.glob("File*"), key=lambda p: int(p.name[4:]))
+            if files:
+                found["adj"] = files
+        for v in found.values():
+            if isinstance(v, list):
+                v.sort(key=lambda p: int(p.name.split("File")[-1]))
         return found
 
     def frames(self, key: str) -> np.ndarray:
         path = self.available()[key]
-        if key == "adj":
-            return np.array(sorted(int(p.name[4:]) for p in path.glob("File*")))
+        if isinstance(path, list):
+            return np.array([int(p.name.split("File")[-1]) for p in path])
         return np.array([int(line.split(" ", 1)[0]) for line in path.read_text().splitlines() if line.strip()])
 
     # ------------------------------------------------------------------ loading
     def load(self, key: str):
         """Return the quantity as an array indexed ``[frame, ...]`` (a list for CNA patterns)."""
+        if key == "masterkey":
+            return self.masterkey()  # CNA signature labels, e.g. "421" -> keep as strings
         path = self.available().get(key)
         if path is None:
             raise KeyError(f"{key!r} not present in {self.base}; have {sorted(self.available())}")
-        if key == "adj":
-            files = sorted(path.glob("File*"), key=lambda p: int(p.name[4:]))
-            return np.array([np.loadtxt(p, dtype=np.int8) for p in files])
+        if isinstance(path, list):  # per-frame matrices
+            return np.array([np.loadtxt(p, dtype=np.int32, ndmin=2) for p in path])
         payloads = [parse_line(l)[1] for l in path.read_text().splitlines() if l.strip()]
         if payloads and isinstance(payloads[0], list):
             return payloads

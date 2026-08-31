@@ -2,6 +2,7 @@ import numpy as np
 import os
 import networkx as nx
 from Sapphire.CNA import Utilities
+from Sapphire.Utilities import errors
 from Sapphire.Utilities.log import get_logger
 
 log = get_logger('Sapphire.CNA.FrameSignature')
@@ -20,7 +21,7 @@ class CNA(object):
     
     Parameters
     ----------
-    system : Full Sapphire calculation information regarding base directories and file composition.
+    System : Full Sapphire calculation information regarding base directories and file composition.
     
     Adj : scipy sparse matrix - returned from Post_Process.Adjacent.ReturnAdj()
         the 1st param name Adj
@@ -57,12 +58,14 @@ class CNA(object):
                 # conversion under numpy>=2 (and were O(N) per lookup anyway).
                 self.Adj = np.asarray(Adj.todense())
             except Exception as e:
-                log.info(e)
+                errors.report(e, 'CNA adjacency densification failed: %s', base_dir=self.System['base_dir'] if self.System else None)
         else:
             pass
         if Fingerprint:
             self.Fingerprint = np.zeros(self.Adj.shape[0], dtype = object)
             self.Keys = np.zeros(self.Adj.shape[0], dtype = object)    
+        else:
+            self.Fingerprint = False
 
         if Masterkey is None:
             self.Masterkey = ((0,0,0),
@@ -183,30 +186,38 @@ class CNA(object):
                     self.perm.append((b,c))
         return self.s
 
-    def T (self):
-        self.G = nx.Graph()
-        for bond in self.bonds:
-            self.G.add_node(str(bond))
-        for item in self.perm:
-            self.G.add_edge(*(str(item[0]), str(item[1])))
-        chain = []
-        for n1 in self.bonds:
-            for n2 in self.bonds:
-                paths = nx.all_simple_paths(self.G, source=str(n1), target=str(n2))
-                for path in map(nx.utils.pairwise, paths):
-                    chain.append(len(list(path)))
-        cycles = [len(x) for x in nx.cycle_basis(self.G)]
-        try:
-            chain.append(max(cycles))
-        except ValueError:
-            pass
-        try:
-            self.t = max(chain)
-        except ValueError:
-            self.t = 0
+    def T(self):
+        """Longest chain among the bonds between common neighbours.
+
+        Same definition as the original networkx implementation: the maximum over all simple
+        paths (in edges) and, where the bond graph has cycles, the longest cycle in a cycle basis.
+        The path search is a small DFS; networkx is only used for the (rare) cyclic case.
+        """
+        nodes = list(self.bonds)
+        nbrs = {n: set() for n in nodes}
+        for b1, b2 in self.perm:
+            if b1 != b2:
+                nbrs[b1].add(b2); nbrs[b2].add(b1)
+        n_edges = sum(len(v) for v in nbrs.values()) // 2
+        best = 0
+        if n_edges:
+            def dfs(node, visited, length):
+                nonlocal best
+                best = max(best, length)
+                for m in nbrs[node]:
+                    if m not in visited:
+                        visited.add(m); dfs(m, visited, length + 1); visited.discard(m)
+            for start in nodes:
+                dfs(start, {start}, 0)
+            if n_edges >= len(nodes):  # cyclic
+                G = nx.Graph(); G.add_nodes_from(nodes); G.add_edges_from((a, b) for a in nbrs for b in nbrs[a] if a < b)
+                cycles = [len(c) for c in nx.cycle_basis(G)]
+                if cycles:
+                    best = max(best, max(cycles))
+        self.t = best
         return self.t
-    
-    
+
+
     def calculate(self):
         for i, atom in enumerate(self.Adj):
             self.particle_cnas = []
@@ -248,7 +259,8 @@ class CNA(object):
     """
     
     def write(self):
-        
+        if self.System is None:  # standalone use (tutorials): nothing to write to
+            return None
         if self.Type == 'Full':
             from Sapphire.IO import OutputInfoFull as Out  # Case 1
             
@@ -277,7 +289,8 @@ class CNA(object):
         self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
         self.MakeFile(Attributes)
         keys = list(self.Sigs.keys())
-        with open(OutFile, 'a') as outfile:
+        # overwrite: the masterkey only grows, so the latest frame's key is the complete one
+        with open(OutFile, 'w') as outfile:
             for item in keys:
                 outfile.write(''.join(str(index) for index in item ) +' ')
                 

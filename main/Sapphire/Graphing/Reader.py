@@ -1,9 +1,8 @@
-import pickle
 import numpy as np
+_trapz = getattr(np, 'trapezoid', None) or np.trapz  # noqa: NPY201
+from scipy.stats import norm
 import os
-import sys
 
-from Sapphire.CNA.Utilities import Logo
 from Sapphire.Utilities.log import get_logger
 
 log = get_logger('Sapphire.Graphing.Reader')
@@ -99,419 +98,130 @@ def ensure_dir(file_path=''):
         log.info("Made a new directory.")
 
 
-class Read_Meta():
-    def __init__(self, System = None):
-        
-        """        
-        Robert
-            
-            Reading user defined inputs for where to find the simulation data,
-            where it can be found and the names of files used.
-            
-            Alse provides the output directroy for plots to be sent to.
-        """
-        L = Logo().Logo()
+class Read_Meta:
+    """Build the metadata layout :class:`Plot_Funcs` expects from one or more Sapphire run
+    directories, via :class:`Sapphire.IO.Reader.Reader`.
 
+    ``System`` keys (all optional except ``base_dir``):
 
-        self.BigMeta = {}
-        if System == None:
-             self.System = None
-             self.Base = ''
-             with open(self.Base+'Plotting_Info.txt', "w") as f:
-                 f.write(L)
-                 f.write(" #"*50)
-                 f.write("\n")
-             with open(self.Base+'Plotting_Info.txt', "a") as f:
-                 f.write("\nNo specified system info to read from. Attempting to load in defaults.\n")
-             with open(self.Base+'Plotting_Info.txt', "a") as f:
-                 f.write("Base directory set to current working directory.\n")
-                 f.write(os.getcwd())
-             self.Images = ''
-             with open(self.Base+'Plotting_Info.txt', "a") as f:
-                 f.write("\nAny images generated will be saved to this directory.\n")
-             self.Meta = 'Metadata.csv'
-             with open(self.Base+'Plotting_Info.txt', "a") as f:
-                 f.write("Will attempt to read input data from 'Metadata.csv'.\n")
-             self.single_file = True
-             self.Iter = False
-             with open(self.Base+'Plotting_Info.txt', "a") as f:
-                 f.write("Will only attempt to read a single trajectory file.\n")
-             
-        else:
-            self.System = System
-            try:
-                self.Base = System['base_dir']
-                with open(self.Base+'Plotting_Info.txt', "w") as f:
-                    f.write(L)
-                    f.write(" #"*50)
-                    f.write("\n")
-                    f.write("\nBase directory set to %s.\n" %System['base_dir'])
-            except KeyError:
-                self.Base = ''
-                with open(self.Base+'Plotting_Info.txt', "w") as f:
-                    f.write(L)
-                    f.write(" #"*50)
-                    f.write("\n")                    
-                    f.write("\nNo base directory given. Will attempt to read from current working directory.\n")
-                    f.write(os.getcwd())
-                    f.write("\n")
-            try:
-                self.Iter = System['iter_dir']
-                if System['iter_dir'] is False:
-                    self.single_file = True
-                    self.Iter = False
-                    with open(self.Base+'Plotting_Info.txt', "a") as f:
-                        f.write("Will only attempt to read a single trajectory file.\n")
-                else:
-                    with open(self.Base+'Plotting_Info.txt', "a") as f:
-                        f.write("Reading multiple simulations over the iterable directories:\n")
-                        for obj in self.Iter:
-                            f.write("\n%s"%obj)
-            except KeyError:
-                self.Iter = False
-                with open(self.Base+'Plotting_Info.txt', "a") as f:
-                    f.write("Will only attempt to read a single trajectory file.\n")                
-            try:
-                self.Images = System['plot_dir']
-                ensure_dir(self.Base + self.Images)
-                with open(self.Base+'Plotting_Info.txt', "a") as f:
-                    f.write("Will be saving all figures into %s.\n"%(self.Base+self.Images))
-            except KeyError:
-                self.Images = ''
-                with open(self.Base+'Plotting_Info.txt', "a") as f:
-                    f.write("Saving all figures to the base directory.\n")
-            
-            try:
-                self.Meta = System['meta_name']
-                with open(self.Base+'Plotting_Info.txt', "a") as f:
-                    f.write("Will be reading files named '%s'.\n"%self.Meta)
-            except KeyError:
-                self.Meta = 'Metadata.csv'    
-                with open(self.Base+'Plotting_Info.txt', "a") as f:
-                    f.write("Reading, by default, from files named '%s'.\n"%self.Meta)
-                    
-            """
-            The next section will be to read through the iterable directories and 
-            pull out the metadata files to be used in analysis.
-            """
+    * ``base_dir``   – run directory (or parent of the ``iter_dir`` runs); figures go to
+      ``base_dir/plot_dir``.
+    * ``iter_dir``   – list of run sub-directories to average over (errors = std across runs).
+    * ``plot_dir``   – output folder for images, default ``Images/``.
+    * ``frame_dt``   – ps per output frame; gives ``SimTime``. Default: frame index.
+    * ``temperature``– optional per-frame temperatures (K) for annotations.
+    * ``com_band``   – KDE bandwidth for centre-of-mass distance distributions (default 0.3 Å).
 
-        
-        """
-        This section reads in the metadata files from each iterable
-        directory and then creates a dictionary to average over.
-        """
-        ensure_dir(self.Base + self.Images)
-        with open(self.Base+'Plotting_Info.txt', "a") as f:
-            f.write("Verified the existence of a plotting directory.\n")
-        self.Iter_Probs = []
-        if self.Iter:
-            with open(self.Base+'Plotting_Info.txt', "a") as f:
-                f.write("Will be executing the software across all iterable directories to average over realisations.\n")
-                
-            for Object in self.Iter:
-                try:
-                    with open(self.Base + Object + '/' + self.Meta, "rb") as file:
-                        self.BigMeta[str(Object)] = pickle.load(file)
-                except FileNotFoundError:
-                    self.Iter_Probs.append(Object)
-                    with open(self.Base+'Plotting_Info.txt', "a") as f:
-                        f.write("\n%s was not found and so this metadata will not be read.\n" %(self.Base + Object + '/' + self.Meta))
-                except EOFError:
-                    self.Iter_Probs.append(Object)
-                    with open(self.Base+'Plotting_Info.txt', "a") as f:
-                        f.write("\n%s was not found and so this metadata will not be read.\n" %(self.Base + Object + '/' + self.Meta))
-                self.Keys = list(self.BigMeta[str(Object)].keys())
-                
-                    
-            self.AverageMeta = {} #Averaged data across simulations
-            self.Errors = {} #The standard errors which will be plotted
-            for Probs in self.Iter_Probs:
-                self.Iter.remove(Probs)
-            
-            #This front-loads the reading functions so that the user may either
-            #settle with default (full simulation) or user-defined time ranges.
-            
-            for Item in ['Start', 'End','Step', 'Skip', 'Band',
-                         'NSpecies', 'NFrames', 'NAtoms']:
-                self.AverageMeta[Item] =  self.BigMeta[self.Iter[0]][Item] 
-                self.Keys.remove(Item)
-            
-            self.Species = self.BigMeta[self.Iter[0]]['Species']
-            self.Elements = self.BigMeta[self.Iter[0]]['Elements']
-            
-            for Item in ['pdftype', 'Elements', 'Species', 'euc', 'pos']:
-                self.Keys.remove(Item)
-                
-        elif self.single_file:
-            try:
-                with open(self.Base + '/' + self.Meta, "rb") as file:
-                    self.Metadata = pickle.load(file)                
-            except FileNotFoundError:
-                with open(self.Base + 'Plotting_Info.txt', 'a') as file:
-                    file.write("\nNo metadata could be read. Terminating programme.\n")
-                    sys.exit(0)
-            self.Keys = list(self.Metadata.keys())
-                    
-            for Item in ['Start', 'End', 'Step', 'Skip', 'Band', 'NSpecies', 'NFrames', 'NAtoms']:
-                self.Keys.remove(Item)
-            
-            self.Species = self.Metadata['Species']
-            self.Elements = self.Metadata['Elements']
-            
-            for Item in ['pdftype', 'Elements', 'Species', 'euc', 'pos']:
-                self.Keys.remove(Item)
-            
-    
+    Legacy keys produced: ``pdf/rdf`` as ``[(space, heights), ...]`` per frame, ``HePDF``,
+    ``HoPDF<X>``, ``R_Cut``, ``Cut<X>``, ``cna_sigs`` (normalised), ``masterkey`` (tuples),
+    ``agcn``, ``CoMSpace``, ``CoMDist``, ``CoMDist<X>``, ``MidCoMDist<X>``, ``h``, ``c``,
+    ``Start/End/Step/Skip``, ``SimTime``, ``Temp``.
+    """
+
+    def __init__(self, System=None):
+        from Sapphire.IO.Reader import Reader
+        self.System = dict(System or {})
+        self.Base = self.System.get('base_dir', '')
+        self.Images = os.path.join(self.Base, self.System.get('plot_dir', 'Images/'))
+        self.Iter = self.System.get('iter_dir') or False
+        os.makedirs(self.Images, exist_ok=True)
+        runs = [os.path.join(self.Base, str(d), '') for d in self.Iter] if self.Iter else [self.Base]
+        self.BigMeta = {str(run): self._adapt(Reader(run).load_all()) for run in runs}
+        self.Keys = sorted(set().union(*(m.keys() for m in self.BigMeta.values())))
+        self.AverageMeta, self.Errors = {}, {}
+
+    # ------------------------------------------------------------------ adapter
+    def _kde(self, samples, space):
+        band = self.System.get('com_band', 0.3)  # Å; centre-of-mass distributions have ~N samples, not N^2
+        out = np.zeros_like(space)
+        s = np.asarray(samples, dtype=float)
+        if s.size:
+            out = np.sum(norm.pdf(space[None, :], s[:, None], band), axis=0)
+            area = _trapz(out, space)
+            if area > 0:
+                out = out / area
+        return out
+
+    def _adapt(self, m):
+        """Map Reader keys (see IO/OutputInfo*) onto the layout Plot_Funcs was written for."""
+        out = {}
+        species = sorted({k[len('hocut'):] for k in m if k.startswith('hocut')})
+        n_frames = max((len(v) for k, v in m.items() if k in ('nn', 'pdf', 'rcut', 'cna_sigs') and hasattr(v, '__len__')), default=0)
+
+        def dist(space_key, height_key, name):
+            if space_key in m and height_key in m:
+                sp, h = np.atleast_2d(m[space_key]), np.atleast_2d(m[height_key])
+                out[name] = [(sp[min(i, len(sp) - 1)], h[i]) for i in range(len(h))]
+
+        dist('pdfspace', 'pdf', 'pdf'); dist('rdfspace', 'rdf', 'rdf')
+        dist('hepdfspace', 'hepdf', 'HePDF'); dist('herdfspace', 'herdf', 'HeRDF')
+        for x in species:
+            dist('hopdfspace' + x, 'hopdf' + x, 'HoPDF' + x); dist('hordfspace' + x, 'hordf' + x, 'HoRDF' + x)
+            if 'hocut' + x in m:
+                out['Cut' + x] = np.asarray(m['hocut' + x], dtype=float)
+        if 'rcut' in m:
+            out['R_Cut'] = np.asarray(m['rcut'], dtype=float)
+        if 'agcn' in m:
+            out['agcn'] = np.asarray(m['agcn'], dtype=float)
+        if 'nn' in m:
+            out['nn'] = np.asarray(m['nn'], dtype=float)
+        if 'cna_sigs' in m:
+            # Rows grow as new signatures join the masterkey: right-pad (absent == 0 counts).
+            rows = [np.asarray(r, dtype=float) for r in m['cna_sigs']]
+            width = max([len(r) for r in rows] + [len(m.get('masterkey', []))])
+            sigs = np.array([np.pad(r, (0, width - len(r))) for r in rows])
+            tot = sigs.sum(axis=1, keepdims=True); tot[tot == 0] = 1
+            out['cna_sigs'] = sigs / tot
+            out['masterkey'] = [tuple(int(c) for c in s) for s in m.get('masterkey', [])]
+        # centre-of-mass distance distributions on a common grid
+        com_keys = [k for k in ('comdist',) if k in m] + [k for k in m if k.startswith(('hocomdist', 'homidcomdist'))]
+        if com_keys:
+            rmax = max(float(np.max(np.asarray(m[k], dtype=float))) for k in com_keys)
+            space = np.linspace(0, 1.1 * rmax, 100)
+            out['CoMSpace'] = space
+            for k in com_keys:
+                name = {'comdist': 'CoMDist'}.get(k) or k.replace('hocomdist', 'CoMDist').replace('homidcomdist', 'MidCoMDist')
+                out[name] = np.array([self._kde(frame, space) for frame in np.asarray(m[k], dtype=float)])
+        if 'collect' in m:
+            out['h'] = np.asarray(m['collect'], dtype=float)
+        if 'concert' in m:
+            out['c'] = np.asarray(m['concert'], dtype=float)
+        for k in ('mix', 'gyration', 'stat_radius', 'surf_area'):
+            if k in m:
+                out[k] = np.asarray(m[k], dtype=float)
+        for k, v in m.items():  # statistics and any other simple per-frame series
+            if k not in out and isinstance(v, np.ndarray) and v.ndim == 1 and n_frames - 2 <= len(v) <= n_frames:
+                out[k] = v.astype(float)
+        # bookkeeping expected by the plotters
+        out['Start'], out['End'], out['Step'], out['Skip'] = 0, n_frames, 1, 1
+        dt = self.System.get('frame_dt')
+        out['SimTime'] = np.arange(n_frames) * dt if dt else np.arange(n_frames)
+        if self.System.get('temperature') is not None:
+            out['Temp'] = np.asarray(self.System['temperature'], dtype=float)
+        return out
+
+    # ------------------------------------------------------------------ averaging
     def Average(self):
-        
-        """
-        This function takes in the dictionary of the metadata and averages over
-        the quantities found to exist as the relevant keys.
-        """
-        if self.Iter:
-            with open(self.Base+'Plotting_Info.txt', 'a') as file:
-                file.write("\nAveraging over all of the iterable directories.\n")
-            for obj in self.Keys:
-            
-                try:
-                    
-                    Truth = type(self.BigMeta[self.Iter[0]][obj][1]) is list
-                    
-                except TypeError:
-                    with open(self.Base+'Plotting_Info.txt', "a") as f:
-                        f.write("\nTypeError for %s as it is %s.\n"%(obj, type(self.BigMeta[self.Iter[0]][obj])))
-                        
-                except IndexError:
-                    with open(self.Base+'Plotting_Info.txt', "a") as f:
-                        f.write("\nIndexError for %s.\n"%(obj))
-                    Truth = False
-                    
-                if Truth:
-                    
-                    if self.Range_Comp(obj):                        
-                        TempDat, TempErr = self.Add_Quant_List(obj)
-                        self.AverageMeta[obj] = TempDat
-                        self.Errors[obj] = TempErr
-                        Truth = False
-                        
-                    else:
-                        try:
-                            TempDat, TempErr = self.Add_Quant_List(obj, range(len(self.BigMeta[self.Iter[0]][obj])))
-                        except IndexError:
-                            with open(self.Base+'Plotting_Info.txt', "a") as f:
-                                f.write("\IndexError raised for %s. Consider adding it yourself or review the metadata.\n"%(obj))                           
-                    
-                    self.AverageMeta[obj] = TempDat
-                    self.Errors[obj] = TempErr
-                    Truth = False
-                    
-                try:  
-                    
-                    Truth = type(self.BigMeta[self.Iter[0]][obj][2]) is tuple
-                    
-                except TypeError:
-                    with open(self.Base+'Plotting_Info.txt', "a") as f:
-                        f.write("\nTypeError for %s as it is %s.\n"%(obj, type(self.BigMeta[self.Iter[0]][obj])))
-                    Truth = False
-                    
-                except IndexError:
-                    with open(self.Base+'Plotting_Info.txt', "a") as f:
-                        f.write("\nIndexError for %s.\n"%(obj))
-                    Truth = False
-    
-                if Truth:
-                    
-                    if self.Range_Comp(obj):                        
-                        TempDat, TempErr = self.Add_Quant_Tuple(obj)
-                        
-                    else:
-                        TempDat, TempErr = self.Add_Quant_Tuple(obj, range(len(self.BigMeta[self.Iter[0]][obj])))
-                        
-                    self.AverageMeta[obj] = TempDat
-                    self.Errors[obj] = TempErr
-                    Truth = False
-                    
-                try:    
-                    
-                    Truth = 'float' in str(type(self.BigMeta[self.Iter[0]][obj][1]))
-                    
-                except TypeError:
-                    with open(self.Base+'Plotting_Info.txt', "a") as f:
-                        f.write("\nTypeError for %s as it is %s.\n"%(obj, type(self.BigMeta[self.Iter[0]][obj])))
-                    Truth = False
-                    
-                except IndexError:
-                    with open(self.Base+'Plotting_Info.txt', "a") as f:
-                        f.write("\nIndexError for %s.\n"%(obj))
-                    Truth = False
-                    
-                if Truth:
-                    with open(self.Base+'Plotting_Info.txt', "a") as f:
-                        f.write("\nCurrently averaging over %s.\n"%obj)
-                    for It in self.Iter:
-                        self.BigMeta[It][obj] = [ float(x) for x in self.BigMeta[It][obj] if x!= None ]
-                    self.AverageMeta[obj] = np.average( [ self.BigMeta[x][obj] for x in self.Iter ], axis = 0)
-                    self.Errors[obj] = np.std( [ self.BigMeta[x][obj] for x in self.Iter ], axis = 0)
-                    Truth = False
-                if 'CoM' in obj:
-                    Truth = type(self.BigMeta[self.Iter[0]][obj][1]) is np.ndarray
-                    if Truth:
-                        with open(self.Base+'Plotting_Info.txt', "a") as f:
-                            f.write("\nType found to be array for %s as it is %s.\n"%(obj, type(self.BigMeta[self.Iter[0]][obj])))
-                        
-                        if self.Range_Comp(obj):
-                            try:
-                                TempDat, TempErr = self.Add_Quant_List(obj)
-                                self.AverageMeta[obj] = TempDat
-                                self.Errors[obj] = TempErr
-                                Truth = False
-                            except IndexError:
-                                with open(self.Base+'Plotting_Info.txt', "a") as f:
-                                    f.write("\IndexError raised for %s. Consider adding it yourself or review the metadata.\n"%(obj))                                                  
-                            
-                        else:
-                            try:
-                                TempDat, TempErr = self.Add_Quant_List(obj, range(len(self.BigMeta[self.Iter[0]][obj])))                
-                                self.AverageMeta[obj] = TempDat
-                                self.Errors[obj] = TempErr
-                                Truth = False                           
-                            except IndexError:
-                                with open(self.Base+'Plotting_Info.txt', "a") as f:
-                                    f.write("\IndexError raised for %s. Consider adding it yourself or review the metadata.\n"%(obj))                                                  
-
-            """
-            
-            The following code was historically used but is now obsolete:
- 
-            self.AverageMeta['cna'] = [] 
-            self.Errors['cna'] = []
+        """Mean (and std as error) over the run directories; a single run passes through."""
+        runs = list(self.BigMeta.values())
+        for key in self.Keys:
+            vals = [r[key] for r in runs if key in r]
+            if not vals:
+                continue
+            if key in ('masterkey', 'Start', 'End', 'Step', 'Skip', 'SimTime', 'Temp') or len(vals) == 1:
+                self.AverageMeta[key] = vals[0]
+                continue
             try:
-                for i in range(len(self.BigMeta[self.Iter[0]]['cna'])):
-                    self.AverageMeta['cna'].append( np.average( [ self.BigMeta[x]['cna'][i][1] for x in self.Iter ], axis = 0) )
-        
-                    self.Errors['cna'].append( np.std( [ self.BigMeta[x]['cna'][i][1] for x in self.Iter ], axis = 0) )
-            except KeyError:
-                with open(self.Base+'Plotting_Info.txt', "a") as f:
-                    f.write("\nKeyError raised for CNA averaging. Consider adding it yourself or review the metadata.\n")
-            except TypeError:
-                with open(self.Base+'Plotting_Info.txt', "a") as f:
-                    f.write("\nTypeError raised for CNA averaging. Consider adding it yourself or review the metadata.\n")
-    
-            """
-            
-            """
-            
-            Robert:
-                
-                The following block gives the option for the user to save the averaged
-                metadata and the associated errors for later analysis
-                
-                This means that they will not have to run the plotting script if they
-                wish to revisit old data.
-            """
-            
-            try:
-                if self.System['save_meta'] is True:
-                    with open(self.Base + 'Metadata.csv', "wb") as file:
-                        pickle.dump( self.AverageMeta, file, protocol=pickle.HIGHEST_PROTOCOL )
-            except KeyError:
-                pass
-            
-            try:
-                if self.System['save_errors'] is True:
-                    with open(self.Base + 'Errors.csv', "wb") as file:
-                        pickle.dump( self.Errors, file, protocol=pickle.HIGHEST_PROTOCOL )
-            except KeyError:
-                pass   
-            
-            return self.AverageMeta, self.Errors
-        
-        elif self.single_file:
-            with open(self.Base+'Plotting_Info.txt', 'a') as file:
-                file.write("\nAveraging over all of the iterable directories.\n")
-            for obj in self.Keys:
-            
-                if type(self.Metadata[obj][0]) is list:
-                    with open(self.Base+'Plotting_Info.txt', 'a') as file:
-                        file.write("\nCurrently sanitising the data for %s.\n"%obj)
-                    for t in range(len(self.Metadata[obj])):
-                        self.Metadata[obj][t] = np.array(self.Metadata[obj][t], dtype = float)
-                elif type(self.Metadata[obj][0]) is tuple:
-                    with open(self.Base+'Plotting_Info.txt', 'a') as file:
-                        file.write("\nCurrently sanitising the data for %s.\n"%obj)
+                if isinstance(vals[0], list):  # list of (space, heights) tuples
+                    n = min(len(v) for v in vals)
+                    self.AverageMeta[key] = [(vals[0][i][0], np.mean([v[i][1] for v in vals], axis=0)) for i in range(n)]
+                    self.Errors[key] = [(vals[0][i][0], np.std([v[i][1] for v in vals], axis=0)) for i in range(n)]
                 else:
-                    pass
-                    
-            return self.Metadata, False
-        else:
-            with open(self.Base + 'Plotting_Info.txt', 'a') as file:
-                file.write("\nNo metadata could be read. Terminating programme.\n")
-        
-    def Add_Quant_List(self, Quant, Range = None):
-        with open(self.Base+'Plotting_Info.txt', "a") as f:
-            f.write("\nCurrently adding %s to the metadata.\n"%Quant)
-        
-        Val, Err = [], []
-        
-        if Range is None:
-            Range = range(int(self.AverageMeta['Start']), int(self.AverageMeta['End']/self.AverageMeta['Step']))
-        
-        for i in Range:
-            try:
-            
-                TempDat = np.average( ( [self.BigMeta[It][Quant][i] for It in self.Iter ] ), axis = 0)
-                
-                TempErr = np.std( ( [self.BigMeta[It][Quant][i] for It in self.Iter ] ), axis = 0)
-                
-                Val.append(TempDat)
-                Err.append(TempErr)
-            except IndexError:
-                pass
-            except TypeError:
-                TempDat = np.average( ( [np.array(self.BigMeta[It][Quant][i], dtype = float) for It in self.Iter ] ), axis = 0)
-                
-                TempErr = np.std( ( [np.array(self.BigMeta[It][Quant][i], dtype = float) for It in self.Iter ] ), axis = 0)
-                
-                Val.append(TempDat)
-                Err.append(TempErr)
-                    
-        
-        return Val, Err
-
-    def Add_Quant_Tuple(self, Quant, Range = None):
-        if Quant.lower() == 'masterkey':
-            return None
-        with open(self.Base+'Plotting_Info.txt', "a") as f:
-            f.write("\nCurrently adding %s to the metadata.\n"%Quant)
-        
-        if Range is None:
-            Range = range(int(self.AverageMeta['Start']), int(self.AverageMeta['End']/self.AverageMeta['Step']))
-            
-        TempDat = np.empty( (len(Range),len(self.BigMeta[self.Iter[0]][Quant][0])), dtype = object )
-        TempErr = np.empty( (len(Range),len(self.BigMeta[self.Iter[0]][Quant][0])), dtype = object )
-        
-        for i in Range:
-            try:
-                for j in range(len(self.BigMeta[self.Iter[0]][Quant][i])):
-                    
-                
-                    TempDat[i][j] = np.average( ( [self.BigMeta[It][Quant][i][j] for It in self.Iter ] ), axis = 0)
-                    
-                    TempErr[i][j] = np.std( ( [self.BigMeta[It][Quant][i][j] for It in self.Iter ] ), axis = 0)
-
-            except TypeError:
-                with open(self.Base+'Plotting_Info.txt', "a") as f:
-                    f.write("\IndexError raised for %s. Consider adding it yourself or review the metadata.\n"%(Quant))
-            except IndexError:
-                with open(self.Base+'Plotting_Info.txt', "a") as f:
-                    f.write("\IndexError raised for %s. Consider adding it yourself or review the metadata.\n"%(Quant))
-            
-            
-        return TempDat, TempErr
-        
-    def Range_Comp(self, obj):
-        R = range(int(self.AverageMeta['Start']), int(self.AverageMeta['End']/self.AverageMeta['Step']))
-        if len(self.BigMeta[self.Iter[0]][obj]) == len(R):
-            return True
-        else:
-            return False           
+                    n = min(len(v) for v in vals)
+                    stack = np.array([np.asarray(v)[:n] for v in vals], dtype=float)
+                    self.AverageMeta[key] = stack.mean(axis=0)
+                    self.Errors[key] = stack.std(axis=0)
+            except (ValueError, TypeError) as e:
+                log.warning("could not average %s across runs: %s", key, e)
+                self.AverageMeta[key] = vals[0]
+        return self.AverageMeta, (self.Errors if len(runs) > 1 else None)
