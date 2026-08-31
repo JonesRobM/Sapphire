@@ -1,6 +1,6 @@
 # legacy/
 
-Code quarantined during the 2026 restoration (see `docs/RESTORATION_PLAN.md`).
+Code quarantined during the 2026 modernisation and kept for reference.
 Nothing here is packaged or imported by `Sapphire`. Kept because the scientific
 intent may be worth resurrecting once remembered.
 

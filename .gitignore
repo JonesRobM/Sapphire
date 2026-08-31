@@ -27,7 +27,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -142,3 +141,6 @@ main/Sapphire/Tutorials/*/Images/
 main/Sapphire/Tutorials/*/Au561.xyz
 main/Sapphire/Tutorials/*/*.png
 main/Sapphire/Tutorials/*/run_ml/
+
+# working notes (plans, audits, runbooks) - not part of the repository
+notes/

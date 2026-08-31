@@ -12,7 +12,7 @@ Everything below (the 2026 restoration, Phases 1–8) constitutes release 1.1.0.
 
 ### Packaging
 - `setup.py` → `pyproject.toml`; `requires-python >= 3.10`; version `1.1.0.dev0`.
-- Core dependencies reduced to `numpy scipy ase pandas networkx`; everything else is an extra (`plot`, `changepoint`, `ml`, `cna`, `light`, `quote`, `notebooks`, `dev`, `all`). See `docs/DEPENDENCY_NOTES.md`.
+- Core dependencies reduced to `numpy scipy ase pandas networkx`; everything else is an extra (`plot`, `changepoint`, `ml`, `cna`, `light`, `quote`, `notebooks`, `dev`, `all`). Rationale for the dropped packages is summarised in `docs/ML_POTENTIALS.md`.
 
 ### Importability (behaviour-preserving)
 - `Light/Epsilon_DFT.py` — Ni Johnson & Christy table was pasted as two tab-separated columns and did not parse (SyntaxError). Rebuilt as three 150-point arrays; values unchanged.
@@ -104,7 +104,7 @@ Everything below (the 2026 restoration, Phases 1–8) constitutes release 1.1.0.
 - `IO/Output.py`, `Graphing/Read_Plot.py`, `Graphing/Plotter.py` → `legacy/` (unused since the file-output refactor).
 - `Potentials/GuptaPotential.py` — RGL energies (numpy) + `GuptaCalculator` (ASE, numerical forces); tests reproduce the Cleri–Rosato cohesive energies of Au/Ag/Cu/Ni/Pt/Pd within 6 %.
 - `Light/Epsilon_DFT`: Au table has 150 n but 149 k values (source omission) — classes now truncate to the common range with a warning; tests check plasmonic ε′ < 0 for Ag/Au/Cu and the Ag interband edge. `ClassSpec` (pyGDM2) remains untested without the optional dependency.
-- `Process` boilerplate (bluepy) docstrings replaced; `docs/DOCSTRING_AUDIT.md` supersedes `Logs/DocStrings.xlsx` (which can be dropped).
+- `Process` boilerplate docstrings replaced; documentation coverage is now tracked by the API reference rather than by a spreadsheet.
 
 ### API (Task 5)
 - `Sapphire.api.Config` (dataclass, validated against `Utilities.Supported`, TOML round-trip) and `api.run(trajectory, out_dir, ...)` → `Reader`; bimetallic Homo/Hetero defaults inferred from the species; every run writes `sapphire_config.toml` for reproducibility.

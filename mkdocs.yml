@@ -60,9 +60,5 @@ nav:
       - Potentials: api/potentials.md
       - Utilities: api/utilities.md
   - Project:
-      - Restoration plan: RESTORATION_PLAN.md
       - Changelog: CHANGELOG.md
-      - Dependencies: DEPENDENCY_NOTES.md
       - ML potentials brief: ML_POTENTIALS.md
-      - History rewrite runbook: HISTORY_REWRITE.md
-      - Docstring audit: DOCSTRING_AUDIT.md

@@ -38,7 +38,7 @@ def branch_intersection(branches=PT_BRANCHES):
 # DECISION (R. M. Jones, 2026-08-29): the paper states the apex is at GCN = 8.33, but the printed
 # coefficients intersect at 8.096 (A = 6.9); at 8.33 they give 15.7 (left) vs 2.4 (right). Sapphire
 # switches branches where they meet, so A(α) is continuous. Pass apex=8.33 for the literal reading.
-# Recorded in docs/CHANGELOG.md and docs/RESTORATION_PLAN.md.
+# Recorded in docs/CHANGELOG.md.
 GCN_APEX = branch_intersection()
 
 
