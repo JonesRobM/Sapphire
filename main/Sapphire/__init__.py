@@ -21,7 +21,7 @@ Utilities contains useful features and main module docstrings.
 
 """
 
-__version__ = "1.1.0"
+__version__ = "1.2.0.dev0"
 
 __all__ = ['api', 'CNA', 'Graphing', 'IO', 'Light', 'Post_Process', 'Potentials',
            'Process', 'Tutorials', 'Utilities']

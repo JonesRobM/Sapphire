@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sapphire-nano"
-version = "1.1.0"
+version = "1.2.0.dev0"
 description = "A pythonic post-processing environment for the analysis of metallic nanoalloys"
 readme = "README.md"
 license = { file = "LICENSE" }
