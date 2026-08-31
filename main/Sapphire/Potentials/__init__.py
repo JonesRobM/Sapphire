@@ -3,5 +3,7 @@
 __all__ = [
     'Gupta',
     'GuptaParameters',
+    'GuptaPotential',
+    'MLCalculator',
     'Potentials',
 ]

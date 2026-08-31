@@ -1,0 +1,68 @@
+site_name: Sapphire
+site_description: Post-processing environment for metallic nanoparticle simulations
+repo_url: https://github.com/JonesRobM/Sapphire
+docs_dir: docs
+theme:
+  name: material
+  features: [navigation.sections, navigation.top, content.code.copy, search.suggest]
+  palette:
+    - scheme: default
+      primary: indigo
+      toggle: { icon: material/brightness-7, name: dark mode }
+    - scheme: slate
+      primary: indigo
+      toggle: { icon: material/brightness-4, name: light mode }
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [main]
+          options:
+            docstring_style: numpy
+            show_source: true
+            show_root_heading: true
+            members_order: source
+            filters: ["!^_"]
+  - mkdocs-jupyter:
+      include: ["tutorials/*.ipynb"]
+      execute: false
+      include_source: true
+markdown_extensions:
+  - admonition
+  - tables
+  - toc: { permalink: true }
+  - pymdownx.superfences
+  - pymdownx.arithmatex: { generic: true }
+extra_javascript:
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Tutorials:
+      - 01 Build and inspect: tutorials/01_Build_and_Inspect.ipynb
+      - 02 PDDF and cutoff: tutorials/02_PDDF_and_Cutoff.ipynb
+      - 03 Adjacency, CN, aGCN: tutorials/03_Adjacency_CN_aGCN.ipynb
+      - 04 CNA signatures and patterns: tutorials/04_CNA_Signatures_and_Patterns.ipynb
+      - 05 Trajectories with Process: tutorials/05_Trajectory_Analysis_with_Process.ipynb
+      - 06 Statistics and change-points: tutorials/06_Statistics_and_Changepoints.ipynb
+      - 07 Shape: tutorials/07_Shape_MoI_and_Radii.ipynb
+      - 08 Ensemble averaging: tutorials/08_Ensemble_Averaging.ipynb
+      - 09 ML potentials: tutorials/09_ML_Potentials.ipynb
+  - Reference:
+      - Run-directory file contract: FILE_CONTRACT.md
+      - API: api/index.md
+      - Process: api/process.md
+      - Post_Process: api/post_process.md
+      - CNA: api/cna.md
+      - IO: api/io.md
+      - Graphing: api/graphing.md
+      - Potentials: api/potentials.md
+      - Utilities: api/utilities.md
+  - Project:
+      - Restoration plan: RESTORATION_PLAN.md
+      - Changelog: CHANGELOG.md
+      - Dependencies: DEPENDENCY_NOTES.md
+      - ML potentials brief: ML_POTENTIALS.md
+      - History rewrite runbook: HISTORY_REWRITE.md
+      - Docstring audit: DOCSTRING_AUDIT.md

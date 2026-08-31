@@ -36,8 +36,10 @@ ml          = ["scikit-learn>=1.2", "joblib>=1.2"]
 cna         = ["ovito>=3.8"]
 light       = ["pygdm2>=1.1"]
 quote       = ["wikiquote>=0.1"]
+mlpot       = ["mace-torch>=0.3"]          # machine-learned potentials (MACE foundation models); pulls in torch
 notebooks   = ["jupyter", "ipykernel"]
 dev         = ["pytest>=7", "ruff>=0.4", "pre-commit"]
+docs        = ["mkdocs>=1.6,<2", "mkdocs-material>=9", "mkdocstrings[python]>=0.25", "mkdocs-jupyter>=0.24"]
 all         = ["Sapphire[plot,changepoint,ml,light,quote,notebooks]"]
 
 [project.urls]

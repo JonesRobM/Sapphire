@@ -26,19 +26,35 @@ pytest            # needs the dev extra
 ## Quick start
 
 ```python
-from Sapphire import Process
+from Sapphire.api import run
+from Sapphire.Tutorials import data
 
-System = {"base_dir": "./run/", "movie_file_name": "movie.xyz", "extend_xyz": None,
-          "Homo": None, "Hetero": False,
-          "Start": 0, "End": 100, "Step": 1, "Skip": 1, "UniformPDF": False, "Band": 0.05}
-Quantities = {"Full": {"pdf": None, "adj": None, "nn": None, "agcn": None, "cna_sigs": None}}
-
-Process.Process(System=System, Quantities=Quantities)
-# results: ./run/Time_Dependent/<Quantity>  (one line per frame)
+xyz = data.sample("AuPt", "work/")            # bundled Au80Pt20 melting trajectory (70 frames)
+r = run(xyz, "work/out/", quantities=["pdf", "adj", "nn", "agcn", "cna_sigs"],
+        frames=(0, 70, 7), statistics={"JSD": ["pdf"]})
+r.load("agcn")                                 # (frames, atoms) atop generalised coordination numbers
 ```
 
-Complete templates live in `examples/`; worked notebooks in `main/Sapphire/Tutorials/`.
-Tutorial MD data is fetched on demand — see `main/Sapphire/Tutorials/Data/ReadMe.md`.
+Results are plain per-frame text files (`docs/FILE_CONTRACT.md`) readable with `Sapphire.IO.Reader`
+or any other tool. The classic two-dictionary interface to `Sapphire.Process` is unchanged
+(`examples/run_analysis.py`).
+
+## Tutorials
+
+Nine executable notebooks in `main/Sapphire/Tutorials/`, run in CI, rendered on the
+[documentation site](https://jonesrobm.github.io/Sapphire/):
+
+| # | Topic |
+|---|---|
+| 01 | Build a cluster; CN/GCN; surface–core peeling (`Morphology`) |
+| 02 | Pair-distance KDE, RDF, deriving the cutoff |
+| 03 | Adjacency, aGCN and the ORR mass-activity volcano |
+| 04 | CNA signatures, patterns, structure classifier |
+| 05 | Bimetallic trajectory with `Process`, `Reader`, `Graphing` |
+| 06 | Divergences, collectivity, change-point detection |
+| 07 | Shape: inertia, radii of gyration, radial density |
+| 08 | Ensemble averaging over runs |
+| 09 | MD with a MACE foundation-model potential |
 
 ## Repository layout
 
@@ -47,7 +63,7 @@ Tutorial MD data is fetched on demand — see `main/Sapphire/Tutorials/Data/Read
 | `main/Sapphire/` | the package (`Process`, `Post_Process`, `CNA`, `IO`, `Graphing`, `Potentials`, `Light`, `Utilities`, `Tutorials`) |
 | `examples/` | driver-script templates |
 | `tests/` | pytest suite (import sweep, numerics, end-to-end smoke run on Au561) |
-| `docs/` | restoration plan, changelog, dependency notes, history-rewrite runbook |
+| `docs/` | mkdocs site: guides, file contract, API reference, changelog (`mkdocs serve`) |
 | `legacy/` | quarantined code kept for reference; not installed |
 
 Please check out our group page to learn more about the exciting work we do at the nanoscale! 

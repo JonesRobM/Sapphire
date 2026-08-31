@@ -130,3 +130,14 @@ Logs/~$*
 main/Sapphire/Tutorials/Data/*.tar.gz
 __pycache/
 .ruff_cache/
+assets/*.png
+assets/*/
+!assets/LOG.md
+
+# tutorial run outputs (created when notebooks execute)
+main/Sapphire/Tutorials/*/run_AuPt/
+main/Sapphire/Tutorials/*/ensemble/
+main/Sapphire/Tutorials/*/Images/
+main/Sapphire/Tutorials/*/Au561.xyz
+main/Sapphire/Tutorials/*/*.png
+main/Sapphire/Tutorials/*/run_ml/

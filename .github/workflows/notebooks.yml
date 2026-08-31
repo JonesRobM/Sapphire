@@ -1,0 +1,21 @@
+name: Notebooks
+on:
+  push: { branches: [main] }
+  pull_request:
+  schedule: [{ cron: "0 6 1 * *" }]     # monthly, so the tutorials cannot rot silently
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: python -m pip install -e ".[plot,changepoint,ml,notebooks]" nbconvert
+      - name: Execute every tutorial
+        run: |
+          set -e
+          for nb in main/Sapphire/Tutorials/0*/Tutorial.ipynb; do
+            echo "::group::$nb"
+            (cd "$(dirname "$nb")" && jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=900 --output executed.ipynb Tutorial.ipynb)
+            echo "::endgroup::"
+          done
