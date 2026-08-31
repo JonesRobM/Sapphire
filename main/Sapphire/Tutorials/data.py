@@ -84,14 +84,17 @@ def fetch(system: str, cache: str | os.PathLike | None = None, force: bool = Fal
 
 
 def synthetic(n_frames: int = 50, element: str = "Cu", noshells: int = 2,
-              temperature_K: float = 600.0, seed: int = 0, out: str | os.PathLike | None = None):
+              temperature_K: float = 600.0, seed: int = 0, out: str | os.PathLike | None = None,
+              calculator=None):
     """Short seeded Langevin MD of an icosahedral cluster with ASE's EMT potential.
 
     Returns the list of :class:`ase.Atoms`; also writes an ``.xyz`` if *out* is given.
-    Requires only ``ase`` (EMT supports Al, Cu, Ag, Au, Ni, Pd, Pt).
+    Requires only ``ase`` (EMT supports Al, Cu, Ag, Au, Ni, Pd, Pt). Pass any ASE ``calculator``
+    (e.g. ``Potentials.MLCalculator.ml_calculator('mace-mp-0')``) to use a better potential.
     """
     import numpy as np
     from ase import units
+    from ase.constraints import FixCom
     from ase.calculators.emt import EMT
     from ase.cluster import Icosahedron
     from ase.io import write
@@ -100,9 +103,10 @@ def synthetic(n_frames: int = 50, element: str = "Cu", noshells: int = 2,
 
     rng = np.random.RandomState(seed)
     atoms = Icosahedron(element, noshells=noshells)
-    atoms.calc = EMT()
+    atoms.calc = calculator if calculator is not None else EMT()
+    atoms.set_constraint(FixCom())
     MaxwellBoltzmannDistribution(atoms, temperature_K=temperature_K, rng=rng)
-    dyn = Langevin(atoms, 5 * units.fs, temperature_K=temperature_K, friction=0.02, rng=rng)
+    dyn = Langevin(atoms, 5 * units.fs, temperature_K=temperature_K, friction=0.02, rng=rng, fixcm=False)
     frames = []
     for _ in range(n_frames):
         dyn.run(10)
