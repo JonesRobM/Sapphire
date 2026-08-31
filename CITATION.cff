@@ -7,6 +7,14 @@ title: Sapphire
 version: 1.1.0
 date-released: "2026-08-31"
 repository-code: "https://github.com/JonesRobM/Sapphire"
+doi: 10.5281/zenodo.22211283
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.22211283
+    description: "Concept DOI: resolves to the latest Sapphire release"
+  - type: doi
+    value: 10.5281/zenodo.22211284
+    description: "Version DOI for v1.1.0"
 url: "https://jonesrobm.github.io/Sapphire/"
 license: GPL-3.0
 authors:

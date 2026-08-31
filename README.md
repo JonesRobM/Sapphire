@@ -1,5 +1,11 @@
 # SAPPHIRE
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22211283.svg)](https://doi.org/10.5281/zenodo.22211283)
+[![PyPI](https://img.shields.io/pypi/v/sapphire-nano)](https://pypi.org/project/sapphire-nano/)
+[![CI](https://github.com/JonesRobM/Sapphire/actions/workflows/ci.yml/badge.svg)](https://github.com/JonesRobM/Sapphire/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-jonesrobm.github.io%2FSapphire-blue)](https://jonesrobm.github.io/Sapphire/)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-lightgrey)](LICENSE)
+
 ![Sapphire-logos_black](https://user-images.githubusercontent.com/52043020/154812758-c0184aa5-c2d0-4b5c-b23f-5955221d1d79.png)
 
 **Sapphire** is a post-processing environment for the structural characterisation of metallic
@@ -37,6 +43,11 @@ If Sapphire contributes to your work, please cite the method paper:
   doi     = {10.1039/D2FD00097K},
 }
 ```
+
+To cite the software itself (a specific archived version), use the Zenodo DOI:
+[10.5281/zenodo.22211283](https://doi.org/10.5281/zenodo.22211283) resolves to the latest
+release; v1.1.0 is [10.5281/zenodo.22211284](https://doi.org/10.5281/zenodo.22211284).
+GitHub's "Cite this repository" button (from `CITATION.cff`) gives both formats.
 
 The GCN-based mass-activity model implemented in `Post_Process.Mass_Activity` follows
 Rossi, Asara & Baletto, *ChemPhysChem* 2019, **20**, 3037

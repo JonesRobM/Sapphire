@@ -24,4 +24,5 @@ modernised in 2026. GPL-3.0.
 **Citing Sapphire:** R. M. Jones, K. Rossi, C. Zeni, M. Vanzan, I. Vasiljevic, A. Santana-Bonilla
 and F. Baletto, *Structural characterisation of nanoalloys for (photo)catalytic applications with
 the Sapphire library*, Faraday Discuss., 2023, **242**, 326–352,
-[doi:10.1039/D2FD00097K](https://doi.org/10.1039/D2FD00097K).
+[doi:10.1039/D2FD00097K](https://doi.org/10.1039/D2FD00097K). Software archive:
+[doi:10.5281/zenodo.22211283](https://doi.org/10.5281/zenodo.22211283).
