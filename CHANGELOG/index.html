@@ -1,0 +1,1858 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Post-processing environment for metallic nanoparticle simulations">
+      
+      
+      
+      
+        <link rel="prev" href="../api/utilities/">
+      
+      
+        <link rel="next" href="../ML_POTENTIALS/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Changelog - Sapphire</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#changelog" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Sapphire" class="md-header__button md-logo" aria-label="Sapphire" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Sapphire
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Changelog
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/JonesRobM/Sapphire" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Sapphire" class="md-nav__button md-logo" aria-label="Sapphire" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Sapphire
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/JonesRobM/Sapphire" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/01_Build_and_Inspect/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    01. Build a cluster and read its morphology
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/02_PDDF_and_Cutoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    02. Pair distances and the nearest-neighbour cutoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/03_Adjacency_CN_aGCN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    03. Adjacency, coordination and the aGCN catalysis model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/04_CNA_Signatures_and_Patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    04. Common-neighbour analysis: signatures, patterns and classification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/05_Trajectory_Analysis_with_Process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    05. A full trajectory with
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/06_Statistics_and_Changepoints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    06. Statistics along a trajectory: divergences, collectivity and change-points
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/07_Shape_MoI_and_Radii/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    07. Shape: moments of inertia and radii
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/08_Ensemble_Averaging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    08. Averaging over an ensemble of runs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/09_ML_Potentials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    09. Machine-learned potentials: from a toy MD to a foundation model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FILE_CONTRACT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run-directory file contract
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Process
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/post_process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post_Process
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/cna/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CNA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/io/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    IO
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/graphing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graphing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/potentials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Potentials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#110-released-2026-08-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1.0 — released 2026-08-31
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#110dev0-restoration-2026-08-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1.0.dev0 — restoration (2026-08-28)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.1.0.dev0 — restoration (2026-08-28)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repository
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#packaging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Packaging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#importability-behaviour-preserving" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Importability (behaviour-preserving)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes-may-change-behaviour-each-was-a-crash-or-a-silent-no-op-before" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug fixes (may change behaviour — each was a crash or a silent no-op before)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#numpy-2-end-to-end-fixes-found-by-the-smoke-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        numpy 2 / end-to-end fixes found by the smoke test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#follow-up-2026-08-28-after-first-push" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Follow-up (2026-08-28, after first push)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-6-file-backed-metadata-strict-mode-logging-2026-08-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6 — file-backed metadata, strict mode, logging (2026-08-28)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-71-bimetallic-paths-graphing-on-reader-exemplar-figures-2026-08-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 7.1 — bimetallic paths, Graphing on Reader, exemplar figures (2026-08-28)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 7.1 — bimetallic paths, Graphing on Reader, exemplar figures (2026-08-28)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bugs-found-by-the-first-ever-bimetallic-run-aupt-sample-and-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bugs found by the first-ever bimetallic run (AuPt sample) and fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graphing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Graphing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-7377-2026-08-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 7.3–7.7 (2026-08-28)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-72-tutorials-as-a-graded-course-2026-08-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 7.2 — tutorials as a graded course (2026-08-29)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions-2026-08-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decisions (2026-08-29)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-8-legacy-corners-performance-api-2026-08-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 8 — legacy corners, performance, API (2026-08-29)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 8 — legacy corners, performance, API (2026-08-29)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#performance-task-4-2-frame-bimetallic-benchmark-177-s-17-s-outputs-bit-identical-except-the-agcn-fix-below" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance (Task 4) — 2-frame bimetallic benchmark 17.7 s → 1.7 s, outputs bit-identical except the aGCN fix below
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#legacy-corners-task-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Legacy corners (Task 3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-task-5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API (Task 5)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#110-packaging-2026-08-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1.0 packaging (2026-08-31)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ML_POTENTIALS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ML potentials brief
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#110-released-2026-08-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1.0 — released 2026-08-31
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#110dev0-restoration-2026-08-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1.0.dev0 — restoration (2026-08-28)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.1.0.dev0 — restoration (2026-08-28)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repository
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#packaging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Packaging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#importability-behaviour-preserving" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Importability (behaviour-preserving)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes-may-change-behaviour-each-was-a-crash-or-a-silent-no-op-before" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug fixes (may change behaviour — each was a crash or a silent no-op before)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#numpy-2-end-to-end-fixes-found-by-the-smoke-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        numpy 2 / end-to-end fixes found by the smoke test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#follow-up-2026-08-28-after-first-push" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Follow-up (2026-08-28, after first push)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-6-file-backed-metadata-strict-mode-logging-2026-08-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6 — file-backed metadata, strict mode, logging (2026-08-28)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-71-bimetallic-paths-graphing-on-reader-exemplar-figures-2026-08-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 7.1 — bimetallic paths, Graphing on Reader, exemplar figures (2026-08-28)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 7.1 — bimetallic paths, Graphing on Reader, exemplar figures (2026-08-28)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bugs-found-by-the-first-ever-bimetallic-run-aupt-sample-and-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bugs found by the first-ever bimetallic run (AuPt sample) and fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graphing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Graphing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-7377-2026-08-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 7.3–7.7 (2026-08-28)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-72-tutorials-as-a-graded-course-2026-08-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 7.2 — tutorials as a graded course (2026-08-29)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions-2026-08-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decisions (2026-08-29)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-8-legacy-corners-performance-api-2026-08-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 8 — legacy corners, performance, API (2026-08-29)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 8 — legacy corners, performance, API (2026-08-29)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#performance-task-4-2-frame-bimetallic-benchmark-177-s-17-s-outputs-bit-identical-except-the-agcn-fix-below" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance (Task 4) — 2-frame bimetallic benchmark 17.7 s → 1.7 s, outputs bit-identical except the aGCN fix below
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#legacy-corners-task-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Legacy corners (Task 3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-task-5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API (Task 5)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#110-packaging-2026-08-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1.0 packaging (2026-08-31)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
+<h2 id="110-released-2026-08-31">1.1.0 — released 2026-08-31<a class="headerlink" href="#110-released-2026-08-31" title="Permanent link">&para;</a></h2>
+<p>Everything below (the 2026 restoration, Phases 1–8) constitutes release 1.1.0.</p>
+<h2 id="110dev0-restoration-2026-08-28">1.1.0.dev0 — restoration (2026-08-28)<a class="headerlink" href="#110dev0-restoration-2026-08-28" title="Permanent link">&para;</a></h2>
+<h3 id="repository">Repository<a class="headerlink" href="#repository" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Removed ~400 tracked build artefacts (<code>build/</code>, <code>dist/</code>, <code>.eggs/</code>, <code>*.egg-info</code>, <code>__pycache__</code>, <code>.ipynb_checkpoints</code>), a copied <code>.git/</code> internals dump (<code>HEAD</code>, <code>config</code>, <code>description</code>, <code>hooks/</code>, <code>info/</code>), duplicate <code>README</code>/<code>setup.py</code> under <code>main/</code>, and an Excel lock file.</li>
+<li>Removed the never-initialised <code>Raffy</code> submodule.</li>
+<li>New <code>legacy/</code> for quarantined code, <code>examples/</code> for driver templates, <code>tests/</code>, <code>docs/</code>.</li>
+</ul>
+<h3 id="packaging">Packaging<a class="headerlink" href="#packaging" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>setup.py</code> → <code>pyproject.toml</code>; <code>requires-python &gt;= 3.10</code>; version <code>1.1.0.dev0</code>.</li>
+<li>Core dependencies reduced to <code>numpy scipy ase pandas networkx</code>; everything else is an extra (<code>plot</code>, <code>changepoint</code>, <code>ml</code>, <code>cna</code>, <code>light</code>, <code>quote</code>, <code>notebooks</code>, <code>dev</code>, <code>all</code>). Rationale for the dropped packages is summarised in <code>docs/ML_POTENTIALS.md</code>.</li>
+</ul>
+<h3 id="importability-behaviour-preserving">Importability (behaviour-preserving)<a class="headerlink" href="#importability-behaviour-preserving" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>Light/Epsilon_DFT.py</code> — Ni Johnson &amp; Christy table was pasted as two tab-separated columns and did not parse (SyntaxError). Rebuilt as three 150-point arrays; values unchanged.</li>
+<li>24 Python-2-style implicit imports rewritten as <code>Sapphire.*</code> absolute imports.</li>
+<li><code>CNA/Model.py</code> — <code>sklearn.externals.joblib</code> → <code>joblib</code>.</li>
+<li>Glob-generated <code>__all__</code> replaced with explicit lists in every <code>__init__.py</code>.</li>
+<li><code>IO/input.py</code>, <code>Graphing/Plot_input.py</code> were scripts executing on import → <code>examples/</code>.</li>
+<li><code>Emerald/</code>, <code>CNA/main.py</code>, <code>CNA/FrameSignature_Ovito.py</code>, <code>IO/ExtendXYZ.py</code>, <code>IO/OutWrite.py</code>, <code>IO/*.sh</code> → <code>legacy/</code>.</li>
+</ul>
+<h3 id="bug-fixes-may-change-behaviour-each-was-a-crash-or-a-silent-no-op-before">Bug fixes (may change behaviour — each was a crash or a silent no-op before)<a class="headerlink" href="#bug-fixes-may-change-behaviour-each-was-a-crash-or-a-silent-no-op-before" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>Utilities/ExtendXYZ.py</code> — a second <code>class Extend</code> (an Au/Pt one-off script) shadowed the real one, so <code>Process</code> could never write extended-xyz output. Script moved to <code>legacy/Utilities/ExtendXYZ_AuPt_script.py</code>. <code>Process.py</code> now imports <code>Sapphire.Utilities.ExtendXYZ</code>.</li>
+<li><code>Utilities/Pattern_Clean.py</code> — <code>Process(Pattern_Input=None)</code> (the documented default) raised <code>TypeError</code>; defaults are now pre-filled. <code>FROM_MEMORY</code> cleaner wrote to <code>System</code> instead of <code>Pattern_Input</code>.</li>
+<li><code>Post_Process/Stats.py</code> — Jensen–Shannon <code>calculate()</code> referenced bare <code>P</code>, <code>Q</code> (NameError). Now uses <code>self.P</code>, <code>self.Q</code>; loop vectorised, same formula.</li>
+<li><code>Post_Process/Mass_Activity.py</code> — <code>mass_NP</code> was undefined; now <code>len(traj[j]) * mass_cu</code>. <strong>Please sanity-check this physics choice.</strong></li>
+<li><code>Graphing/Reader.py</code> — <code>Get_Heights_Ovito</code> used <code>Metadata</code> instead of its <code>CNAs</code> argument; <code>Quant.lower is 'masterkey'</code> (always False) → <code>Quant.lower() == 'masterkey'</code>.</li>
+<li><code>Graphing/Plot_Funcs.py</code> — <code>autolabel</code> now takes <code>ax</code>; <code>ax2Ticks</code>/<code>tick_function</code> typos → <code>ax3Ticks</code>/<code>self.tick_function</code>; <code>is</code> on string literals → <code>==</code>.</li>
+<li><code>Graphing/Plotter.py</code> — Lindemann/CoM helper block (no <code>self</code>, six undefined globals) → <code>legacy/Graphing/Lindemann_CoM_script.py</code>.</li>
+<li><code>CNA/Model.py</code> — <code>np.maximum(np.max(X, axis=0))</code> (TypeError) → <code>np.max(X, axis=0)</code>; six bare names → <code>self.*</code>; ndarray writes wrapped in <code>str()</code>.</li>
+<li>50 unused imports removed (ruff F401).</li>
+</ul>
+<h3 id="tests">Tests<a class="headerlink" href="#tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>tests/</code> with import sweep, <code>DistFuncs</code> numerics, and a <code>Process</code> smoke run on <code>Tutorials/CNA/Au561.xyz</code>.</li>
+</ul>
+<h3 id="numpy-2-end-to-end-fixes-found-by-the-smoke-test">numpy 2 / end-to-end fixes found by the smoke test<a class="headerlink" href="#numpy-2-end-to-end-fixes-found-by-the-smoke-test" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>np.trapz</code> (removed in numpy 2.0) → <code>np.trapezoid</code> with fallback, in <code>Kernels</code>, <code>Plot_Funcs</code>, <code>Read_Plot</code>. Before this, <strong>the PDF failed, so no cutoff was found, so adjacency/CN/CNA all silently failed</strong> for every user on numpy ≥ 2.</li>
+<li><code>CNA/FrameSignature.py</code> — row-iteration over the scipy sparse adjacency matrix raised under numpy 2; the matrix is densified once and neighbour lookups are vectorised (same results, much faster).</li>
+<li><code>Process.Initialising</code> — <code>All_Times</code>/<code>Band</code> were only set in the bimetallic branch, so <strong>every monometallic run crashed</strong>; missing <code>Quantities</code> groups (<code>Homo</code>/<code>Hetero</code>) now default to <code>{}</code>.</li>
+<li><code>Process.__init__</code> — <code>self.metadata = {}</code> so <code>analyse()</code>/<code>write_meta()</code> no longer raise; note the in-memory metadata design was superseded by <code>Time_Dependent/</code> file output in 1.0 and those two methods need a Reader-based redesign (open item).</li>
+</ul>
+<h3 id="follow-up-2026-08-28-after-first-push">Follow-up (2026-08-28, after first push)<a class="headerlink" href="#follow-up-2026-08-28-after-first-push" title="Permanent link">&para;</a></h3>
+<ul>
+<li>CI was failing at the <code>ruff</code> step (24 residual findings, exit code 1) before <code>pytest</code> ran. All cleared: unused result bindings in <code>Process.calculate</code>, unused <code>as e</code>, dead <code>freq</code>/<code>fig</code>/<code>ax</code>/<code>Plot</code>/<code>f</code> locals, and <code>for self.x in …</code> in <code>IO/Output.py</code>.</li>
+<li><code>Mass_Activity</code> — nanoparticle mass is now Σ over atoms of the species' relative atomic mass (<code>ase Atoms.get_masses()</code>), converted to mg via <code>AMU_MG</code>. Replaces the single-species <code>mass_cu</code> constant.</li>
+</ul>
+<h2 id="phase-6-file-backed-metadata-strict-mode-logging-2026-08-28">Phase 6 — file-backed metadata, strict mode, logging (2026-08-28)<a class="headerlink" href="#phase-6-file-backed-metadata-strict-mode-logging-2026-08-28" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>Sapphire.IO.Reader</code></strong> — reads a run directory (<code>Time_Dependent/</code>, <code>CNA/</code>, <code>Adjacency/</code>, <code>Exec/</code>) back into arrays keyed by the metadata names (<code>nn</code>, <code>pdf</code>, <code>cna_sigs</code>, <code>hocomAu</code>, <code>adj</code>, …). Tolerant of absent quantities. Any external code that writes <code>&lt;frame&gt; &lt;values…&gt;</code> under <code>Time_Dependent/</code> is readable the same way.</li>
+<li><code>Process.load_metadata()</code> / <code>Process.reader()</code>; <code>analyse()</code>, <code>write_meta()</code> (now <code>Metadata.pkl</code>) and the extended-xyz writer run on the Reader output instead of an empty dict.</li>
+<li><code>Process(strict=True)</code> re-raises instead of log-and-continue; 17 copy-pasted <code>except</code> blocks collapsed into <code>Process._report()</code>, which also emits a <code>logging</code> warning.</li>
+<li><code>Sapphire.Utilities.log</code> — 31 <code>print()</code> calls now go through the <code>Sapphire</code> logger.</li>
+<li><code>Stats.Dist_Stats.Kullback/JSD</code> returned the divergence <em>object</em>, never a value; now return the number. <code>JSD_Dist</code> no longer mutates its inputs.</li>
+<li><code>Utilities/ExtendXYZ.py</code> — <code>Names.pop(name)</code> (TypeError) fixed; writes a valid multi-frame xyz (<code>N</code>, comment, atoms per frame) rather than a trailing-count layout.</li>
+<li>Tests: <code>test_reader.py</code> (parsing, shapes, adjacency ↔ NN consistency, analyse/JSD, write_meta, strict, extend_xyz), <code>test_graphing.py</code>.</li>
+</ul>
+<h2 id="phase-71-bimetallic-paths-graphing-on-reader-exemplar-figures-2026-08-28">Phase 7.1 — bimetallic paths, Graphing on Reader, exemplar figures (2026-08-28)<a class="headerlink" href="#phase-71-bimetallic-paths-graphing-on-reader-exemplar-figures-2026-08-28" title="Permanent link">&para;</a></h2>
+<h3 id="bugs-found-by-the-first-ever-bimetallic-run-aupt-sample-and-fixed">Bugs found by the first-ever bimetallic run (AuPt sample) and fixed<a class="headerlink" href="#bugs-found-by-the-first-ever-bimetallic-run-aupt-sample-and-fixed" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>DistFuncs.CoM_Dist</code> ignored its <code>CoM</code> argument (<code>self.CoM = Positions</code>), so <strong>every <code>CoMDist</code> ever written was a per-atom 3-vector, not a distance</strong>; <code>get_CoM</code> returned a scalar (<code>np.average</code> without <code>axis=0</code>). Homo CoM distances now use the sub-species centre.</li>
+<li><code>Process</code>: Homo- and Hetero-RDF calls passed positions positionally into <code>System</code>; the Homo-RDF block was indented inside the <code>except</code> of the Full RDF (so it only ran when Full RDF failed); the LAE/mixing block was a stub with wrong keyword names under a copy-pasted "Gyration" error message.</li>
+<li><code>Post_Process/AtomicEnvironment.py</code> rewritten as a coherent module: <code>Mix</code> (mixing parameter + homo/hetero bond counts), <code>LAE</code> (hetero-neighbour histograms per species), <code>Ele_NN</code> (per-atom neighbour counts by species). Wired into <code>Process</code> and verified bond-for-bond against the full adjacency.</li>
+<li><code>analyse()</code>: called <code>Adjacent.R/Collectivity/Concertedness</code>, which live in <code>Stats.Mobility</code> (AttributeError swallowed → collectivity always 0); looped <code>range(1, (End-Start)/Step)</code> instead of over loaded frames; treated <code>'collect': None</code> as "not requested"; matched <code>'pdf' in key</code> so divergences were computed on the <code>*space</code> grids too. Collectivity/concertedness and every statistic are now written to <code>Time_Dependent/</code> (<code>Collectivity</code>, <code>Concertedness</code>, <code>Stats/&lt;Stat&gt;&lt;quantity&gt;</code>).</li>
+<li><code>Stats.Mobility.R</code> accepted only sparse input and summed the <em>signed</em> neighbour difference (lose one + gain one = "unchanged"); now any change counts.</li>
+<li><code>IO.Reader</code>: per-frame matrix sets (<code>Adjacency/File&lt;n&gt;</code>, <code>HeAdjFile&lt;n&gt;</code>, <code>HomoAdjAuFile&lt;n&gt;</code>) collapse to one 3-D array per key; <code>Time_Dependent/Stats/*</code> pass through; <code>masterkey</code> stays as strings.</li>
+</ul>
+<h3 id="graphing">Graphing<a class="headerlink" href="#graphing" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>Graphing.Read_Meta</code> rewritten as an adapter over <code>IO.Reader</code> producing the legacy layout <code>Plot_Funcs</code> expects (<code>(space, heights)</code> per frame, <code>R_Cut</code>, <code>Cut&lt;X&gt;</code>, normalised <code>cna_sigs</code> with right-padded ragged rows, KDE <code>CoMDist</code>/<code>MidCoMDist&lt;X&gt;</code> over <code>CoMSpace</code>, <code>h</code>/<code>c</code>, <code>SimTime</code>/<code>Temp</code> from <code>frame_dt</code>/<code>temperature</code>). Multi-run averaging = mean/std across <code>iter_dir</code>.</li>
+<li><code>Plot_Funcs</code>: <code>inspect.getargspec</code> (removed in 3.11) → <code>getfullargspec</code>; <code>sys.exit</code> → exceptions; output paths via <code>os.path.join</code>; <code>agcn_heat</code> ticks matched to data; <code>plot_stats</code> time axis from <code>SimTime</code>; <code>cna_traj</code> tuple labels; <code>h_c</code> aligned to frame pairs; missing quantities skipped with a log line instead of crashing.</li>
+<li><code>examples/make_figures.py</code> regenerates the 26-figure exemplar set into <code>assets/</code> (gitignored; provenance in <code>assets/LOG.md</code>).</li>
+</ul>
+<h3 id="tests_1">Tests<a class="headerlink" href="#tests_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Shared 3-frame AuPt fixture (<code>tests/conftest.py</code>), <code>tests/test_bimetallic.py</code> (shapes, bond bookkeeping, mixing parameter, LAE, collectivity, melting raises JSD), Graphing figure-rendering tests (12 figures).</li>
+</ul>
+<h2 id="phase-7377-2026-08-28">Phase 7.3–7.7 (2026-08-28)<a class="headerlink" href="#phase-7377-2026-08-28" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>Post_Process/Mass_Activity.py</code></strong> rewritten to Rossi, Asara &amp; Baletto, ChemPhysChem 2019 (Eqs. 5–7): volcano <code>A_l=exp(3.14α−23.40)</code>, <code>A_r=exp(−4.96α+42.18)</code>, sites with GCN &gt; 6, <code>MA = j_flat/ρ_sites · Σ A / M_NP</code>; the 4.107 A/mg prefactor is reproduced from 2 mA cm⁻² and 1.503·10¹⁵ cm⁻² and the mass is species-weighted (alloys). The old file could not run (<code>beta</code> function used as a scalar). <strong>Note:</strong> the printed branch coefficients intersect at GCN 8.10, not the stated 8.33; we switch branches where they meet (continuous) — <code>apex=8.33</code> reproduces the literal reading.</li>
+<li><strong><code>Post_Process/Morphology.py</code></strong> — Emerald's surface/core peeling, shell thickness, faceting ratio, surface area, volume, solid angle; vectorised; tests reproduce the Mackay shells [252, 162, 92, 42, 12, 1] of Au561.</li>
+<li><strong><code>CNA/Classify.py</code></strong> — fingerprint → bulk-pattern features → SVC (classes fcc/Ih/Dh/amorphous), filename labelling, save/load; test trains on ASE Ih/Dh/Oct clusters and predicts held-out sizes.</li>
+<li><strong><code>Utilities/errors.py</code></strong> — single <code>report()</code> honouring strict mode; <code>Process._report</code>, <code>Adjacent</code>, <code>Kernels</code>, <code>DistFuncs</code>, <code>FrameSignature</code> route through it (silent <code>except: pass/return None</code> no longer silent).</li>
+<li><code>Adjacency_Matrix</code>: <code>Type</code> defaults to <code>'Full'</code> and no write without a <code>System</code> (standalone use, as in the tutorials, previously produced an empty list). <code>FrameSignature</code>: no write without <code>System</code>; <code>Exec/Masterkey</code> is overwritten per frame rather than appended (it accumulated duplicates).</li>
+<li>Docs: <code>docs/FILE_CONTRACT.md</code> (run-directory format for external producers), <code>examples/from_lammps.py</code>, <code>docs/ML_POTENTIALS.md</code> (brief + proposal), <code>legacy/README.md</code> marks Emerald and CNA/main superseded.</li>
+</ul>
+<h2 id="phase-72-tutorials-as-a-graded-course-2026-08-29">Phase 7.2 — tutorials as a graded course (2026-08-29)<a class="headerlink" href="#phase-72-tutorials-as-a-graded-course-2026-08-29" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Eight new executable notebooks under <code>Tutorials/0N_*/Tutorial.ipynb</code> (build &amp; morphology → PDDF/cutoff → adjacency/aGCN/mass activity → CNA signatures/patterns/classifier → <code>Process</code> on a bimetallic melt → divergences/collectivity/change-points → shape → ensemble averaging). Each runs offline on bundled data; all outputs verified physically (Mackay shells, five Ih signatures with exact counts, JSD change-points at 5 and 10 ns). Previous notebooks (one real, five byte-identical clones, one stub, the Emerald script) moved to <code>legacy/Tutorials/</code>. <code>Data/Au561.xyz</code> is the bundled reference structure.</li>
+<li><code>.github/workflows/notebooks.yml</code> executes every tutorial on push/PR and monthly.</li>
+<li><code>Process(overwrite=True)</code> (default) clears previous result files from the Sapphire-owned output folders before a run — results were appended, so re-running in the same directory doubled every series.</li>
+<li><code>FrameSignature</code>: <code>cna_sigs</code> without <code>cna_patterns</code> raised <code>AttributeError: Fingerprint</code> (silently, per frame) — attribute now always defined.</li>
+<li><code>analyse()</code> no longer re-ingests its own earlier statistics (<code>JSDpdf</code>) as distributions.</li>
+<li>Cleaners (<code>System_Clean</code>, <code>Pattern_Clean</code>) log at debug level instead of <code>warnings.warn</code> (they already write to <code>Sapphire_Info.txt</code>); <code>Stats.KB_Dist</code> masks zero bins instead of emitting divide warnings; <code>data.synthetic</code> uses <code>FixCom</code> per ASE ≥ 3.28.</li>
+</ul>
+<h2 id="decisions-2026-08-29">Decisions (2026-08-29)<a class="headerlink" href="#decisions-2026-08-29" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Mass_Activity volcano apex:</strong> branches switch at their intersection, GCN = 8.096 (Rob, 2026-08-29). Literal 8.33 available via <code>apex=8.33</code>.</li>
+<li><strong>ML potentials:</strong> scrap <code>tensorflow</code>/<code>mir-flare</code>/<code>ray</code>; adopt MACE foundation models as an optional extra (<code>pip install -e .[mlpot]</code>), see <code>Potentials/MLCalculator.py</code> and Tutorial 09.</li>
+</ul>
+<h2 id="phase-8-legacy-corners-performance-api-2026-08-29">Phase 8 — legacy corners, performance, API (2026-08-29)<a class="headerlink" href="#phase-8-legacy-corners-performance-api-2026-08-29" title="Permanent link">&para;</a></h2>
+<h3 id="performance-task-4-2-frame-bimetallic-benchmark-177-s-17-s-outputs-bit-identical-except-the-agcn-fix-below">Performance (Task 4) — 2-frame bimetallic benchmark 17.7 s → 1.7 s, outputs bit-identical except the aGCN fix below<a class="headerlink" href="#performance-task-4-2-frame-bimetallic-benchmark-177-s-17-s-outputs-bit-identical-except-the-agcn-fix-below" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>DistFuncs.Euc_Dist</code>/<code>Hetero</code> → <code>scipy.spatial.distance.pdist/cdist</code> (13 M Python calls to <code>distance()</code> removed); <code>RDF.calculate</code> → <code>bincount</code>; <code>Kernels</code> Gaussian/Epanechnikov → chunked broadcasting, Uniform → sorted search; <code>Adjacent.calculate_adj</code> → <code>squareform</code>; <code>FrameSignature.T</code> → small DFS (networkx only for the rare cyclic bond graphs). Verified against a pickled baseline of 64 quantities.</li>
+<li><strong>aGCN was wrong.</strong> The original <code>agcn_generator</code> walked <code>scipy.sparse.find</code> output assuming column-grouped rows; <code>find</code> sorts row-major, so each atom's own CN was summed: aGCN = CN²/12 (up to 16.3 in a liquid; a (111) terrace gave 6.75 instead of 7.5). Now aGCN_i = Σ_{j∈N(i)} CN_j / 12 exactly (tests: terrace 7.5, Ih vertex 4.33, bulk 12). Surface-area and surface-atom counts, which derive from aGCN, change accordingly. Whether the 2020 scipy behaved identically could not be verified — treat older Sapphire aGCN output with caution.</li>
+<li>CNA signature columns are now consistent across frames: <code>Process</code> carries a running masterkey so each frame's row is a prefix-compatible extension of the previous one; <code>Exec/Masterkey</code> holds the final key.</li>
+</ul>
+<h3 id="legacy-corners-task-3">Legacy corners (Task 3)<a class="headerlink" href="#legacy-corners-task-3" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>IO/Output.py</code>, <code>Graphing/Read_Plot.py</code>, <code>Graphing/Plotter.py</code> → <code>legacy/</code> (unused since the file-output refactor).</li>
+<li><code>Potentials/GuptaPotential.py</code> — RGL energies (numpy) + <code>GuptaCalculator</code> (ASE, numerical forces); tests reproduce the Cleri–Rosato cohesive energies of Au/Ag/Cu/Ni/Pt/Pd within 6 %.</li>
+<li><code>Light/Epsilon_DFT</code>: Au table has 150 n but 149 k values (source omission) — classes now truncate to the common range with a warning; tests check plasmonic ε′ &lt; 0 for Ag/Au/Cu and the Ag interband edge. <code>ClassSpec</code> (pyGDM2) remains untested without the optional dependency.</li>
+<li><code>Process</code> boilerplate docstrings replaced; documentation coverage is now tracked by the API reference rather than by a spreadsheet.</li>
+</ul>
+<h3 id="api-task-5">API (Task 5)<a class="headerlink" href="#api-task-5" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>Sapphire.api.Config</code> (dataclass, validated against <code>Utilities.Supported</code>, TOML round-trip) and <code>api.run(trajectory, out_dir, ...)</code> → <code>Reader</code>; bimetallic Homo/Hetero defaults inferred from the species; every run writes <code>sapphire_config.toml</code> for reproducibility.</li>
+</ul>
+<h3 id="110-packaging-2026-08-31">1.1.0 packaging (2026-08-31)<a class="headerlink" href="#110-packaging-2026-08-31" title="Permanent link">&para;</a></h3>
+<ul>
+<li>PyPI distribution name <strong><code>sapphire-nano</code></strong> (<code>sapphire</code> was taken in 2018); the import stays <code>import Sapphire</code>.</li>
+<li>Wheel/sdist verified: bundled tutorial samples and potentials included (<code>*.xyz.gz</code> added to package data); a <strong>bare</strong> <code>pip install sapphire-nano</code> imports and runs (<code>ruptures</code> import in <code>Stats</code> made lazy — it is the <code>changepoint</code> extra).</li>
+<li><code>CITATION.cff</code> (preferred citation: Jones et al., Faraday Discuss. 2023, 242, 326); <code>release.yml</code> builds on tag <code>v*</code>, publishes to PyPI via trusted publishing and attaches the dist to a GitHub release.</li>
+<li>ASCII-logo strings made raw (SyntaxWarning on import gone).</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "content.code.copy", "search.suggest"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
