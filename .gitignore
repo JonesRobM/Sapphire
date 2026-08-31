@@ -11,6 +11,7 @@ __pycache__/
 build/
 develop-eggs/
 dist/
+/dist*/          # any local build output dir (dist_check, dist-test, ...)
 downloads/
 eggs/
 .eggs/
