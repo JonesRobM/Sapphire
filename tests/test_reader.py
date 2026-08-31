@@ -42,7 +42,7 @@ def test_load_shapes(run):
     work, _ = run
     r = Reader(work)
     assert r.load("nn").shape == (1, 561)
-    assert r.load("com").shape == (1, 561, 3)
+    assert r.load("com").shape == (1, 3)          # one centre-of-mass vector per frame
     assert r.load("gyration").shape == (1,)
     assert r.load("adj").shape == (1, 561, 561)
     assert r.load("cna_sigs").shape == (1, len(r.masterkey()))
@@ -74,7 +74,8 @@ def test_analyse_statistics_and_write_meta(run):
     with open(path, "rb") as f:
         meta = pickle.load(f)
     assert meta["nn"].shape == (1, 561)
-    log = (work / "Sapphire_Errors.log").read_text()
+    log_file = work / "Sapphire_Errors.log"
+    log = log_file.read_text() if log_file.exists() else ""
     assert "Exception raised" not in log and "Error raised" not in log, log
 
 

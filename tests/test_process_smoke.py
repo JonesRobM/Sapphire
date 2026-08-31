@@ -97,3 +97,18 @@ def test_cna_signatures_of_icosahedron(run):
     assert len(sigs) == len(masterkey)
     assert sigs[masterkey.index("555")] == 120
     assert sigs[masterkey.index("421")] > 0 and sigs[masterkey.index("422")] > 0
+
+
+def test_agcn_is_generalised_coordination(run):
+    """aGCN_i = sum over neighbours j of CN_j / 12 (Calle-Vallejo): terrace 7.5, Ih vertex 4.33, bulk 12."""
+    work, _ = run
+    agcn = np.asarray(_read(work / "Time_Dependent" / "AGCN")[0][1:], dtype=float)
+    nn = np.asarray(_read(work / "Time_Dependent" / "NN")[0][1:], dtype=float)
+    assert agcn.max() <= 12.0 + 1e-9
+    interior = agcn[nn == 12]
+    assert interior.max() == 12.0 and interior.min() >= 9.5         # deep bulk 12; sub-surface 11.25; under edges/vertices 9.83
+    assert np.allclose(agcn[nn == 6], 52 / 12, atol=1e-3)          # 12 vertices: one CN-12 below, five CN-8 edges
+    facet = agcn[nn == 9]
+    # (111) facet atoms: 3 CN-12 below + 6 in-plane neighbours of CN 8/9 -> 7.167 or 7.333 on a 5-shell Ih
+    # (a facet large enough for all-CN-9 neighbours would give the textbook terrace value 7.5)
+    assert len(facet) and facet.min() >= 7.1 and facet.max() <= 7.5
