@@ -144,3 +144,5 @@ main/Sapphire/Tutorials/*/run_ml/
 
 # working notes (plans, audits, runbooks) - not part of the repository
 notes/
+CLAUDE*
+*claude*

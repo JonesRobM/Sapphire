@@ -1,7 +1,10 @@
 name: Release
 on:
   push:
-    tags: ["v*"]
+    # Deliberately narrower than v*: this repo also carries non-release tags
+    # (e.g. data-v1), and only a version tag may reach PyPI.
+    tags: ["v[0-9]*"]
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -9,11 +12,52 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
+
+      # A tag is the only thing that triggers this workflow, but the artefacts are
+      # named from pyproject.toml. If the two disagree, the tag is a lie about what
+      # lands on PyPI -- so refuse to build rather than publish the wrong version.
+      - name: Tag must match the packaged version
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(python -c 'import tomllib, pathlib; print(tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]["version"])')"
+          echo "tag=${tag}  pyproject=${pkg}"
+          if [ "${tag}" != "${pkg}" ]; then
+            echo "::error::Tag v${tag} does not match pyproject.toml version ${pkg}. Bump the version, commit, then move the tag."
+            exit 1
+          fi
+
+          # The package is archived on Zenodo and carries a per-version DOI, so the
+          # citation metadata has to name the version actually being released.
+          cff="$(python -c 'import re,pathlib; m=re.search(r"^version:\s*(.+?)\s*$", pathlib.Path("CITATION.cff").read_text(), re.M); print(m.group(1).strip(chr(34)+chr(39)) if m else "")')"
+          echo "CITATION.cff=${cff}"
+          if [ "${tag}" != "${cff}" ]; then
+            echo "::error::CITATION.cff declares version ${cff} but the tag is v${tag}. Update CITATION.cff (version and date-released) before tagging."
+            exit 1
+          fi
+          # Sapphire.__version__ is hand-maintained alongside pyproject.toml; if they
+          # drift, the installed package reports a version it is not.
+          dunder="$(python -c 'import re,pathlib; m=re.search(r"^__version__\s*=\s*(.+)$", pathlib.Path("main/Sapphire/__init__.py").read_text(), re.M); print(m.group(1).strip().strip(chr(34)+chr(39)) if m else "")')"
+          echo "Sapphire.__version__=${dunder}"
+          if [ "${pkg}" != "${dunder}" ]; then
+            echo "::error::pyproject.toml says ${pkg} but Sapphire.__version__ is ${dunder}. Keep them in step."
+            exit 1
+          fi
+
+          case "${pkg}" in
+            *dev*)
+              echo "::error::${pkg} is a development version and must not be published to PyPI."
+              exit 1 ;;
+            *a[0-9]*|*b[0-9]*|*rc[0-9]*)
+              echo "::notice::${pkg} will be published as a pre-release." ;;
+          esac
+
       - run: python -m pip install build twine
       - run: python -m build
-      - run: python -m twine check dist/*
+      - run: python -m twine check --strict dist/*
       - uses: actions/upload-artifact@v4
         with: { name: dist, path: dist/ }
+
   publish:
     needs: build
     runs-on: ubuntu-latest
@@ -22,9 +66,30 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with: { name: dist, path: dist/ }
+
+      # skip-existing keeps a re-run of an already-published tag green instead of
+      # failing on "400 File already exists". The verification step below is what
+      # guarantees the release is actually on the index.
       - uses: pypa/gh-action-pypi-publish@release/v1
+        with: { skip-existing: true }
+
+      - name: Confirm the version is live on PyPI
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          for attempt in $(seq 1 10); do
+            if curl -sfL "https://pypi.org/pypi/sapphire-nano/${version}/json" > /dev/null; then
+              echo "sapphire-nano ${version} is on PyPI"
+              exit 0
+            fi
+            echo "not visible yet (attempt ${attempt}/10); waiting"
+            sleep 15
+          done
+          echo "::error::sapphire-nano ${version} never appeared on PyPI"
+          exit 1
+
   github-release:
-    needs: build
+    needs: publish                         # never advertise a release PyPI does not have
     runs-on: ubuntu-latest
     permissions: { contents: write }
     steps:

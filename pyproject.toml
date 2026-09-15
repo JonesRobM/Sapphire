@@ -52,10 +52,30 @@ package-dir = { "" = "main" }
 [tool.setuptools.packages.find]
 where   = ["main"]
 include = ["Sapphire*"]
+# Without this, find defaults to namespace discovery and promotes every directory
+# under main/Sapphire to a package -- including tutorial run outputs, so the wheel
+# grew importable junk like Sapphire.Tutorials.08_Ensemble_Averaging.ensemble.seed0.
+# Only directories with an __init__.py are packages here.
+namespaces = false
 
 [tool.setuptools.package-data]
+"Sapphire"            = ["Sapphire-logos/*"]   # not a package; shipped as data
 "Sapphire.Potentials" = ["*.eam.alloy", "*.eam.fs", "*.eam", "*.set", "*.adp.txt"]
 "Sapphire.Tutorials"  = ["**/*.ipynb", "**/*.xyz", "**/*.xyz.gz", "**/*.md"]
+
+# Executing a tutorial writes its outputs next to the notebook. Those directories are
+# gitignored, so CI never sees them, but a local `python -m build` would sweep them
+# into the wheel via the globs above and ship a distribution CI cannot reproduce.
+[tool.setuptools.exclude-package-data]
+"Sapphire.Tutorials" = [
+    "*/run_AuPt/*",
+    "*/run_ml/*",
+    "*/ensemble/*",
+    "*/Images/*",
+    "*/*.png",
+    "*/Au561.xyz",
+    "Data/*.tar.gz",
+]
 
 [tool.ruff]
 line-length = 110
