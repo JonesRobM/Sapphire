@@ -7,8 +7,9 @@ common-neighbour-analysis signatures and patterns, chemical ordering in alloys, 
 morphology, and the divergences and change-points that locate transitions along a run.
 
 * Runs on any trajectory ASE can read (xyz, ASE `.traj`, LAMMPS dumps, …).
-* Writes plain-text per-frame results you can read back with `Sapphire.IO.Reader` or any tool
-  (see the [file contract](FILE_CONTRACT.md)).
+* Writes per-frame results you can read back with `Sapphire.IO.Reader` or any tool: plain text
+  for series, sparse `npz` for adjacency matrices (see the [file contract](FILE_CONTRACT.md)).
+* Drives from Python or from the [command line](cli.md), with frames analysed across processes.
 * Nine executable [tutorials](tutorials/01_Build_and_Inspect.ipynb) build from a single cluster to
   ensembles of runs.
 
@@ -16,6 +17,10 @@ morphology, and the divergences and change-points that locate transitions along 
 from Sapphire.api import run
 reader = run("movie.xyz", "out/", quantities=["pdf", "adj", "nn", "agcn", "cna_sigs"], frames=(0, 100, 5))
 agcn = reader.load("agcn")          # (frames, atoms)
+```
+
+```bash
+sapphire run movie.xyz -o out/ -q pdf,adj,nn,agcn,cna_sigs --frames 0:100:5 -j 8
 ```
 
 Developed in the [Baletto group](http://balettogroup.org) (King's College London); restored and

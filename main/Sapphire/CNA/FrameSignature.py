@@ -1,11 +1,57 @@
 import numpy as np
 import os
+from functools import lru_cache
+
 import networkx as nx
 from Sapphire.CNA import Utilities
 from Sapphire.Utilities import errors
 from Sapphire.Utilities.log import get_logger
 
 log = get_logger('Sapphire.CNA.FrameSignature')
+
+
+@lru_cache(maxsize=8192)
+def _longest_chain(n_nodes, edges):
+    """Longest chain in a bond graph given as ``n_nodes`` and a frozenset of (i, j), i < j.
+
+    The maximum over all simple paths, measured in edges, and -- where the graph has cycles
+    -- the longest cycle in a cycle basis. Identical to the original networkx-backed
+    definition; only the labels have been normalised to 0..n-1 so that the answer can be
+    cached.
+
+    Caching is what makes this cheap. The graph is the mutual neighbourhood of two bonded
+    atoms, so it has three to five nodes, and a crystal presents the same few shapes over
+    and over: a 923-atom icosahedron yields just 11 distinct graphs across 9804 calls, so
+    99.9% of them are answered from here without searching anything.
+    """
+    nbrs = {k: set() for k in range(n_nodes)}
+    for a, b in edges:
+        nbrs[a].add(b)
+        nbrs[b].add(a)
+    n_edges = len(edges)
+    if not n_edges:
+        return 0
+
+    best = 0
+
+    def dfs(node, visited, length):
+        nonlocal best
+        if length > best:
+            best = length
+        for m in nbrs[node]:
+            if m not in visited:
+                visited.add(m); dfs(m, visited, length + 1); visited.discard(m)
+
+    for start in range(n_nodes):
+        dfs(start, {start}, 0)
+    if n_edges >= n_nodes:                      # cyclic
+        G = nx.Graph()
+        G.add_nodes_from(range(n_nodes))
+        G.add_edges_from(edges)
+        cycles = [len(c) for c in nx.cycle_basis(G)]
+        if cycles:
+            best = max(best, max(cycles))
+    return best
 
 class CNA(object):
     """
@@ -54,16 +100,33 @@ class CNA(object):
         self.Frame = Frame
         if Adj is not None:
             try:
-                # np.asarray: .todense() gives np.matrix, whose 2-D column slices break scalar
-                # conversion under numpy>=2 (and were O(N) per lookup anyway).
-                self.Adj = np.asarray(Adj.todense())
+                # Kept sparse, as an adjacency list. The signature only ever asks two
+                # questions -- "who neighbours atom i" and "are b and c bonded" -- and an
+                # adjacency list answers both in O(k), k ~ 12. Densifying used to cost
+                # O(N^2) memory (66 MB at N=2869, 3.2 GB at N=20000) and turned every
+                # neighbour lookup into a full column scan, which made the routine
+                # quadratic in N for physics that is linear in it.
+                #
+                # Columns, not rows: S() reads Adj[c, b], so _cols[b] must be the set of
+                # row indices nonzero in column b. The matrix is symmetric in practice,
+                # but indexing by column keeps this exactly equivalent to the original.
+                csc = Adj.tocsc()
+                self._n = csc.shape[0]
+                indptr, indices, data = csc.indptr, csc.indices, csc.data
+                self._cols, self._colsets = [], []
+                for j in range(self._n):
+                    lo, hi = indptr[j], indptr[j + 1]
+                    rows = indices[lo:hi][data[lo:hi] == 1]   # '== 1' matches the original mask
+                    col = sorted(int(r) for r in rows)        # flatnonzero returned ascending
+                    self._cols.append(col)
+                    self._colsets.append(set(col))
             except Exception as e:
-                errors.report(e, 'CNA adjacency densification failed: %s', base_dir=self.System['base_dir'] if self.System else None)
+                errors.report(e, 'CNA adjacency preparation failed: %s', base_dir=self.System['base_dir'] if self.System else None)
         else:
             pass
         if Fingerprint:
-            self.Fingerprint = np.zeros(self.Adj.shape[0], dtype = object)
-            self.Keys = np.zeros(self.Adj.shape[0], dtype = object)    
+            self.Fingerprint = np.zeros(self._n, dtype = object)
+            self.Keys = np.zeros(self._n, dtype = object)    
         else:
             self.Fingerprint = False
 
@@ -148,7 +211,7 @@ class CNA(object):
 
         """
         
-        self.neigh = np.flatnonzero(self.Adj[:, atom] == 1).tolist()
+        self.neigh = self._cols[atom]
         return self.neigh
         
     
@@ -170,7 +233,7 @@ class CNA(object):
 
         """
         
-        self.bonds = np.flatnonzero((self.Adj[:, atom] == 1) & (self.Adj[:, friend] == 1)).tolist()
+        self.bonds = sorted(self._colsets[atom] & self._colsets[friend])
         self.r = len(self.bonds)
         return self.r
                     
@@ -179,47 +242,32 @@ class CNA(object):
         self.s = 0
         self.perm = []
         for i, b in enumerate(self.bonds):
-            for j, c in enumerate(self.bonds[i:]):
-                a = int(self.Adj[c, b])
-                if a == 1:
-                    self.s += a
+            col_b = self._colsets[b]
+            for c in self.bonds[i:]:
+                if c in col_b:
+                    self.s += 1
                     self.perm.append((b,c))
         return self.s
 
     def T(self):
         """Longest chain among the bonds between common neighbours.
 
-        Same definition as the original networkx implementation: the maximum over all simple
-        paths (in edges) and, where the bond graph has cycles, the longest cycle in a cycle basis.
-        The path search is a small DFS; networkx is only used for the (rare) cyclic case.
+        The graph itself is what determines the answer, not which atoms happen to form it,
+        so the node labels are normalised to 0..n-1 and the search is delegated to the
+        cached :func:`_longest_chain`. self.bonds is already ascending, so enumerating it
+        gives a stable relabelling.
         """
-        nodes = list(self.bonds)
-        nbrs = {n: set() for n in nodes}
-        for b1, b2 in self.perm:
-            if b1 != b2:
-                nbrs[b1].add(b2); nbrs[b2].add(b1)
-        n_edges = sum(len(v) for v in nbrs.values()) // 2
-        best = 0
-        if n_edges:
-            def dfs(node, visited, length):
-                nonlocal best
-                best = max(best, length)
-                for m in nbrs[node]:
-                    if m not in visited:
-                        visited.add(m); dfs(m, visited, length + 1); visited.discard(m)
-            for start in nodes:
-                dfs(start, {start}, 0)
-            if n_edges >= len(nodes):  # cyclic
-                G = nx.Graph(); G.add_nodes_from(nodes); G.add_edges_from((a, b) for a in nbrs for b in nbrs[a] if a < b)
-                cycles = [len(c) for c in nx.cycle_basis(G)]
-                if cycles:
-                    best = max(best, max(cycles))
-        self.t = best
+        index = {atom: k for k, atom in enumerate(self.bonds)}
+        edges = frozenset(
+            (index[b1], index[b2]) if index[b1] < index[b2] else (index[b2], index[b1])
+            for b1, b2 in self.perm if b1 != b2
+        )
+        self.t = _longest_chain(len(self.bonds), edges)
         return self.t
 
 
     def calculate(self):
-        for i, atom in enumerate(self.Adj):
+        for i in range(self._n):
             self.particle_cnas = []
             self.NN(i)
             for neigh in self.neigh:

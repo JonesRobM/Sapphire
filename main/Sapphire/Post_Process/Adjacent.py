@@ -9,6 +9,51 @@ from Sapphire.Utilities import errors
 
 log = get_logger('Sapphire.Post_Process.Adjacent')
 
+
+def write_adjacency(filename, matrix, dense_text=False):
+    """Persist one frame's adjacency, sparse by default.
+
+    The matrix is ~12 nonzeros per row, so dense text costs O(N^2) bytes to store what
+    is O(N) information: 8 MB per frame at N=2000, 160 GB over a 20k-frame run. Sparse
+    npz stores the same matrix in ~0.19 MB. ``dense_text`` restores the original
+    human-readable format for the cases where it is genuinely wanted.
+
+    Returns the path actually written (npz gains a ``.npz`` suffix).
+    """
+    if dense_text:
+        dense = matrix.todense() if hasattr(matrix, 'todense') else matrix
+        with open(filename, 'w') as f:
+            _write_int_matrix(f, dense)
+        return filename
+    sparse = matrix if spa.issparse(matrix) else spa.csr_matrix(matrix)
+    spa.save_npz(filename, sparse.tocsr())      # appends .npz
+    return filename + '.npz'
+
+
+def _write_int_matrix(f, mat, chunk=512):
+    """Write a matrix of single-digit non-negative integers as text, one row per line.
+
+    Byte-for-byte identical to ``np.savetxt(f, mat, fmt='%d')``, but assembled as a byte
+    buffer rather than formatting every value through Python. The adjacency is 0/1 and
+    N x N, so this is 2 million values per frame at N=1415 -- savetxt spent ~0.077 s/frame
+    on it. Rows are written in chunks so the buffer stays bounded for large N.
+
+    Anything outside 0-9 falls back to savetxt, so the fast path can never silently
+    mangle a matrix it was not designed for.
+    """
+    arr = np.asarray(mat)
+    if arr.ndim != 2 or arr.size == 0 or arr.min() < 0 or arr.max() > 9:
+        np.savetxt(f, arr, fmt='%d')
+        return
+    cols = arr.shape[1]
+    for lo in range(0, arr.shape[0], chunk):
+        block = arr[lo:lo + chunk]
+        buf = np.full((block.shape[0], 2 * cols), 0x20, dtype=np.uint8)   # spaces
+        buf[:, 0::2] = block.astype(np.uint8) + 0x30                       # '0'..'9'
+        buf[:, -1] = 0x0A                                                  # newline
+        f.write(buf.tobytes().decode('ascii'))
+
+
 class Adjacency_Matrix():
     """ 
     This class function is desined for the fast evaluation of adjacency matrices
@@ -105,6 +150,8 @@ class Adjacency_Matrix():
         self.Type = Type or 'Full'   # standalone callers rarely pass Type
         self.Frame = Frame
         self.Metals = Metals #Species present
+        # Adjacency is written sparse unless the caller explicitly wants dense text.
+        self.dense_adj = bool((System or {}).get('adj_format', 'npz') == 'text')
         self.Elements = Elements #List of atomic elements in 1:1 correspondance with coordinates
         
         #Consider the calculable objects below
@@ -287,10 +334,7 @@ class Adjacency_Matrix():
             self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
             self.MakeFile(Attributes)
             self.filename = self.System['base_dir'] + Attributes['Dir'] + 'File%s' % str(self.Frame)
-            Mat = spa.csr_matrix.todense(self.Adjacent)
-            with open(self.filename, 'w') as f:
-                for line in Mat:
-                    np.savetxt(f, line, fmt='%d')
+            write_adjacency(self.filename, self.Adjacent, self.dense_adj)
                 
             if self.CN:
                 self.get_coordination()
@@ -341,10 +385,7 @@ class Adjacency_Matrix():
             self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
             self.MakeFile(Attributes)
             self.filename = self.System['base_dir'] + Attributes['Dir'] + Attributes['File']+self.Metals[0] +'File%s' % str(self.Frame)
-            self.Mat = spa.csr_matrix.todense(self.Adjacent)
-            with open(self.filename, 'w') as f:
-                for line in self.Mat:
-                    np.savetxt(f, line, fmt='%d')
+            write_adjacency(self.filename, self.Adjacent, self.dense_adj)
                     
             if self.CN:
                 self.get_coordination()
@@ -384,10 +425,7 @@ class Adjacency_Matrix():
             self.ensure_dir(base_dir=self.System['base_dir'], file_path=Attributes['Dir'])   
             self.MakeFile(Attributes)
             self.filename = self.System['base_dir'] + Attributes['Dir'] + Attributes['File'] +'File%s' % str(self.Frame)
-            self.Mat = spa.csr_matrix.todense(self.Adjacent)
-            with open(self.filename, 'w') as f:
-                for line in self.Mat:
-                    np.savetxt(f, line, fmt='%d')
+            write_adjacency(self.filename, self.Adjacent, self.dense_adj)
    
             if self.CN:
                 self.get_coordination_hetero()

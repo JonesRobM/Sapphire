@@ -105,3 +105,51 @@ def test_extend_xyz_written(tmp_path):
     header = out.read_text().splitlines()[:3]
     assert header[0].strip() == "561"
     assert len(header[2].split()) == 4 + 2   # symbol, x, y, z, nn, agcn
+
+
+# --------------------------------------------------------------- directory scan caching
+def _tiny_run(root):
+    """A minimal run directory the Reader can discover."""
+    (root / "Time_Dependent").mkdir(parents=True, exist_ok=True)
+    (root / "Time_Dependent" / "NN").write_text("0 12 12\n1 12 11\n")
+    return root
+
+
+def test_available_is_cached(tmp_path):
+    """A run holds one matrix file per frame, so the scan is O(frames): ~5 s at 20 000.
+
+    load() and frames() each call available(), and load_all() calls it once per key, so
+    rescanning every time made reading a large run cost minutes of iterdir.
+    """
+    from Sapphire.IO.Reader import Reader
+    r = Reader(_tiny_run(tmp_path))
+    first = r.available()
+    assert r.available() is first, "the scan should not be repeated"
+
+
+def test_refresh_picks_up_new_files(tmp_path):
+    """The cache is explicit, so anything appearing later needs refresh()."""
+    from Sapphire.IO.Reader import Reader
+    r = Reader(_tiny_run(tmp_path))
+    assert "agcn" not in r.available()
+
+    (tmp_path / "Time_Dependent" / "AGCN").write_text("0 11.5 11.5\n1 11.4 11.4\n")
+    assert "agcn" not in r.available(), "a cached listing must stay put until refreshed"
+
+    assert "agcn" in r.refresh().available()
+    assert np.asarray(r.load("agcn")).shape == (2, 2)
+
+
+def test_refresh_returns_the_reader(tmp_path):
+    from Sapphire.IO.Reader import Reader
+    r = Reader(_tiny_run(tmp_path))
+    assert r.refresh() is r
+
+
+def test_a_fresh_reader_sees_everything(tmp_path):
+    """Process.reader() hands back a new Reader per call, which is why caching is safe."""
+    from Sapphire.IO.Reader import Reader
+    _tiny_run(tmp_path)
+    Reader(tmp_path).available()                      # prime one and discard it
+    (tmp_path / "Time_Dependent" / "AGCN").write_text("0 11.5\n")
+    assert "agcn" in Reader(tmp_path).available()

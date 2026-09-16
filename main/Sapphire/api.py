@@ -27,6 +27,55 @@ FULL_KEYS, HOMO_KEYS, HETERO_KEYS = set(_SUP.Full()), set(_SUP.Homo()), set(_SUP
 FULL_KEYS |= {"collect", "concert", "euc", "pos"}
 STAT_KEYS = {"JSD", "Kullback", "PStat"}
 
+# Quantities that cannot be computed alone. The cutoff deciding whether two atoms are
+# adjacent is read off the pair-distance distribution, so everything downstream of the
+# adjacency matrix needs 'pdf' in the same run. Asking for 'cna_sigs' by itself used to
+# log a KeyError for 'FullCut', then another for 'Adj', write nothing, and return
+# successfully -- silent empty results on a batch node.
+REQUIRES = {
+    "adj": ("pdf",),
+    "nn": ("pdf", "adj"),
+    "agcn": ("pdf", "adj"),
+    "surf_area": ("pdf", "adj"),
+    "surf_atoms": ("pdf", "adj"),
+    "cna_sigs": ("pdf", "adj"),
+    "cna_patterns": ("pdf", "adj", "cna_sigs"),
+    "collect": ("pdf", "adj"),
+    "concert": ("pdf", "adj", "collect"),
+}
+
+# A few quantities are filed by the Reader under a different name than the one you
+# request them by; without this, present output reads as missing.
+READER_ALIASES = {
+    "cna_patterns": "pattern_indices",
+    "homobonds": "homo_bonds",
+    "heterobonds": "hetero_bonds",
+    "he_pair_distance": "hepair_distance",
+}
+
+# Requestable, but intermediate -- never written on their own, so presence is unverifiable.
+NOT_PERSISTED = frozenset({"euc", "pos", "collect_only"})
+
+
+def resolve_dependencies(quantities):
+    """Return ``(ordered_quantities, added)`` with prerequisites inserted before their dependents.
+
+    The order the caller asked for is preserved; anything pulled in is reported so a run
+    can say why it is computing something that was not requested.
+    """
+    resolved, added = list(quantities), []
+    changed = True
+    while changed:                      # REQUIRES is shallow, but resolve to a fixed point anyway
+        changed = False
+        for q in list(resolved):
+            for dep in REQUIRES.get(q, ()):
+                if dep not in resolved:
+                    resolved.insert(resolved.index(q), dep)
+                    added.append(dep)
+                    changed = True
+    return resolved, added
+
+
 DEFAULT_QUANTITIES = ["pdf", "rdf", "adj", "nn", "agcn", "cna_sigs", "cna_patterns", "com", "comdist", "gyration"]
 DEFAULT_HOMO = ["hopdf", "hoadj", "hocomdist", "homobonds"]
 DEFAULT_HETERO = ["hepdf", "headj", "mix", "lae", "ele_nn", "heterobonds"]
@@ -48,6 +97,13 @@ class Config:
     extend_xyz: list | None = None                 # per-atom quantities to write as extra xyz columns
     strict: bool = False
     overwrite: bool = True
+    adj_format: str = "npz"                        # "npz" (sparse) or "text" (dense, O(N^2) bytes)
+    jobs: int = 1                                  # processes to analyse frames across
+
+    def __post_init__(self):
+        # Derived, not configuration: kept off the dataclass so it never reaches
+        # to_dict()/to_toml() and cannot round-trip back in as a stale setting.
+        self.resolved_dependencies = []
 
     # ------------------------------------------------------------------ validation
     def validate(self):
@@ -59,6 +115,12 @@ class Config:
             raise ValueError(f"unknown quantities {bad} / statistics {bad_stats}; see Sapphire.Utilities.Supported")
         if not os.path.isfile(self.trajectory):
             raise FileNotFoundError(self.trajectory)
+        if self.adj_format not in ("npz", "text"):
+            raise ValueError(f"adj_format must be 'npz' or 'text', got {self.adj_format!r}")
+        if self.jobs < 1:
+            raise ValueError(f"jobs must be at least 1, got {self.jobs}")
+        # Fill in prerequisites rather than letting Process fail quantity by quantity.
+        self.quantities, self.resolved_dependencies = resolve_dependencies(self.quantities)
         return self
 
     # ------------------------------------------------------------------ conversion
@@ -77,6 +139,7 @@ class Config:
             "Hetero": bool(bimetallic and hetero),
             "Start": start, "End": end if end is not None else n_frames, "Step": step, "Skip": 1,
             "UniformPDF": False, "Band": self.band,
+            "adj_format": self.adj_format,
         }
         quantities = {"Full": {q: None for q in self.quantities}}
         if system["Homo"]:
@@ -145,7 +208,15 @@ def run_config(cfg: Config):
     if os.path.abspath(cfg.trajectory) != os.path.abspath(target):
         shutil.copy(cfg.trajectory, target)
     system, quantities = cfg.to_legacy(n_frames=len(frames), species=species)
-    proc = Process.Process(System=system, Quantities=quantities, strict=cfg.strict, overwrite=cfg.overwrite)
+    if cfg.jobs > 1:
+        # Per-frame work fans out; the cross-frame quantities in analyse() then run once
+        # over the merged results, exactly as they would after a serial run.
+        from Sapphire import parallel
+        parallel.run_parallel(system, quantities, cfg.jobs, strict=cfg.strict)
+        proc = Process.Process(System=system, Quantities=quantities, strict=cfg.strict,
+                               overwrite=False, run=False)
+    else:
+        proc = Process.Process(System=system, Quantities=quantities, strict=cfg.strict, overwrite=cfg.overwrite)
     if cfg.statistics or cfg.extend_xyz or "collect" in cfg.quantities:
         proc.analyse(cfg.statistics or {})
     cfg.to_toml(os.path.join(base, "sapphire_config.toml"))

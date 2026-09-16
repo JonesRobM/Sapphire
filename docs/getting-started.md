@@ -10,6 +10,15 @@ pip install -e ".[plot,changepoint]"
 Extras: `ml` (CNA structure classifier), `mlpot` (MACE foundation-model potentials, pulls in
 PyTorch), `light` (pyGDM2 optics), `quote`, `notebooks`, `dev`, `docs`, `all`.
 
+## From the command line
+
+```bash
+sapphire run movie.xyz -o out/ -q pdf,adj,nn,agcn,cna_sigs --frames 0:1000:10 -j 8
+```
+
+Prerequisites are filled in for you, the run exits non-zero if it could not produce what you
+asked for, and `-j` analyses frames across processes. See [Command line](cli.md).
+
 ## First analysis
 
 ```python
@@ -33,7 +42,7 @@ figure set.
 out/
   Time_Dependent/   one line per frame per quantity      (NN, AGCN, PDF, RCut, Mixing, ...)
   Time_Dependent/Stats/   statistics from analyse()      (JSDpdf, Collectivity, ...)
-  Adjacency/        one dense matrix per frame
+  Adjacency/        one sparse matrix per frame (File<n>.npz; see the file contract)
   CNA/              Signatures, Patterns
   Exec/             Masterkey
   sapphire_config.toml, Sapphire_Info.txt, Sapphire_Errors.log

@@ -39,6 +39,7 @@ extra_javascript:
 nav:
   - Home: index.md
   - Getting started: getting-started.md
+  - Command line: cli.md
   - Tutorials:
       - 01 Build and inspect: tutorials/01_Build_and_Inspect.ipynb
       - 02 PDDF and cutoff: tutorials/02_PDDF_and_Cutoff.ipynb

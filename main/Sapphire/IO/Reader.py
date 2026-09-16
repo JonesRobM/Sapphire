@@ -32,7 +32,26 @@ import numpy as np
 from Sapphire.IO import OutputInfoExec, OutputInfoFull, OutputInfoHetero, OutputInfoHomo
 
 _VEC = re.compile(r"\[([^\]]*)\]")
-_FRAME = re.compile(r"([A-Z][a-z]*)?File(\d+)")  # optional species prefix + per-frame index
+# optional species prefix + per-frame index, either dense text (File7) or sparse (File7.npz)
+_FRAME = re.compile(r"([A-Z][a-z]*)?File(\d+)(?:\.npz)?")
+
+
+def _frame_index(path) -> int:
+    """Frame number from a per-frame matrix filename, whichever format it is in."""
+    stem = path.name[:-4] if path.name.endswith(".npz") else path.name
+    return int(stem.split("File")[-1])
+
+
+def _load_matrix(path) -> np.ndarray:
+    """One frame's matrix as a dense array, from sparse npz or dense text.
+
+    Adjacency is written sparse by default; callers downstream (tests, tutorials,
+    Plot_Funcs) expect dense arrays indexed [frame, i, j], so densify on read.
+    """
+    if path.name.endswith(".npz"):
+        import scipy.sparse as spa
+        return spa.load_npz(path).toarray().astype(np.int32)
+    return np.loadtxt(path, dtype=np.int32, ndmin=2)
 
 
 def _table() -> dict[str, tuple[str, str]]:
@@ -92,6 +111,12 @@ class Reader:
     def __init__(self, base_dir: str | os.PathLike):
         self.base = pathlib.Path(base_dir)
         self._table = _table()
+        self._available = None
+
+    def refresh(self):
+        """Forget the cached directory listing; call after a run adds files."""
+        self._available = None
+        return self
 
     # ------------------------------------------------------------------ discovery
     def available(self) -> dict[str, pathlib.Path | list[pathlib.Path]]:
@@ -101,6 +126,11 @@ class Reader:
         sets (``Adjacency/File0``, ``Time_Dependent/HeAdjFile7``, ``Adjacency/HomoAdjPtFile0``)
         collapse to one key (``adj``, ``headj``, ``hoadjPt``) holding the ordered file list.
         """
+        # A run directory holds one matrix file per frame, so this walk is O(frames):
+        # ~6 s at 20 000 frames. load() and frames() each call it, and load_all() calls it
+        # once per key, so the scan is cached and invalidated explicitly via refresh().
+        if self._available is not None:
+            return self._available
         found: dict = {}
         claimed: set = set()
         # Longest File names first so 'HomoCoMDist' is not claimed by 'HomoCoM'.
@@ -125,18 +155,19 @@ class Reader:
                     found[p.name] = p
         adj = self.base / "Adjacency"
         if adj.is_dir():
-            files = sorted(adj.glob("File*"), key=lambda p: int(p.name[4:]))
+            files = sorted(adj.glob("File*"), key=_frame_index)
             if files:
                 found["adj"] = files
         for v in found.values():
             if isinstance(v, list):
-                v.sort(key=lambda p: int(p.name.split("File")[-1]))
+                v.sort(key=_frame_index)
+        self._available = found
         return found
 
     def frames(self, key: str) -> np.ndarray:
         path = self.available()[key]
         if isinstance(path, list):
-            return np.array([int(p.name.split("File")[-1]) for p in path])
+            return np.array([_frame_index(p) for p in path])
         return np.array([int(line.split(" ", 1)[0]) for line in path.read_text().splitlines() if line.strip()])
 
     # ------------------------------------------------------------------ loading
@@ -144,11 +175,12 @@ class Reader:
         """Return the quantity as an array indexed ``[frame, ...]`` (a list for CNA patterns)."""
         if key == "masterkey":
             return self.masterkey()  # CNA signature labels, e.g. "421" -> keep as strings
-        path = self.available().get(key)
+        available = self.available()
+        path = available.get(key)
         if path is None:
-            raise KeyError(f"{key!r} not present in {self.base}; have {sorted(self.available())}")
+            raise KeyError(f"{key!r} not present in {self.base}; have {sorted(available)}")
         if isinstance(path, list):  # per-frame matrices
-            return np.array([np.loadtxt(p, dtype=np.int32, ndmin=2) for p in path])
+            return np.array([_load_matrix(p) for p in path])
         payloads = [parse_line(l)[1] for l in path.read_text().splitlines() if l.strip()]
         if payloads and isinstance(payloads[0], list):
             return payloads

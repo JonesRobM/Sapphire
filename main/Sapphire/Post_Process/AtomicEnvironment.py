@@ -36,6 +36,15 @@ def _dense(m):
     return np.asarray(m.todense() if hasattr(m, "todense") else m)
 
 
+def _rowsum(m, axis):
+    """Sum along ``axis``, flat, for a scipy sparse matrix or a dense array alike.
+
+    Sparse ``.sum`` returns an np.matrix of shape (n, 1); ravel to the 1-D vector the
+    callers expect.
+    """
+    return np.asarray(m.sum(axis=axis)).ravel()
+
+
 def _append(system, attributes, frame, values, suffix=""):
     """Append ``frame v1 v2 ...`` to the file described by an OutputInfo entry."""
     directory = system['base_dir'] + attributes['Dir']
@@ -82,7 +91,9 @@ class LAE:
 
     def __init__(self, System=None, Frame=None, HeAdj=None, Species=None, MaxCN=12):
         self.System, self.Frame, self.Species = System, Frame, list(Species)
-        self.HeAdj = _dense(HeAdj)
+        # Kept sparse: calculate() only sums along each axis, which scipy does directly.
+        # Densifying cost ~800 MB per frame for a 20k-atom bimetallic system.
+        self.HeAdj = HeAdj
         self.MaxCN = MaxCN
         self.calculate()
         if System is not None:
@@ -91,8 +102,8 @@ class LAE:
     def calculate(self):
         bins = np.arange(self.MaxCN + 2)
         self.Hist = {
-            self.Species[0]: np.histogram(self.HeAdj.sum(axis=1), bins=bins)[0],  # A atoms' B-neighbours
-            self.Species[1]: np.histogram(self.HeAdj.sum(axis=0), bins=bins)[0],  # B atoms' A-neighbours
+            self.Species[0]: np.histogram(_rowsum(self.HeAdj, 1), bins=bins)[0],  # A atoms' B-neighbours
+            self.Species[1]: np.histogram(_rowsum(self.HeAdj, 0), bins=bins)[0],  # B atoms' A-neighbours
         }
         return self.Hist
 
@@ -107,7 +118,10 @@ class Ele_NN:
 
     def __init__(self, System=None, Frame=None, Adj=None, Elements=None, Species=None):
         self.System, self.Frame = System, Frame
-        self.Adj = _dense(Adj)
+        # Kept sparse: calculate() selects columns by species and sums rows, which scipy
+        # does directly. Densifying an N x N adjacency cost 32 MB per frame at N=2000 and
+        # 3.2 GB at N=20000, for no gain.
+        self.Adj = Adj.tocsc() if hasattr(Adj, 'tocsc') else np.asarray(Adj)
         self.Elements = np.asarray(Elements)
         self.Species = list(Species)
         self.calculate()
@@ -115,7 +129,8 @@ class Ele_NN:
             self.write()
 
     def calculate(self):
-        self.EleNN = {x: self.Adj[:, self.Elements == x].sum(axis=1).astype(int) for x in self.Species}
+        self.EleNN = {x: _rowsum(self.Adj[:, self.Elements == x], 1).astype(int)
+                      for x in self.Species}
         return self.EleNN
 
     def write(self):

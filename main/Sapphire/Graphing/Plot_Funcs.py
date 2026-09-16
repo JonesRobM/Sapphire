@@ -595,16 +595,23 @@ class Plot_Funcs():
         if self.Errors is True:
             Errors = True
             
-        if 'h' not in self.Meta or 'c' not in self.Meta:
-            log.info("collectivity/concertedness not in metadata; skipping h_c.")
+        if 'h' not in self.Meta:
+            log.info("collectivity not in metadata; skipping h_c.")
             return None
-        Time = np.asarray(self.Meta.get('SimTime', np.arange(len(self.Meta['h']) + 1)))
-        h, c = np.asarray(self.Meta['h']), np.asarray(self.Meta['c'])
+        # Concertedness compares collectivity across a lag of two, so it needs at least
+        # four analysed frames. A shorter run legitimately has none -- draw the
+        # collectivity it does have rather than returning no figure at all.
+        h = np.asarray(self.Meta['h'])
+        c = np.asarray(self.Meta.get('c', []))
+        if c.size == 0:
+            log.info("concertedness needs at least four frames; plotting collectivity only.")
+        Time = np.asarray(self.Meta.get('SimTime', np.arange(len(h) + 1)))
         fig,ax = plt.subplots()
         fig.set_size_inches(9,3)
         ax.plot(Time[len(Time) - len(h):], h, label = 'Collectivity (frame pairs)')
-        ax.plot(Time[len(Time) - len(c):], c, label = 'Concertedness')
-        if Errors is True:
+        if c.size:
+            ax.plot(Time[len(Time) - len(c):], c, label = 'Concertedness')
+        if Errors is True and c.size:
             ax.fill_between(Time[1:], 
                             self.Meta['h']+self.Err['h'],
                             self.Meta['h']-self.Err['h'],

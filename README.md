@@ -17,9 +17,10 @@ structure classifier, chemical ordering in alloys (mixing parameter, LAE, per-sp
 neighbour counts), shape and shell-by-shell morphology, and the distribution divergences and
 change-point statistics that locate melting and other transitions along a run.
 
-It reads anything [ASE](https://wiki.fysik.dtu.dk/ase/) can read and writes plain per-frame
-text files that any tool can consume. Documentation, rendered tutorials and the full API
-reference live at **https://jonesrobm.github.io/Sapphire/**.
+It reads anything [ASE](https://wiki.fysik.dtu.dk/ase/) can read and writes per-frame results
+any tool can consume — plain text for series, sparse `npz` for adjacency matrices.
+Documentation, rendered tutorials and the full API reference live at
+**https://jonesrobm.github.io/Sapphire/**.
 
 ## Citing Sapphire
 
@@ -79,7 +80,17 @@ r = run(xyz, "work/out/", quantities=["pdf", "adj", "nn", "agcn", "cna_sigs"],
 r.load("agcn")                                 # (frames, atoms) atop generalised coordination numbers
 ```
 
-Results are plain per-frame text files (see the
+Or from a shell, which is the same analysis driven by a TOML config:
+
+```bash
+sapphire run movie.xyz -o out/ -q pdf,adj,nn,agcn,cna_sigs --frames 0:1000:10 -j 8
+```
+
+`-j` analyses frames across processes for identical output; missing prerequisites are filled in
+and reported, and a run that could not produce what was asked exits non-zero. See the
+[command line reference](https://jonesrobm.github.io/Sapphire/cli/).
+
+Results are per-frame text files, with adjacency matrices stored sparse (see the
 [file contract](https://jonesrobm.github.io/Sapphire/FILE_CONTRACT/)) readable with
 `Sapphire.IO.Reader` or any other tool. The classic two-dictionary interface to
 `Sapphire.Process` is unchanged (`examples/run_analysis.py`); `examples/from_lammps.py`

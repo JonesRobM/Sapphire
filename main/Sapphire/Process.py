@@ -107,7 +107,7 @@ class Process(object):
     """
     
     def __init__(self, System=None, Quantities=None,
-                 Pattern_Input=None, strict=False, overwrite=True):
+                 Pattern_Input=None, strict=False, overwrite=True, run=True):
         
         self.tick = time.time()
         # strict=True re-raises any exception instead of only logging it to Sapphire_Errors.log.
@@ -149,7 +149,11 @@ class Process(object):
 
         self.Initialising()
         #self.run_pdf()
-        self.run_core()
+        # run=False builds the object without analysing anything, so a caller that has
+        # already produced the per-frame results (see Sapphire.parallel) can still use
+        # analyse() for the cross-frame quantities.
+        if run:
+            self.run_core()
 
     def _report(self, exc, message):
         """Record a caught exception in Sapphire_Errors.log; re-raise when strict."""
@@ -291,20 +295,23 @@ class Process(object):
             f.write("Loading in the dataset to be analysed.\n")
             f.write("Be aware that this may take a while for a large file.\n")
         Read_Time = time.time()
-        self.Dataset = read(self.filename, index=':')
+        # Read only the frames that will be analysed. Reading the whole file cost memory
+        # proportional to the trajectory rather than to the analysis (with Step=34 it read
+        # 70 frames to use 3), and left ExtendXYZ pairing Traj[i] with quantity row i --
+        # the wrong atoms whenever Step > 1. Dataset is now exactly All_Times, in order.
+        _start, _end, _step = self.System['Start'], self.System['End'], self.System['Step']
+        self.Dataset = read(self.filename, index='%d:%d:%d' % (_start, _end, _step))
+        # absolute frame number -> position within Dataset
+        self._frame_pos = {f: p for p, f in enumerate(range(_start, _end, _step))}
         with open(self.System['base_dir']+'Sapphire_Info.txt', "a") as f:
             f.write("Opened the dataset in %.3f seconds.\n" %
                     (time.time()-Read_Time))
-        self.all_positions = self.Dataset[0].get_positions()
+        self.all_positions = self.Dataset[0].get_positions()   # first analysed frame
         self.max_dist = max(DistFuncs.Euc_Dist(self.all_positions))
         del(self.all_positions)
         
         #self.all_atoms contains the chemical symbols for all frames
-        self.all_atoms = [ 
-            self.Dataset[t].get_chemical_symbols() for t in range(
-                self.System['Start'], self.System['End'], self.System['Step']
-            )
-        ] 
+        self.all_atoms = [atoms.get_chemical_symbols() for atoms in self.Dataset]
 
         used = set()
         self.Species = [x for x in self.all_atoms[0]
@@ -373,7 +380,7 @@ class Process(object):
 
         with open(self.System['base_dir']+'Sapphire_Info.txt', "a") as f:
             f.write("\nLoading in atoms for frame %s.\n" % i)
-        self.All_Atoms = self.Dataset[i]
+        self.All_Atoms = self.Dataset[self._frame_pos[i]]
         with open(self.System['base_dir']+'Sapphire_Info.txt', "a") as f:
             f.write("Loaded the atoms in %.3f seconds.\n" % (time.time()-self.timer))
 
@@ -696,6 +703,15 @@ class Process(object):
         
         for i in self.All_Times:
             self.calculate(i)
+        # The masterkey grows as new signatures appear, so rows written early are narrower
+        # than rows written late. Lay the table out rectangularly against the final key --
+        # the same pass a parallel run uses to merge its workers.
+        if 'cna_sigs' in self.Quantities.get('Full', {}):
+            try:
+                from Sapphire.parallel import rewrite_signatures
+                rewrite_signatures([self.Base], self.Base)
+            except Exception as e:
+                self._report(e, '\nException raised while squaring the CNA signature table: \n%s')
         with open(self.System['base_dir']+'Sapphire_Info.txt', "a") as f:
             self.T3 = time.time()
             f.write('Time for completion is %s.\n' %
@@ -724,7 +740,11 @@ class Process(object):
         if 'adj' in self.metadata and ('collect' in self.Quantities['Full'] or 'concert' in self.Quantities['Full']):
             n = len(self.metadata['adj'])
             self.metadata.setdefault('collect', np.zeros(max(n - 1, 0)))   # one value per consecutive pair
-            self.metadata.setdefault('concert', np.zeros(max(n - 2, 0)))   # needs two pairs
+            # Concertedness compares collectivity across a lag of two (collect[i-1] vs
+            # collect[i-3]), so it is only defined from i = 3 onwards: n - 3 values, not
+            # n - 2. Sizing it n - 2 left element 0 never assigned, and it was written to
+            # file as a hard zero indistinguishable from a real measurement.
+            self.metadata.setdefault('concert', np.zeros(max(n - 3, 0)))
         # one comparison per consecutive pair of analysed frames
         for i in range(1, len(self.metadata.get('adj', []))):
 
@@ -737,7 +757,7 @@ class Process(object):
                                              1] = Stats.Mobility.Collectivity(self.result_cache['r'])
                     if not(i < 3):
                         if 'concert' in self.Quantities['Full']:
-                            self.metadata['concert'][i-2] = Stats.Mobility.Concertedness(self.metadata['collect'][i-1],
+                            self.metadata['concert'][i-3] = Stats.Mobility.Concertedness(self.metadata['collect'][i-1],
                                                                                    self.metadata['collect'][i-3])
             except Exception as e:
                 self._report(e, '\nException raised while computing collecivity and concertednes:\n%s')

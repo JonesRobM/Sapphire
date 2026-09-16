@@ -1,5 +1,77 @@
 # Changelog
 
+## 1.3.0.dev0 — command line, sparse adjacency, parallel frames (2026-09-16)
+
+### Added
+- **`sapphire` command line interface** (`Sapphire.cli`, installed as a console script).
+  `sapphire run` analyses a trajectory, `sapphire expand` converts sparse adjacency matrices
+  back to dense text, `sapphire quantities` lists what can be asked for. Built on the existing
+  `Sapphire.api.Config`, so a run is reproducible from one TOML file.
+  - Prerequisites are resolved automatically: asking for `cna_sigs` alone used to log a
+    `KeyError` for `FullCut`, then another for `Adj`, write nothing and exit **0**. It now
+    pulls in `pdf` and `adj`, and a run that produced nothing exits non-zero.
+  - `--no-quote` / `SAPPHIRE_NO_QUOTE` skips the log header's quote lookup, which reaches the
+    network from inside `Process.__init__`.
+  - `-j/--jobs N` analyses frames across N processes.
+  - `--adj-format {npz,text}`, `--dry-run`, `--strict`, `--frames START:END:STEP`.
+- **Parallel frame analysis** (`Sapphire.parallel`). Workers analyse contiguous chunks in
+  private directories; results merge in frame order, and `analyse()` then runs once over the
+  merged output exactly as after a serial run. Output is byte-identical to serial, verified
+  for mono- and bimetallic runs at 2, 3, 4 and 8 jobs.
+
+### Changed
+- **Adjacency is written sparse (`scipy.sparse` npz) by default**, ~165x smaller than dense
+  text — roughly 160 GB to 1 GB over a 20 000-frame run at N = 2000. `Reader` loads either
+  encoding transparently and still returns dense arrays; `--adj-format text` and
+  `sapphire expand` recover the old format byte for byte. See `docs/FILE_CONTRACT.md`.
+- **CNA signature tables are rectangular.** The masterkey grows as new signatures appear, so
+  rows written early were narrower than rows written late and `np.loadtxt` could not read the
+  file. It is now laid out against the final masterkey with zero padding; no counts change.
+- `Process` reads only the frames it will analyse rather than the whole trajectory.
+
+### Fixed
+- `Utilities/ExtendXYZ.py` paired `Traj[i]` with quantity row `i`, so extended-xyz output used
+  the **wrong atoms** for every row whenever `Step > 1`. Fixed by the sliced read above.
+- `Process.analyse` sized the concertedness series for one more entry than the loop ever
+  assigned, so element 0 was written to file as a hard `0.0` indistinguishable from a
+  measurement. A three-frame run produced *only* that fabricated value. Concertedness spans a
+  lag of two and is defined from the fourth analysed frame; the series is now `n-3` long.
+  `Graphing.Plot_Funcs.h_c` plots collectivity alone when concertedness is undefined.
+- `Utilities/Initial.py` — a `wikiquote` failure propagated out of `Process.__init__`, so a
+  compute node with no outbound route could not construct a run. Now bounded by a timeout and
+  never raised. The version in the log header was hardcoded `1.0.0`; it reads the package.
+
+### Performance
+Frame cost fell from 0.328 s to 0.055 s serially and 0.015 s across 8 processes (N = 1415),
+with every cutoff and all derived quantities bit-identical throughout.
+- `CNA/FrameSignature` densified the sparse adjacency and scanned two full N-length columns
+  per bonded pair, making the routine **quadratic in N** for physics that is linear in it
+  (per-atom cost grew 49.7 → 270.6 µs between N = 147 and N = 6525). It now keeps an adjacency
+  list; cost is flat in N.
+- The longest-chain search behind a signature's `t` is cached on the bond graph. A 923-atom
+  icosahedron presents 11 distinct graphs across 9804 calls — a 99.9% hit rate.
+- `Post_Process/Adjacent` called `np.savetxt` once per atom (1415 calls per frame); matrices
+  are now written in one pass.
+- `Post_Process/Kernels._gaussian_sum` writes the Gaussian out instead of calling
+  `scipy.stats.norm.pdf` (~2.3x). Values agree to ~8e-15 relative; every cutoff is unchanged
+  bit for bit.
+- `Post_Process/AtomicEnvironment` densified the adjacency for `ele_nn` and `lae`; both
+  operations work on sparse directly (3.2 GB per frame at N = 20 000, for nothing).
+
+### Packaging
+- `packages.find` defaulted to namespace discovery, so every directory under `main/Sapphire`
+  became a package: 1.1.0 and 1.2.0 shipped ~30 bogus importables such as
+  `Sapphire.Tutorials.08_Ensemble_Averaging.ensemble.seed0` and the unimportable
+  `Sapphire.Sapphire-logos`. `namespaces = false` plus `exclude-package-data` for tutorial run
+  outputs; the wheel drops from 12.5 MB to 8.1 MB and declares 10 packages.
+
+## 1.2.0 — released 2026-09-15
+Zenodo DOI in citation metadata and README; documentation moved out of internal planning
+notes; local build artefacts untracked. Release tagging is now guarded: the workflow refuses
+to build unless the tag, `pyproject.toml`, `CITATION.cff` and `Sapphire.__version__` agree and
+the version is not a development one, publishing is idempotent and verified against PyPI, and
+the GitHub release waits on a successful upload.
+
 ## 1.1.0 — released 2026-08-31
 Everything below (the 2026 restoration, Phases 1–8) constitutes release 1.1.0.
 

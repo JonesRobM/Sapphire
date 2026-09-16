@@ -7,10 +7,10 @@ this layout is a first-class data source for `Sapphire.IO.Reader`, `Process.anal
 ```
 <base_dir>/
   Time_Dependent/<Quantity>[<Species>]        one line per frame:  <frame> <v1> <v2> ...
-  Time_Dependent/<Quantity>File<frame>        one dense matrix per frame (rows = atoms)
   Time_Dependent/Stats/<Statistic><quantity>  one line per frame:  <frame> <value>
-  Adjacency/File<frame>                       dense N×N 0/1 adjacency for the whole cluster
-  Adjacency/HomoAdj<Species>File<frame>       N_X×N_X adjacency within species X
+  Time_Dependent/HeAdjFile<frame>[.npz]       N_A×N_B adjacency between the two species
+  Adjacency/File<frame>[.npz]                 N×N 0/1 adjacency for the whole cluster
+  Adjacency/HomoAdj<Species>File<frame>[.npz] N_X×N_X adjacency within species X
   CNA/Signatures                              <frame> <count per masterkey entry ...>
   CNA/Patterns                                <frame> <per-atom pattern tuple repr ...>
   Exec/Masterkey                              "000 100 200 211 ... 555 666" (r s t triples)
@@ -24,10 +24,39 @@ this layout is a first-class data source for `Sapphire.IO.Reader`, `Process.anal
   * vectors — `[x y z]` (numpy repr, any whitespace inside the brackets);
   * CNA patterns — `((12, (5, 5, 5)),)` or `((2, (5, 5, 5)), (10, (4, 2, 2)))`;
   * bare words — masterkey labels.
-* Rows may be **ragged** across frames when a per-frame vocabulary grows (CNA signatures);
-  consumers right-pad with zeros.
+* Rows are **rectangular**. Where a per-frame vocabulary grows (CNA signatures), the table is
+  laid out against the final `Exec/Masterkey` at the end of the run and short rows are padded
+  with zeros, so `np.loadtxt` reads it directly. Runs written before 1.3.0 may be ragged;
+  consumers that right-pad defensively stay correct for both.
 * Species-resolved files carry the symbol as a suffix (`HomoPDFAu`, `HomoCoMDistPt`). The
   Reader key is the table name plus suffix (`hopdfAu`).
+
+## Per-frame matrices
+
+A matrix file is identified by its **name**, not its directory: anything ending `File<frame>`
+(optionally `.npz`). The full and per-species matrices live under `Adjacency/`, the hetero one
+under `Time_Dependent/`.
+
+Two interchangeable encodings:
+
+| | file | contents |
+|---|---|---|
+| sparse (**default**) | `File7.npz` | `scipy.sparse.save_npz` of a CSR 0/1 matrix |
+| dense text | `File7` | one row per atom, `0`/`1` space separated, `%d` |
+
+Adjacency is ~12 non-zeros per row, so dense text spends O(N²) bytes on O(N) information —
+8 MB per frame at N = 2000, about 160 GB over a 20 000-frame run, against roughly 1 GB sparse.
+`Sapphire.IO.Reader` loads either transparently and always hands back a dense
+`numpy` array indexed `[frame, i, j]`, so a consumer using the Reader need not care which is
+on disk.
+
+To choose the encoding, or to convert:
+
+```bash
+sapphire run movie.xyz -o run/ --adj-format text   # write dense text instead
+sapphire expand run/ -o dense/                     # sparse -> dense text, layout preserved
+sapphire expand run/ --frames 0:1:1 --stdout       # one matrix to stdout
+```
 
 ## Table of names
 `IO/OutputInfoFull.py`, `OutputInfoHomo.py`, `OutputInfoHetero.py`, `OutputInfoExec.py` map
