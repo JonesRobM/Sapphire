@@ -6,7 +6,7 @@
 [![Docs](https://img.shields.io/badge/docs-jonesrobm.github.io%2FSapphire-blue)](https://jonesrobm.github.io/Sapphire/)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-lightgrey)](LICENSE)
 
-![Sapphire-logos_black](assets/New_Logo.png)
+![Sapphire-logos_black](main/Sapphire/Sapphire-logos/New_Logo.png)
 
 **Sapphire** is a post-processing environment for the structural characterisation of metallic
 nanoparticles and nanoalloys from molecular-dynamics trajectories. It turns frames into
