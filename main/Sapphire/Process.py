@@ -200,7 +200,8 @@ class Process(object):
         r = self.reader()
         available = r.available()
         for k in (available if keys is None else [k for k in keys if k in available]):
-            self.metadata[k] = r.load(k)
+            # per-frame matrices stay on disk until a frame is indexed (see FrameMatrices)
+            self.metadata[k] = r.load_lazy(k)
         self.metadata['masterkey'] = r.masterkey()
         return self.metadata
 
@@ -693,7 +694,7 @@ class Process(object):
                 f.write("\nAnalysis of frame %s required %.3f seconds.\n" %
                         (i, time.time() - self.timer))
                 f.write("\nThis is approximately %.3fms for each atom.\n" % (
-                    1000*(time.time() - self.timer)/self.NAtoms[int(i/self.Step)]))
+                    1000*(time.time() - self.timer)/self.NAtoms[self._frame_pos[i]]))
         except Exception as e:
             log.info(e)
             

@@ -32,3 +32,28 @@ def test_run_bimetallic_defaults(tmp_path):
     keys = r.available()
     assert {"hopdfAu", "hopdfPt", "hepdf", "mix", "laeAu", "JSDpdf"} <= set(keys)
     assert np.asarray(r.load("mix")).shape == (2,)
+
+
+def test_statistics_do_not_load_unused_matrices(tmp_path, monkeypatch):
+    # analyse() used to read back every result, and per-frame matrices come back dense:
+    # frames * N^2 ints, ~11 GB for a 1400-frame, 1415-atom movie.
+    from Sapphire.Tutorials import data
+    from Sapphire.IO.Reader import Reader
+    xyz = data.sample("AuPt", tmp_path)
+    loaded = []
+    real = Reader.load
+    monkeypatch.setattr(Reader, "load", lambda self, key: loaded.append(key) or real(self, key))
+    r = api.run(xyz, tmp_path / "out", quantities=["pdf", "adj", "nn"], frames=(0, 4, 1),
+                homo=[], hetero=[], statistics={"JSD": ["pdf"]})
+    assert "adj" not in loaded and "pdf" in loaded
+    assert len(r.load("JSDpdf")) == 4
+
+
+def test_every_frame_logs_its_timing_from_a_nonzero_start(tmp_path):
+    # The per-frame timing indexed atom counts by frame number rather than by position in
+    # the analysed slice, overrunning the list for any run (or parallel chunk) not starting at 0.
+    from Sapphire.Tutorials import data
+    xyz = data.sample("AuPt", tmp_path)
+    api.run(xyz, tmp_path / "out", quantities=["pdf"], frames=(2, 6, 1), homo=[], hetero=[])
+    info = (tmp_path / "out" / "Sapphire_Info.txt").read_text()
+    assert info.count("for each atom") == 4

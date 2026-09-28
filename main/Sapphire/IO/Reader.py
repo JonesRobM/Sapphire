@@ -54,6 +54,51 @@ def _load_matrix(path) -> np.ndarray:
     return np.loadtxt(path, dtype=np.int32, ndmin=2)
 
 
+class FrameMatrices:
+    """Per-frame matrices read one frame at a time, from an ordered list of files.
+
+    Stacking a run's matrices is frames * N^2 ints -- ~11 GB for 1400 frames of 1415
+    atoms -- when the callers in ``Process`` only ever look at a frame or two at once.
+    Indexing yields a dense frame, a slice yields another lazy view, and ``np.asarray``
+    (or pickling) materialises the full ``[frame, i, j]`` stack for whoever asks for it.
+    """
+
+    ndim = 3
+
+    def __init__(self, paths):
+        self.paths = list(paths)
+
+    def __len__(self):
+        return len(self.paths)
+
+    def __getitem__(self, i):
+        if isinstance(i, slice):
+            return FrameMatrices(self.paths[i])
+        return _load_matrix(self.paths[i])
+
+    def __iter__(self):
+        return (_load_matrix(p) for p in self.paths)
+
+    @property
+    def shape(self):
+        if not self.paths:
+            return (0,)
+        first = self.paths[0]
+        if first.name.endswith(".npz"):
+            import scipy.sparse as spa
+            frame_shape = spa.load_npz(first).shape
+        else:
+            frame_shape = _load_matrix(first).shape
+        return (len(self.paths), *frame_shape)
+
+    def __array__(self, dtype=None, copy=None):
+        arr = np.array([_load_matrix(p) for p in self.paths])
+        return arr if dtype is None else arr.astype(dtype)
+
+    def __reduce__(self):
+        return (np.asarray, (self.__array__(),))
+
+
 def _table() -> dict[str, tuple[str, str]]:
     """key -> (Dir, File) for every quantity Sapphire knows how to write."""
     out: dict[str, tuple[str, str]] = {}
@@ -189,6 +234,13 @@ class Reader:
             return arr[:, 0] if arr.ndim == 2 and arr.shape[1] == 1 else arr
         except ValueError:  # ragged (e.g. NAtoms changes between frames)
             return payloads
+
+    def load_lazy(self, key: str):
+        """As :meth:`load`, but per-frame matrices come back as a :class:`FrameMatrices` view."""
+        path = self.available().get(key)
+        if isinstance(path, list):
+            return FrameMatrices(path)
+        return self.load(key)
 
     def load_all(self) -> dict:
         return {k: self.load(k) for k in self.available()}
