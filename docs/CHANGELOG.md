@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- **`Dist_Stats.JSD` computed the wrong quantity.** Since the first release it evaluated
+  `-1/2 sum[P log(2Q/(P+Q)) + Q log(2P/(P+Q))]` -- P and Q swapped inside the logarithms --
+  and returned its square root. That equals the square root of half the symmetric (Jeffreys)
+  KL divergence *minus* the Jensen-Shannon divergence: unbounded and not a Jensen-Shannon
+  quantity (a 1415-atom melting frame gave 1.04 against a true JS distance of 0.09). It now
+  returns the Jensen-Shannon **distance** in base 2, bounded in [0, 1], matching
+  `scipy.spatial.distance.jensenshannon(P, Q, base=2)`. **JSD values from earlier versions
+  are not comparable with new ones**; they can be recomputed from the stored per-frame PDFs.
+- **`Dist_Stats.JSD` and `Dist_Stats.Kullback` normalise their inputs.** PDFs are stored as
+  densities (they integrate to 1 over r, so their values sum to 1/dr, ~33 on the default
+  grid); divergences are defined between probability vectors. Both now normalise to unit sum,
+  which also makes them independent of the grid spacing. KL values change by that factor.
+
 ## 1.3.0.dev0 — command line, sparse adjacency, parallel frames (2026-09-16)
 
 ### Added

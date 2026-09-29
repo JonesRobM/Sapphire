@@ -1,6 +1,22 @@
 import numpy as np
 from scipy.stats import ks_2samp
 
+
+def _as_distribution(D):
+    """A distribution sampled on a grid, as a probability vector (non-negative, sums to 1).
+
+    Sapphire's PDFs are densities: they integrate to 1 over r, but their values sum to
+    1/dr (~33 on the default 200-point grid). Divergences are defined between probability
+    vectors, so each input is normalised to unit sum first; that also makes the result
+    independent of the grid spacing.
+    """
+    D = np.clip(np.asarray(D, dtype=float), 0.0, None)
+    total = D.sum()
+    if not total > 0:
+        raise ValueError("cannot compare an empty distribution")
+    return D / total
+
+
 class KB_Dist():
 
     def __init__(self,P,Q):
@@ -30,7 +46,7 @@ class KB_Dist():
         
     def calculate(self):
         
-        P = np.asarray(self.P, dtype=float); Q = np.asarray(self.Q, dtype=float)
+        P = _as_distribution(self.P); Q = _as_distribution(self.Q)
         mask = (P > 0) & (Q > 0)          # terms with P = 0 contribute 0; Q = 0 where P > 0 is +inf in theory
         with np.errstate(divide='ignore', invalid='ignore'):
             return float(np.sum(P[mask] * np.log(P[mask] / Q[mask])))
@@ -44,20 +60,24 @@ class JSD_Dist():
         return None
         
     def calculate(self):
+        """Jensen-Shannon distance, base 2: sqrt(JSD) with JSD = (KL(P||M) + KL(Q||M)) / 2.
 
-        K=0
-        Epsilon=0.000001
-        # copies: never mutate the caller's distributions in place
-        self.Q = np.asarray(self.Q, dtype=float) + Epsilon
-        self.P = np.asarray(self.P, dtype=float) + Epsilon
-        
+        Bounded in [0, 1] (0 for identical, 1 for disjoint distributions) and symmetric.
+
+        Until 1.3.x this computed -1/2 sum[P log(2Q/(P+Q)) + Q log(2P/(P+Q))] -- P and Q
+        swapped inside the logarithms -- which equals half the symmetric (Jeffreys) KL minus
+        the JSD: unbounded, not a Jensen-Shannon quantity, and applied to unnormalised
+        densities. Values from earlier versions are not comparable with these.
         """
-        * Change this to list comprehension for added efficiency 12/05/22
-        """
-        
-        P = np.asarray(self.P, dtype=float); Q = np.asarray(self.Q, dtype=float)
-        K -= 0.5*np.sum(P*np.log(2*Q/(Q+P)) + Q*np.log(2*P/(P+Q)))
-        return np.sqrt(K)
+        P = _as_distribution(self.P); Q = _as_distribution(self.Q)
+        M = 0.5 * (P + Q)
+
+        def kl_to_m(A):
+            nz = A > 0                    # 0 log 0 = 0; M > 0 wherever A > 0
+            return np.sum(A[nz] * np.log2(A[nz] / M[nz]))
+
+        jsd = 0.5 * kl_to_m(P) + 0.5 * kl_to_m(Q)
+        return float(np.sqrt(max(jsd, 0.0)))  # clip rounding below zero for identical inputs
 
 
 
@@ -163,9 +183,9 @@ class Dist_Stats():
             
         Returns:
             
-            J: Jenson-Shannon Distance which is a symmetric form the the KL distance above.
-            I do not yet understand fully why this should be a superior function to KL but 
-            it's another telling discriptor.
+            J: Jensen-Shannon distance (base 2, in [0, 1]) between the two distributions after
+            normalising each to unit sum. Unlike KL it is symmetric, always finite, and a
+            true metric, so it is well suited to tracking a structure away from its start.
             
             A fun wikiquoutes quote because I was bored and felt like learning while coding...
             
