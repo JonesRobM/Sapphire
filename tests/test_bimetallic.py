@@ -60,7 +60,10 @@ def test_com_distances_are_distances(run):
 def test_melting_increases_divergence(run):
     _, proc = run
     jsd = proc.metadata["JSDpdf"]
-    assert jsd[0] == pytest.approx(0.0, abs=1e-9) and jsd[-1] > 0.5 and jsd[1] > 0
+    # Jensen-Shannon distance (base 2) from frame 0: 0 -> 0.14 -> 0.23 over 300 K -> ~1000 K.
+    # (The old "> 0.5" was calibrated on the pre-1.4 formula, which was unbounded.)
+    assert jsd[0] == pytest.approx(0.0, abs=1e-9)
+    assert 0 < jsd[1] < jsd[-1] <= 1 and jsd[-1] > 0.15
 
 
 def test_collectivity_and_statistics_keys(run):
