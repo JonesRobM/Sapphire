@@ -15,6 +15,7 @@ from Sapphire.CNA import FrameSignature, Utilities
 from Sapphire.Utilities import Initial, System_Clean, Pattern_Clean
 from Sapphire.Utilities import errors
 from Sapphire.Utilities.log import get_logger
+from Sapphire.IO.Reader import LazyMetadata
 
 log = get_logger('Sapphire.Process')
 
@@ -204,6 +205,11 @@ class Process(object):
             self.metadata[k] = r.load_lazy(k)
         self.metadata['masterkey'] = r.masterkey()
         return self.metadata
+
+    def _load_missing(self):
+        """Read back every output not already in ``self.metadata`` (values computed in memory,
+        e.g. ``pattern_indices`` or the statistics, are kept as they are)."""
+        return self.load_metadata([k for k in self.reader().available() if k not in self.metadata])
 
     def ensure_dir(self, base_dir='', file_path=''):
         
@@ -737,7 +743,11 @@ class Process(object):
         :type startHnd: int, optional
         """
 
-        self.load_metadata()
+        # Outputs are read back from disk only when a step below asks for them. Loading them all
+        # up front holds a long run's per-atom CNA tuples in memory: > 10 GB at 10 000 frames.
+        reader = self.reader()
+        available = reader.available()
+        self.metadata = LazyMetadata(reader, self.metadata)
         if 'adj' in self.metadata and ('collect' in self.Quantities['Full'] or 'concert' in self.Quantities['Full']):
             n = len(self.metadata['adj'])
             self.metadata.setdefault('collect', np.zeros(max(n - 1, 0)))   # one value per consecutive pair
@@ -802,7 +812,7 @@ class Process(object):
             self.functions_list = [o for o in getmembers(
                 Stats.Dist_Stats) if isfunction(o[1])]
             self.Stat_Keys = self.Stat_Tools.keys()
-            self.Meta_Keys = list(self.metadata.keys())
+            self.Meta_Keys = list(available) + [k for k in self.metadata if k not in available]
             self.Calc_Dict = {}
             for obj in self.Stat_Keys:
                 for item in self.functions_list:
@@ -846,8 +856,7 @@ class Process(object):
 
         if self.System['extend_xyz'] is not None:
             from Sapphire.Utilities import ExtendXYZ
-            if set(self.metadata) <= {'masterkey'}:
-                self.load_metadata()
+            self._load_missing()
             ExtendXYZ.Extend(
                 Traj=self.Dataset,
                 System=self.System,
@@ -858,8 +867,7 @@ class Process(object):
     def write_meta(self, filename='Metadata.pkl'):
         """Pickle everything the run wrote (read back via :class:`Sapphire.IO.Reader.Reader`)."""
         import pickle
-        if set(self.metadata) <= {'masterkey'}:
-            self.load_metadata()
+        self._load_missing()
         path = self.Base + filename
         with open(path, 'wb') as f:
             pickle.dump(self.metadata, f, protocol=pickle.HIGHEST_PROTOCOL)

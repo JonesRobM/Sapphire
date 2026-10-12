@@ -74,3 +74,13 @@ def test_collectivity_and_statistics_keys(run):
     jsd_keys = {k for k in m if k.startswith("JSD")}
     assert "JSDpdf" in jsd_keys and "JSDhopdfAu" in jsd_keys
     assert not any("space" in k for k in jsd_keys)   # never the *space grids
+
+
+def test_analyse_reads_back_only_what_it_uses(run):
+    """analyse() must not parse every output into memory: a 10 000-frame run's CNA patterns
+    alone exceed 10 GB as Python tuples. Unused outputs load on first access instead."""
+    _, proc = run
+    loaded = set(dict.keys(proc.metadata))
+    assert "pattern_indices" not in loaded and "pattern_indices" in proc.metadata
+    assert len(proc.metadata["pattern_indices"]) == 3        # read from disk on demand
+    assert {"pdf", "JSDpdf"} <= loaded                       # what the JSD statistics needed
