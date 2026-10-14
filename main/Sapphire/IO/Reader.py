@@ -144,6 +144,30 @@ def parse_line(line: str):
         return frame, rest.split()
 
 
+class LazyMetadata(dict):
+    """A run's outputs as a ``dict`` that reads each one from disk the first time it is asked for.
+
+    Values set directly (computed in memory) take precedence. ``in`` and ``get`` see every
+    output on disk; iteration sees only what has been loaded or set so far.
+    """
+
+    def __init__(self, reader, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.reader = reader
+
+    def __missing__(self, key):
+        if key not in self.reader.available():
+            raise KeyError(key)
+        value = self[key] = self.reader.load_lazy(key)
+        return value
+
+    def __contains__(self, key):
+        return dict.__contains__(self, key) or key in self.reader.available()
+
+    def get(self, key, default=None):
+        return self[key] if key in self else default
+
+
 class Reader:
     """Load a Sapphire run directory.
 
