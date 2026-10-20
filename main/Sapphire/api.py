@@ -187,8 +187,8 @@ class Config:
 def run(trajectory, out_dir="sapphire_run/", **kwargs):
     """Analyse ``trajectory`` into ``out_dir`` and return a Reader over the results.
 
-    Keyword arguments are :class:`Config` fields. The trajectory is copied/converted next to the
-    output if it is not already an xyz/traj file ASE can index.
+    Keyword arguments are :class:`Config` fields. The trajectory is hard-linked (or, across
+    filesystems, copied) next to the output if it is not already there.
     """
     cfg = Config(trajectory=str(trajectory), out_dir=str(out_dir), **kwargs)
     return run_config(cfg)
@@ -202,12 +202,23 @@ def run_config(cfg: Config):
     cfg.validate()
     frames = read(cfg.trajectory, index=":")
     species = cfg.species or sorted(set(frames[0].get_chemical_symbols()))
+    n_frames = len(frames)
+    # Process re-reads the file itself; holding every frame here would pin it in memory
+    # (and in each forked worker) for the whole run.
+    del frames
     base = os.path.join(os.path.abspath(cfg.out_dir), "")
     os.makedirs(base, exist_ok=True)
     target = os.path.join(base, os.path.basename(cfg.trajectory))
     if os.path.abspath(cfg.trajectory) != os.path.abspath(target):
-        shutil.copy(cfg.trajectory, target)
-    system, quantities = cfg.to_legacy(n_frames=len(frames), species=species)
+        # A hard link is a real file in the output folder without rewriting a multi-gigabyte
+        # trajectory; Sapphire only reads it.
+        if os.path.lexists(target):
+            os.remove(target)
+        try:
+            os.link(cfg.trajectory, target)
+        except OSError:                                  # across filesystems
+            shutil.copy(cfg.trajectory, target)
+    system, quantities = cfg.to_legacy(n_frames=n_frames, species=species)
     if cfg.jobs > 1:
         # Per-frame work fans out; the cross-frame quantities in analyse() then run once
         # over the merged results, exactly as they would after a serial run.
