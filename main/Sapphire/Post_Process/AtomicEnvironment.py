@@ -32,10 +32,6 @@ from Sapphire.Utilities.log import get_logger
 log = get_logger('Sapphire.Post_Process.AtomicEnvironment')
 
 
-def _dense(m):
-    return np.asarray(m.todense() if hasattr(m, "todense") else m)
-
-
 def _rowsum(m, axis):
     """Sum along ``axis``, flat, for a scipy sparse matrix or a dense array alike.
 
@@ -60,8 +56,9 @@ class Mix:
     def __init__(self, System=None, Frame=None, HoAdj=None, HeAdj=None,
                  HomoBonds=False, HeteroBonds=False):
         self.System, self.Frame = System, Frame
-        self.HoAdj = {k: _dense(v) for k, v in (HoAdj or {}).items()}
-        self.HeAdj = _dense(HeAdj)
+        # sums only, so sparse matrices stay sparse (a dense copy is N_A x N_B integers)
+        self.HoAdj = dict(HoAdj or {})
+        self.HeAdj = HeAdj
         self.HomoBonds, self.HeteroBonds = HomoBonds, HeteroBonds
         self.calculate()
         if System is not None:

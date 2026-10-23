@@ -199,8 +199,19 @@ class Adjacency_Matrix():
         try:
             if self.Type == 'Homo':
                 self.Positions = DistFuncs.get_subspecieslist(self.Metals[0], self.Elements, self.Positions)
-                self.Distances = DistFuncs.Euc_Dist(self.Positions)
-            if self.Type == 'Hetero':
+                self.Distances = None
+            if self.Type == 'Hetero' and DistFuncs.is_large(len(self.Positions)):
+                A = np.atleast_2d(DistFuncs.get_subspecieslist(self.Metals[0], self.Elements, self.Positions))
+                B = np.atleast_2d(DistFuncs.get_subspecieslist(self.Metals[1], self.Elements, self.Positions))
+                i, j, _ = DistFuncs.pairs_within(A, self.R_Cut, B)
+                self.Adjacent = spa.csc_matrix((np.ones(len(i), dtype=int), (i, j)), shape=(len(A), len(B)))
+            elif self.Type != 'Hetero' and DistFuncs.is_large(len(self.Positions)):
+                # never the N x N dense matrix: straight from the pairs, symmetric, zero diagonal
+                n = len(self.Positions)
+                i, j, _ = DistFuncs.pairs_within(self.Positions, self.R_Cut)
+                ones = np.ones(2 * len(i), dtype=int)
+                self.Adjacent = spa.csc_matrix((ones, (np.r_[i, j], np.r_[j, i])), shape=(n, n))
+            elif self.Type == 'Hetero':
                 d = np.asarray(DistFuncs.Hetero(self.Positions, self.Metals, self.Elements), dtype=float)
                 self.Adjacent = spa.csc_matrix((d < self.R_Cut).astype(int))
             else:
@@ -214,8 +225,7 @@ class Adjacency_Matrix():
 
     def get_coordination(self):
         try:
-            Temp = spa.csr_matrix.todense(self.Adjacent)
-            self.NN = np.array([ Temp[i].sum() for i in range(len(Temp)) ])
+            self.NN = np.asarray(self.Adjacent.sum(axis=1)).ravel()   # row sums; no dense copy
         except Exception as e:
             errors.report(e, "Exception raised whilst computing the Coordination:\n%s", base_dir=self.System['base_dir'] if self.System else None)
 

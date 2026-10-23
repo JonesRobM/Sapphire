@@ -314,7 +314,7 @@ class Process(object):
             f.write("Opened the dataset in %.3f seconds.\n" %
                     (time.time()-Read_Time))
         self.all_positions = self.Dataset[0].get_positions()   # first analysed frame
-        self.max_dist = max(DistFuncs.Euc_Dist(self.all_positions))
+        self.max_dist = DistFuncs.max_pair_distance(self.all_positions)
         del(self.all_positions)
         
         #self.all_atoms contains the chemical symbols for all frames
@@ -392,7 +392,10 @@ class Process(object):
             f.write("Loaded the atoms in %.3f seconds.\n" % (time.time()-self.timer))
 
         self.result_cache['pos'] = self.All_Atoms.get_positions()
-        self.result_cache['euc'] = DistFuncs.Euc_Dist(self.result_cache['pos'])
+        # the PDF's kernel estimate keeps only distances below 6.0 + 4*Band (Kernels.Gauss), so a
+        # large system computes just those; small ones keep the full list, which the adjacency uses
+        self._pdf_range = 6.0 + 4 * self.Band
+        self.result_cache['euc'] = DistFuncs.Euc_Dist(self.result_cache['pos'], r_max=self._pdf_range)
         self.result_cache['syms'] = self.All_Atoms.get_chemical_symbols()
         if 'pdf' in self.Quantities['Full']:
             
@@ -406,7 +409,7 @@ class Process(object):
             if 'hepdf' in self.Quantities['Hetero']:
                 
                 TempPos = DistFuncs.Hetero(self.result_cache['pos'], self.Species,
-                                                                  self.result_cache['syms'])
+                                                                  self.result_cache['syms'], r_max=self._pdf_range)
                 
                 self.result_cache['heteropos'] = np.asarray(TempPos, dtype=float).ravel()     
                 
@@ -418,7 +421,7 @@ class Process(object):
 
         if 'hopdf' in self.Quantities['Homo']:
             for x in self.System['Homo']:
-                self.result_cache['homoed'+x] = DistFuncs.Euc_Dist(positions=self.result_cache['pos'], homo=True, specie=x, elements=self.result_cache['syms'])
+                self.result_cache['homoed'+x] = DistFuncs.Euc_Dist(positions=self.result_cache['pos'], homo=True, specie=x, elements=self.result_cache['syms'], r_max=self._pdf_range)
                 if self.result_cache['homoed'+x] is not None:
                     try:
                         self.result_cache[x+'Cut'] = Kernels.Gauss(self.result_cache['homoed'+x], 

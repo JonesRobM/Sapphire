@@ -1,10 +1,52 @@
 import numpy as np
+from scipy.spatial import ConvexHull, QhullError, cKDTree
 from scipy.spatial.distance import cdist, pdist
 from Sapphire.Utilities import errors
 import os
 from Sapphire.Utilities.log import get_logger
 
 log = get_logger('Sapphire.Post_Process.DistFuncs')
+
+# Above this many atoms nothing builds the all-pairs list or an N x N array: N(N-1)/2
+# float64s is 1.6 GB at 20k atoms and 176 GiB for the 217k-atom Big_Rod. Larger systems
+# take the KD-tree routes below, which find exactly the same pairs within each cutoff.
+# At or below it the original all-pairs code runs unchanged.
+LARGE_N = 20000
+
+
+def is_large(n_atoms, n_other=0):
+    return n_atoms + n_other > LARGE_N
+
+
+def pairs_within(positions, r_max, other=None):
+    """(i, j, d) for every pair closer than ``r_max``, from a KD-tree; memory ~ pairs found.
+
+    Without ``other``: pairs within ``positions``, i < j. With it: i indexes ``positions``,
+    j indexes ``other``. Strictly ``d < r_max``, as the all-pairs comparisons are.
+    """
+    a = np.asarray(positions, dtype=float)
+    if other is None:
+        ij = cKDTree(a).query_pairs(r_max, output_type='ndarray')
+        i, j = ij[:, 0], ij[:, 1]
+        d = np.linalg.norm(a[i] - a[j], axis=1)
+    else:
+        b = np.asarray(other, dtype=float)
+        m = cKDTree(a).sparse_distance_matrix(cKDTree(b), r_max, output_type='coo_matrix')
+        i, j, d = m.row, m.col, m.data
+    keep = d < r_max
+    return i[keep], j[keep], d[keep]
+
+
+def max_pair_distance(positions):
+    """Largest pair distance (the cluster's diameter). For large systems only the convex
+    hull's vertices are compared: the farthest pair always lies on the hull."""
+    p = np.asarray(positions, dtype=float)
+    if is_large(len(p)):
+        try:
+            p = p[ConvexHull(p).vertices]
+        except QhullError:      # flat or linear: fall through to all pairs of what's left
+            pass
+    return float(pdist(p).max())
 
 
 def distance(a, b):
@@ -35,24 +77,33 @@ def get_subspecieslist(specie, elements, positions):
     Temp = [x for x in Temp if x[0] == specie]
     return np.array(np.delete(Temp,0,1), dtype = np.float64)
 
-def Euc_Dist(positions, homo = False, specie = None, elements = None):
+def Euc_Dist(positions, homo = False, specie = None, elements = None, r_max = None):
     """All pair distances |r_i - r_j| for i < j (row-major order), as a 1-D array.
 
     With ``homo=True`` only atoms of ``specie`` are considered; returns None if fewer than two.
     Equivalent to the original double loop but via ``scipy.spatial.distance.pdist``.
+    With ``r_max``, a large system returns only the distances below it, in no set order
+    (enough for callers that discard the rest anyway, like the PDF's kernel estimate).
     """
     if homo:
-        Temp = get_subspecieslist(specie, elements, positions)
-        if len(Temp) < 2:
+        positions = get_subspecieslist(specie, elements, positions)
+        if len(positions) < 2:
             return None
-        return pdist(np.asarray(Temp, dtype=float))
-    return pdist(np.asarray(positions, dtype=float))
+    p = np.asarray(positions, dtype=float)
+    if r_max is not None and is_large(len(p)):
+        return pairs_within(p, r_max)[2]
+    return pdist(p)
 
-def Hetero(positions, species, elements):
-    """Distances between every atom of species[0] and every atom of species[1]: (N_A, N_B) array."""
-    TempA = get_subspecieslist(species[0], elements, positions)
-    TempB = get_subspecieslist(species[1], elements, positions)
-    return cdist(np.atleast_2d(TempA), np.atleast_2d(TempB))
+def Hetero(positions, species, elements, r_max = None):
+    """Distances between every atom of species[0] and every atom of species[1]: (N_A, N_B) array.
+
+    With ``r_max``, a large system returns only the distances below it, as a 1-D array.
+    """
+    TempA = np.atleast_2d(get_subspecieslist(species[0], elements, positions))
+    TempB = np.atleast_2d(get_subspecieslist(species[1], elements, positions))
+    if r_max is not None and is_large(len(TempA), len(TempB)):
+        return pairs_within(TempA, r_max, TempB)[2]
+    return cdist(TempA, TempB)
 
 
 class CoM_Dist():
@@ -230,13 +281,13 @@ class RDF():
     def calculate(self):
         """Shell-count RDF: G[j] = 2 x (pairs with j*dr <= r < (j+1)*dr) / (N_ref x shell volume)."""
         if self.Type == 'Hetero':
-            A = get_subspecieslist(self.Species[0], self.Elements, self.Positions)
-            B = get_subspecieslist(self.Species[1], self.Elements, self.Positions)
-            r = cdist(np.atleast_2d(A), np.atleast_2d(B)).ravel()
-            n_ref = len(np.atleast_2d(A))
+            A = np.atleast_2d(get_subspecieslist(self.Species[0], self.Elements, self.Positions))
+            B = np.atleast_2d(get_subspecieslist(self.Species[1], self.Elements, self.Positions))
+            r = pairs_within(A, self.R_Cut, B)[2] if is_large(len(A), len(B)) else cdist(A, B).ravel()
+            n_ref = len(A)
         else:
             P = np.asarray(self.Positions, dtype=float)
-            r = pdist(P)
+            r = pairs_within(P, self.R_Cut)[2] if is_large(len(P)) else pdist(P)
             n_ref = len(P)
         idx = (r / self.dr).astype(int)
         idx = idx[(idx > 0) & (idx < self.Res)]
